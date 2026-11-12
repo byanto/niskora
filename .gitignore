@@ -1,3 +1,4 @@
 # Real business data for design reference only - never commit
 samples/
 .env
+.claude/worktrees/
