@@ -52,7 +52,19 @@ _Avoid_: Combination SKU, kit, multi-pack
 A SKU that a bundle is made of.
 _Avoid_: Child SKU, single SKU
 
+**Product family**:
+The SKUs that share the part of their code before the first `-`. A SKU whose code breaks that rule is a family of one. A bundle belongs to no family by its code.
+_Avoid_: Product, SPU, parent SKU, variant group
+
+**Brand**:
+One of the business's own labels (Kirana, Lumio, Senja), read from the prefix of the SKU code.
+_Avoid_: Category, product line, store
+
 ### Orders
+
+**Store**:
+One sales channel account as BigSeller names it: a marketplace shop, or a built-in channel such as manual orders. Every store in an order export counts.
+_Avoid_: Shop, channel, account
 
 **Package**:
 One parcel of an order, identified by its Package No. It is the unit an order export is imported by.
@@ -68,6 +80,10 @@ _Avoid_: Closed, done, terminal status
 
 ### Stock
 
+**Warehouse**:
+The single place stock is counted for. The second building is shelves inside it, not a warehouse of its own.
+_Avoid_: Location, building, gudang
+
 **Stock snapshot**:
 The stock figures of every SKU as BigSeller reported them on one business day.
 _Avoid_: Inventory list, stock level, balance
@@ -79,3 +95,19 @@ _Avoid_: Stock transaction, stock in/out record, inventory log
 **Stock history gap**:
 A break in a SKU's chain of stock movements, where one movement's stock after does not match the next one's stock before.
 _Avoid_: Missing movement, hole
+
+### Cost
+
+**Actual cost**:
+What a SKU's stock really cost per piece, freight included, averaged over the purchases still in stock. It is BigSeller's Weighted Average Cost, taken as is.
+_Avoid_: COGS, weighted average cost, cost price
+
+**Pricing cost**:
+The deliberately padded cost the owner sets selling prices against, so prices need not follow every change in exchange rate or freight.
+_Avoid_: COGS, reference cost price, standard cost
+
+### Purchasing
+
+**Supplier**:
+A party the business buys SKUs from. niskora keeps the list and the links from SKUs to suppliers.
+_Avoid_: Vendor, seller, factory
