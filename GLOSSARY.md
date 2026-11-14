@@ -2,6 +2,8 @@
 
 The business brain that sits beside BigSeller for a multi-store Indonesian e-commerce seller. It turns BigSeller exports into a trusted catalogue, order history and stock history, and builds restock advice, purchase orders and analysis on top.
 
+Where BigSeller has a name for a thing, niskora uses that name. niskora coins a term only for things BigSeller has no word for.
+
 ## Language
 
 ### Imports
@@ -19,11 +21,11 @@ The one-off import of all past orders and stock movements that BigSeller still h
 _Avoid_: Backfill, migration
 
 **Held package**:
-A package kept out of the order history because one of its lines names a SKU the catalogue does not know yet.
+A package kept out of the order history because one of its lines names a Merchant SKU the catalogue does not know yet.
 _Avoid_: Failed row, quarantined order, rejected package
 
 **Not seen**:
-The state of a package or SKU that a later export should have contained but did not. It is reported and never treated as a deletion.
+The state of a package or Merchant SKU that a later export should have contained but did not. It is reported and never treated as a deletion.
 _Avoid_: Missing, deleted, dropped
 
 **Stale**:
@@ -36,39 +38,67 @@ _Avoid_: Day, calendar day
 
 ### Catalogue
 
-**SKU**:
-A sellable item identified by its Merchant SKU code, which is the key that joins every export.
-_Avoid_: Product, item, variant, Merchant SKU
+**Catalogue**:
+All the Merchant SKUs niskora knows, retired ones included.
+_Avoid_: Product list, supplier catalogue, inventory
 
-**Retired SKU**:
-A SKU that is no longer in BigSeller's SKU list but is kept with all its history.
-_Avoid_: Deleted SKU, inactive SKU, archived SKU
+**Merchant SKU**:
+A sellable item identified by its Merchant SKU code, which is the key that joins every export. It is either a Single SKU or a Combination SKU.
+_Avoid_: SKU, product, item, variant
 
-**Bundle**:
-A SKU that is sold as one item and stands for fixed quantities of other SKUs. It holds no stock of its own.
-_Avoid_: Combination SKU, kit, multi-pack
+**Single SKU**:
+A Merchant SKU that is one physical item and holds stock.
+_Avoid_: Simple SKU, base SKU
+
+**Combination SKU**:
+A Merchant SKU that is sold as one item and stands for fixed quantities of Single SKUs. It holds no stock of its own.
+_Avoid_: Bundle, kit, multi-pack
 
 **Component**:
-A SKU that a bundle is made of.
-_Avoid_: Child SKU, single SKU
+A Single SKU in its role as part of a Combination SKU.
+_Avoid_: Child SKU, bundle item
 
-**Product family**:
-The SKUs that share the part of their code before the first `-`. A SKU whose code breaks that rule is a family of one. A bundle belongs to no family by its code.
-_Avoid_: Product, SPU, parent SKU, variant group
+**Retired Merchant SKU**:
+A Merchant SKU that is no longer in BigSeller's Merchant SKU list but is kept with all its history.
+_Avoid_: Deleted SKU, inactive SKU, archived SKU
 
-**Brand**:
-One of the business's own labels (Kirana, Lumio, Senja), read from the prefix of the SKU code.
-_Avoid_: Category, product line, store
+**SPU**:
+The Merchant SKUs that share the part of their code before the first `-`. A Merchant SKU whose code breaks that rule is an SPU of one, and a Combination SKU belongs to no SPU by its code. Every SPU belongs to exactly one company.
+_Avoid_: Product, product family, parent SKU, variant group
+
+**Company**:
+One of the three businesses under the same owner (Kirana, Senja, Lumio), each owning its SPUs and its stores. Stock, demand and the warehouse are shared across all three.
+_Avoid_: Brand, store, business unit, label
+
+**Listing**:
+A product page in a store that sells one or more Merchant SKUs. One Merchant SKU can have many listings, even within one store. Listings are not held in v1.
+_Avoid_: Product, store SKU, marketplace product
 
 ### Orders
 
+**Marketplace**:
+The selling platform a store belongs to, as the order export names it: Shopee, Lazada, TikTok, Blibli or Manual. Every store is on exactly one.
+_Avoid_: Platform, channel, Other
+
 **Store**:
-One sales channel account as BigSeller names it: a marketplace shop, or a built-in channel such as manual orders. Every store in an order export counts.
-_Avoid_: Shop, channel, account
+One sales channel account, identified by its BigSeller Store Nickname: a marketplace shop, or a built-in channel such as Manual Orders. Every store in an order export counts. A store belongs to at most one company and may sell any company's Merchant SKUs.
+_Avoid_: Shop, channel, account, brand
+
+**Order**:
+The marketplace's own grouping of one or more packages under one Order No. It holds nothing of its own in niskora.
+_Avoid_: Sale, transaction
 
 **Package**:
-One parcel of an order, identified by its Package No. It is the unit an order export is imported by.
+One parcel of an order, identified by its Package No. It is the unit an order export is imported by and the unit demand and destinations are counted in.
 _Avoid_: Shipment, parcel, order
+
+**Package line**:
+One Merchant SKU and its quantity in one package.
+_Avoid_: Order line, order item, row
+
+**Component line**:
+A package line created for one component of a Combination SKU that the package contains. It sits beside the Combination SKU's own package line.
+_Avoid_: Expanded line, child line
 
 **Hub package**:
 A package that moves stock to a Shopee hub for an order Shopee fulfils. It mirrors the buyer's package and is never a customer order.
@@ -78,29 +108,61 @@ _Avoid_: Matched package, FBS order, hub order
 A package status that will not change again: Completed, Canceled, or Return & Refund.
 _Avoid_: Closed, done, terminal status
 
+**Demand**:
+The units of a Single SKU that buyers ordered, counted from the package lines and component lines of packages that count. A Combination SKU's own line, a hub package and a stock movement are never demand.
+_Avoid_: Sales, units sold, consumption
+
+**Buyer**:
+The person a package was sold to, known only through the fields on that package. niskora keeps no record of a buyer across packages.
+_Avoid_: Customer, client, recipient
+
+**Destination**:
+The place a package is shipped to, as far as the marketplace reveals it: province, city and district. A package whose location is masked has an unknown destination.
+_Avoid_: Address, location, region
+
 ### Stock
 
 **Warehouse**:
 The single place stock is counted for. The second building is shelves inside it, not a warehouse of its own.
 _Avoid_: Location, building, gudang
 
-**Stock snapshot**:
-The stock figures of every SKU as BigSeller reported them on one business day.
-_Avoid_: Inventory list, stock level, balance
+**On hand**:
+The units of a Single SKU physically in the warehouse. "Stock" with no other word means on hand.
+_Avoid_: Physical stock, total stock, quantity
+
+**Allocated**:
+The on-hand units already promised to packages that have not left the warehouse.
+_Avoid_: Reserved, locked, committed
+
+**Available**:
+On hand minus allocated.
+_Avoid_: Free stock, sellable stock
+
+**On the way**:
+The units ordered from a supplier and not yet received, as BigSeller reports them.
+_Avoid_: In transit, incoming, on order
+
+**Inventory snapshot**:
+BigSeller's Inventory List as exported on one business day: the stock figures and Weighted Average Cost of every Merchant SKU.
+_Avoid_: Stock snapshot, stock level, balance
 
 **Stock movement**:
-One recorded change to a SKU's stock, with the stock before and after, its type and the document that caused it.
+One recorded change to a Single SKU's on-hand stock, with the stock before and after, its type and the document that caused it.
 _Avoid_: Stock transaction, stock in/out record, inventory log
 
+**Purchase Stock-In**:
+A stock movement that records goods received from a supplier, carrying BigSeller's own purchase document number.
+_Avoid_: Receipt, goods received, delivery
+
 **Stock history gap**:
-A break in a SKU's chain of stock movements, where one movement's stock after does not match the next one's stock before.
+A break in a Single SKU's chain of stock movements, where one movement's stock after does not match the next one's stock before.
 _Avoid_: Missing movement, hole
 
 ### Cost
 
-**Actual cost**:
-What a SKU's stock really cost per piece, freight included, averaged over the purchases still in stock. It is BigSeller's Weighted Average Cost, taken as is.
-_Avoid_: COGS, weighted average cost, cost price
+**Weighted Average Cost**:
+What a Single SKU's stock really cost per piece, freight included, averaged over the purchases still in stock. It is BigSeller's figure, taken as is.
+_Avoid_: Actual cost, COGS, cost price
 
 **Pricing cost**:
 The deliberately padded cost the owner sets selling prices against, so prices need not follow every change in exchange rate or freight.
@@ -109,5 +171,23 @@ _Avoid_: COGS, reference cost price, standard cost
 ### Purchasing
 
 **Supplier**:
-A party the business buys SKUs from. niskora keeps the list and the links from SKUs to suppliers.
+A party the business buys Merchant SKUs from. niskora keeps the list.
 _Avoid_: Vendor, seller, factory
+
+**Supply source**:
+The record that one supplier can supply one Merchant SKU. A Merchant SKU can have several, and niskora keeps them.
+_Avoid_: Supplier link, supplier catalogue, supplier item
+
+**Purchase order**:
+niskora's document asking one supplier for stated quantities of Merchant SKUs. BigSeller's own purchase document, created when goods arrive, is not a purchase order.
+_Avoid_: PO request, purchase plan, order
+
+**Purchase order line**:
+One Merchant SKU and its quantity on a purchase order. Lines are shown grouped by SPU.
+_Avoid_: PO item, PO row
+
+### People
+
+**User**:
+Anyone who logs in to niskora. Every user can do everything.
+_Avoid_: Account, operator, staff, admin
