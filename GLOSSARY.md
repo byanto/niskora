@@ -62,6 +62,10 @@ _Avoid_: Child SKU, bundle item
 A Merchant SKU that is no longer in BigSeller's Merchant SKU list but is kept with all its history.
 _Avoid_: Deleted SKU, inactive SKU, archived SKU
 
+**Discontinued Merchant SKU**:
+A Merchant SKU the business has decided not to buy again. It is still sold until its stock runs out and never gets restock advice. A whole SPU can be discontinued at once.
+_Avoid_: Retired, inactive, dead stock, do-not-restock
+
 **SPU**:
 The Merchant SKUs that share the part of their code before the first `-`. A Merchant SKU whose code breaks that rule is an SPU of one, and a Combination SKU belongs to no SPU by its code. Every SPU belongs to exactly one company.
 _Avoid_: Product, product family, parent SKU, variant group
@@ -109,7 +113,7 @@ A package status that will not change again: Completed, Canceled, or Return & Re
 _Avoid_: Closed, done, terminal status
 
 **Demand**:
-The units of a Single SKU that buyers ordered, counted from the package lines and component lines of packages that count. A Combination SKU's own line, a hub package and a stock movement are never demand.
+The units of a Single SKU that buyers ordered, counted from the package lines and component lines of every package that is not Canceled, on the business day of its Order Time. A returned package still counts. A Combination SKU's own line, a hub package and a stock movement are never demand.
 _Avoid_: Sales, units sold, consumption
 
 **Buyer**:
@@ -185,6 +189,48 @@ _Avoid_: PO request, purchase plan, order
 **Purchase order line**:
 One Merchant SKU and its quantity on a purchase order. Lines are shown grouped by SPU.
 _Avoid_: PO item, PO row
+
+**Preferred supply source**:
+The one supply source of a Merchant SKU that restock advice uses by default. Another can be chosen when a purchase order is made.
+_Avoid_: Main supplier, default supplier, primary source
+
+**On order**:
+The units on niskora's purchase orders that have been placed with a supplier and not yet received. It is niskora's own figure and replaces BigSeller's on the way in restock advice.
+_Avoid_: On the way, incoming, in transit
+
+**Lead time**:
+The days from placing a purchase order with a supplier to the goods being in the warehouse. A supplier has one, and a supply source can have its own.
+_Avoid_: Delivery time, shipping time
+
+**Order cycle**:
+The days the business normally lets pass between two purchase orders to the same supplier.
+_Avoid_: Review period, order frequency
+
+**Safety days**:
+The extra days of demand kept in stock as a cushion against late deliveries and busier days.
+_Avoid_: Safety stock, buffer
+
+### Restock
+
+**Restock advice**:
+For one Single SKU, whether to reorder now and how many units, worked out from its demand, its stock and its supplier's lead time.
+_Avoid_: Purchase suggestion, recommendation, alert
+
+**Stockout day**:
+A business day that a Single SKU began with no on-hand stock, so buyers could not order it.
+_Avoid_: Out-of-stock day, empty day
+
+**Countable day**:
+A business day that is neither a stockout day for the Single SKU nor a campaign day. Only countable days are used to measure its sales rate.
+_Avoid_: Valid day, in-stock day, selling day
+
+**Sales rate**:
+A Single SKU's demand per day over its most recent 90 countable days.
+_Avoid_: Velocity, average daily outbound, run rate
+
+**Campaign day**:
+A business day a user has marked as a sales event, such as 11.11. It is left out when the normal pace of demand is measured.
+_Avoid_: Promo day, spike, event
 
 ### People
 
