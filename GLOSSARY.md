@@ -183,8 +183,74 @@ What a Single SKU's stock really cost per piece, freight included, averaged over
 _Avoid_: Actual cost, COGS, cost price
 
 **Pricing cost**:
-The deliberately padded cost the owner sets selling prices against, so prices need not follow every change in exchange rate or freight.
+The deliberately padded cost the owner sets selling prices against, so prices need not follow every change in exchange rate or freight. It is set per Single SKU, and a Combination SKU's is the sum of its components'.
 _Avoid_: COGS, reference cost price, standard cost
+
+### Pricing
+
+**Selling price**:
+The normal price of one piece of a Merchant SKU on one marketplace, without any promotion. A user types it on the anchor marketplace and on independent marketplaces; on a linked marketplace it follows from the anchor's. Every store on the marketplace uses it unless the store has its own typed price. A Merchant SKU with no selling price on a marketplace is not sold there.
+_Avoid_: Retail price, harga ecer, list price, channel price
+
+**Anchor marketplace**:
+The one marketplace whose selling prices the linked marketplaces follow. It is Shopee.
+_Avoid_: Base marketplace, main marketplace, reference platform
+
+**Linked marketplace**:
+A marketplace whose selling prices BigSeller sets from the anchor marketplace's through a price ratio.
+_Avoid_: Synced marketplace, follower
+
+**Independent marketplace**:
+A marketplace whose selling prices are typed with no tie to the anchor marketplace, such as Manual and Blibli.
+_Avoid_: Unlinked marketplace, standalone
+
+**Price ratio**:
+The number the anchor marketplace's selling price is multiplied by to give the selling price on one linked marketplace. It is set per SPU, and a Merchant SKU priced differently from the rest of its SPU can have its own. niskora records the ratio a user has set in BigSeller.
+_Avoid_: Multiplier, markup, linkage rule
+
+**Marketplace category**:
+The marketplace's own category that an SPU or a Combination SKU is sold under on that marketplace. It decides which fee percentages apply.
+_Avoid_: Product category, kategori
+
+**Minimum buy**:
+The fewest pieces of a Merchant SKU a buyer can order at once on one marketplace. It is 1 unless set.
+_Avoid_: Minimum order quantity, MOQ, minimum purchase
+
+**Wholesale tier**:
+A lower price per piece that applies from a stated quantity upward. A selling price can have several, on marketplaces that allow them.
+_Avoid_: Grosir, bulk price, quantity discount
+
+**Fee**:
+An amount a marketplace charges on a sale: either a percentage of the price, which may have a cap and may vary by the marketplace's category, or a fixed amount per order.
+_Avoid_: Commission, admin cost, charge
+
+**Fee schedule**:
+All the fees of one marketplace as they apply from a stated date.
+_Avoid_: Fee table, rate card, marketplace fee
+
+**Allowance**:
+A percentage of the price the owner sets aside per marketplace for a cost the marketplace does not charge on every sale, such as ads or affiliates.
+_Avoid_: Fee, budget, misc
+
+**Target margin**:
+The share of the price the owner wants left as profit after fees, allowances and the pricing cost.
+_Avoid_: Markup, multiplier, desired profit
+
+**Recommended price**:
+The lowest price at which a Merchant SKU yields the target margin on the anchor marketplace or an independent marketplace. It is advice and never becomes the selling price by itself.
+_Avoid_: Suggested price, calculated price
+
+**Recommended ratio**:
+The price ratio at which a linked marketplace yields the same planned margin as the anchor marketplace's selling price.
+_Avoid_: Suggested multiplier
+
+**Planned profit**:
+What one piece earns at a price after fees and allowances, measured against the pricing cost.
+_Avoid_: Net profit, margin
+
+**Real profit**:
+The same sum measured against the Weighted Average Cost.
+_Avoid_: Actual profit, true margin
 
 ### Purchasing
 
