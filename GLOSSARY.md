@@ -294,6 +294,20 @@ _Avoid_: Velocity, average daily outbound, run rate
 A business day a user has marked as a sales event, such as 11.11. It is left out when the normal pace of demand is measured.
 _Avoid_: Promo day, spike, event
 
+### Agent
+
+**Agent**:
+The part of niskora that answers a user's questions in plain language from niskora's own data. It reads and never changes anything.
+_Avoid_: Assistant, chatbot, AI, copilot
+
+**Conversation**:
+One user's saved series of questions and the agent's answers, private to that user.
+_Avoid_: Chat, thread, session
+
+**Tool**:
+One fixed, read-only query the agent can run to get figures for an answer. Every figure in an answer comes from a tool.
+_Avoid_: Function, query, skill
+
 ### People
 
 **User**:
