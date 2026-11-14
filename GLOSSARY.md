@@ -121,8 +121,22 @@ The person a package was sold to, known only through the fields on that package.
 _Avoid_: Customer, client, recipient
 
 **Destination**:
-The place a package is shipped to, as far as the marketplace reveals it: province, city and district. A package whose location is masked has an unknown destination.
+The place a package is shipped to, in the marketplace's own words and as far as it reveals them: province, city and district. A package whose destination is masked or empty has an unknown destination.
 _Avoid_: Address, location, region
+
+### Locations
+
+**Place**:
+An official province, city or district from the government's list. A city is either a kota or a kabupaten, and every district lies in one city and every city in one province.
+_Avoid_: Region, area, location, regency
+
+**Place alias**:
+A spelling a marketplace uses for a place, mapped to that place automatically or by a user.
+_Avoid_: Mapping, synonym, correction
+
+**Unmatched destination**:
+A destination with a spelling that maps to no place yet. Its package counts as unknown below the last level that did match.
+_Avoid_: Unknown location, bad address, unmapped destination
 
 ### Stock
 
