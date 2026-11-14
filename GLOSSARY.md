@@ -183,12 +183,60 @@ The record that one supplier can supply one Merchant SKU. A Merchant SKU can hav
 _Avoid_: Supplier link, supplier catalogue, supplier item
 
 **Purchase order**:
-niskora's document asking one supplier for stated quantities of Merchant SKUs. BigSeller's own purchase document, created when goods arrive, is not a purchase order.
+niskora's document asking one supplier for stated quantities of Single SKUs, which may belong to different companies. It is a Draft until it is Placed with the supplier, Completed when every line is closed, or Cancelled. BigSeller's own purchase document, created when goods arrive, is not a purchase order.
 _Avoid_: PO request, purchase plan, order
 
 **Purchase order line**:
-One Merchant SKU and its quantity on a purchase order. Lines are shown grouped by SPU.
+One Single SKU with its ordered quantity and goods price on a purchase order. Lines are shown grouped by SPU. A line is open from the moment the purchase order is placed until it is closed.
 _Avoid_: PO item, PO row
+
+**Placed**:
+Said of a purchase order the supplier has been asked to fulfil. Only the open lines of placed purchase orders count as on order.
+_Avoid_: Sent, submitted, confirmed, approved
+
+**Goods price**:
+What the supplier charges for one piece, in the supplier's own currency and without freight.
+_Avoid_: Unit cost, purchase price, stock-in price
+
+**Received quantity**:
+The units of a purchase order line that were counted on arrival. niskora reads it from the Purchase Stock-In movements matched to the purchase order and it is never typed into niskora.
+_Avoid_: Delivered quantity, counted quantity
+
+**Closed line**:
+A purchase order line that expects no more goods. A line closes on its first Purchase Stock-In whatever the count, unless a user marks that the rest is still coming, or when a user closes it by hand.
+_Avoid_: Fulfilled line, done line
+
+**Shortfall**:
+The units by which a closed line's received quantity falls below its ordered quantity. Each shortfall ends as Refunded or as a Loss, and is Unresolved until then.
+_Avoid_: Short delivery, missing goods, shortage
+
+**Overage**:
+The units by which a line's received quantity exceeds its ordered quantity.
+_Avoid_: Surplus, extra goods
+
+**Unmatched stock-in**:
+A Purchase Stock-In that belongs to no niskora purchase order, either because a user has not yet confirmed its match or because the goods were bought outside niskora.
+_Avoid_: Unmatched receipt, orphan receipt
+
+**Expected arrival**:
+The date a placed purchase order's goods should be in the warehouse: the day it was placed plus the lead time, unless a user sets another date. A purchase order with open lines past this date is Overdue.
+_Avoid_: ETA, due date, delivery date
+
+**Forwarder**:
+The freight company that carries goods bought in China to the warehouse.
+_Avoid_: Shipper, cargo agent, expedition
+
+**Forwarder invoice**:
+The Chinese-language document niskora produces from a purchase order for the forwarder, listing each item with its quantity and goods price in yuan.
+_Avoid_: Packing list, commercial invoice
+
+**Trading name**:
+The one neutral name printed as the purchasing party on every purchase order document. No company or store name ever appears there.
+_Avoid_: Buyer name, company name
+
+**Carton**:
+The supplier's shipping box for one SPU, with a fixed number of units and fixed outer dimensions. It may mix that SPU's Merchant SKUs.
+_Avoid_: Box, case, koli
 
 **Preferred supply source**:
 The one supply source of a Merchant SKU that restock advice uses by default. Another can be chosen when a purchase order is made.
