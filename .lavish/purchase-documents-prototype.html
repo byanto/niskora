@@ -1,0 +1,415 @@
+<!doctype html>
+<!--
+  PROTOTYPE - throwaway. Not production code.
+  Question: what do the two purchasing documents look like on the page?
+  Three variants of the supplier purchase order PDF (Bahasa Indonesia) and three of the
+  forwarder invoice (Chinese), switchable via ?doc=po|inv and ?variant=A|B|C.
+  All data is synthetic. Ticket: https://github.com/byanto/niskora/issues/20
+-->
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purchasing documents - layout prototype</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { min-height: 100vh; }
+  #stage { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 8px 0 40px; }
+  .pagewrap { box-shadow: 0 6px 30px rgba(0,0,0,.55); }
+  .pagelabel { font-size: 12px; opacity: .6; margin-bottom: 6px; text-align: center; }
+
+  /* ---------- the paper: everything below is the document itself ---------- */
+  .page { width: 210mm; height: 297mm; padding: 14mm; background: #fff; color: #111; position: relative;
+          overflow: hidden; font-family: Arial, Helvetica, "Microsoft YaHei", "Noto Sans SC", sans-serif;
+          font-size: 9.5pt; line-height: 1.25; }
+  .page.land { width: 297mm; height: 210mm; }
+  .page table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  .page td, .page th { padding: 0 2mm; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #111; }
+  .page th { font-weight: 700; text-align: left; font-size: 8pt; text-transform: uppercase; letter-spacing: .03em; color: #444; }
+  .num { text-align: right !important; font-variant-numeric: tabular-nums; }
+  .ctr { text-align: center !important; }
+  .muted { color: #666; }
+  .pfoot { position: absolute; left: 14mm; right: 14mm; bottom: 8mm; display: flex; justify-content: space-between;
+           font-size: 8pt; color: #666; border-top: .2mm solid #bbb; padding-top: 1.5mm; }
+  .hdr1 { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: .6mm solid #111; overflow: hidden; }
+  .hdr1 .trade { font-size: 17pt; font-weight: 700; letter-spacing: .01em; }
+  .hdr1 .title { font-size: 15pt; font-weight: 700; text-align: right; letter-spacing: .04em; }
+  .meta { display: grid; grid-template-columns: auto auto; gap: .8mm 4mm; font-size: 9.5pt; justify-content: end; margin-top: 2mm; }
+  .meta b { text-align: right; }
+  .to { margin-top: 3mm; font-size: 9.5pt; }
+  .to .lbl { font-size: 8pt; text-transform: uppercase; color: #666; letter-spacing: .04em; }
+  .hdrN { height: 10mm; display: flex; justify-content: space-between; align-items: center; border-bottom: .3mm solid #111;
+          font-size: 9pt; margin-bottom: 4mm; }
+  .recv { border: .25mm solid #111; height: 4.6mm; width: 100%; display: block; background: #fff; }
+  .photo { background: #eee; display: flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
+  .photo svg { width: 100%; height: 100%; display: block; }
+  .endblock { display: flex; justify-content: space-between; gap: 8mm; overflow: hidden; }
+  .sign { display: flex; gap: 8mm; }
+  .sign div { width: 44mm; font-size: 8.5pt; }
+  .sign .line { margin-top: 17mm; border-top: .25mm solid #111; padding-top: 1mm; }
+  .grand { text-align: right; white-space: nowrap; flex: none; }
+  .endblock.narrow { gap: 4mm; } .endblock.narrow .sign { gap: 4mm; } .endblock.narrow .sign div { width: 32mm; }
+  .grand .big { font-size: 15pt; font-weight: 700; }
+  .grand .lbl { font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; color: #444; }
+  body.nosku .sku { display: none; }
+
+  /* PO variant A: one block per SPU, large photo */
+  .a-block { display: flex; gap: 4mm; overflow: hidden; }
+  .a-block .photo { width: 32mm; height: 32mm; }
+  .a-body { flex: 1; min-width: 0; }
+  .a-head { height: 8mm; display: flex; align-items: center; gap: 3mm; border-bottom: .4mm solid #111; font-weight: 700; font-size: 10.5pt; }
+  .a-head .code { font-family: Consolas, monospace; font-size: 9.5pt; background: #111; color: #fff; padding: .4mm 1.6mm; }
+  .a-head .cont { font-weight: 400; font-size: 8.5pt; color: #666; }
+  .a-body tr { height: 7mm; border-bottom: .15mm solid #ccc; }
+  .a-body tr.th { height: 6mm; border-bottom: .2mm solid #888; }
+  .a-head .tot { margin-left: auto; font-size: 9.5pt; }
+  .note { display: block; border-bottom: .2mm dotted #777; height: 4.6mm; }
+  .was { text-decoration: line-through; color: #888; font-size: 8pt; margin-left: 1mm; }
+  .f-table tr { height: 7mm; }
+  .f-table tr.th th { border-bottom: .5mm solid #111; }
+  .f-table td { border-bottom: .15mm solid #ccc; }
+  .f-table tr.pad td { border-bottom: none; }
+  .f-table tr.spu { height: 8mm; }
+  .f-table tr.spu td { border-top: .4mm solid #111; border-bottom: .2mm solid #888; background: #f3f3f3; font-size: 10.5pt; }
+  .f-table tr.spu .code { font-family: Consolas, monospace; font-size: 9.5pt; background: #111; color: #fff; padding: .4mm 1.6mm; margin-right: 2mm; }
+  .f-table tr.spu .tot { float: right; font-size: 9.5pt; font-weight: 700; }
+  .f-table td.ph { vertical-align: top; padding: 1.5mm 2mm; border-bottom: none; }
+  .f-table td.ph .photo { width: 32mm; height: 32mm; }
+  .f-table .recv { height: 5.2mm; }
+  .rs { font-size: 7.5pt; border: .2mm solid #111; padding: .2mm 1.2mm; margin-left: 1.5mm; }
+  .twocol { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 6mm; }
+  .a-body .recv { height: 5.2mm; }
+  .a-body tr.sub { height: 7mm; border-bottom: none; font-weight: 700; }
+  .a-body tr.sub td { border-top: .3mm solid #111; }
+
+  /* PO variant B: one continuous ledger table, small photo */
+  .b-table th { height: 8mm; border-bottom: .5mm solid #111; }
+  .b-table td { height: 6mm; border-bottom: .15mm solid #ccc; }
+  .b-table td.prod { vertical-align: top; white-space: normal; border-bottom: .3mm solid #111; padding-top: 1mm; }
+  .b-table .photo { width: 14mm; height: 14mm; }
+  .b-table tr.sub td { font-weight: 700; background: #f0f0f0; border-bottom: .3mm solid #111; }
+  .b-table tr.lastrow td { border-bottom: .3mm solid #111; }
+
+  /* PO variant C: landscape, two columns of cards */
+  .c-cols { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8mm; }
+  .c-card { border: .3mm solid #111; overflow: hidden; }
+  .c-head { height: 8mm; display: flex; align-items: center; gap: 2mm; background: #111; color: #fff; padding: 0 2mm; font-weight: 700; font-size: 9.5pt; white-space: nowrap; overflow: hidden; }
+  .c-head .code { font-family: Consolas, monospace; font-weight: 400; }
+  .c-head .cont { font-weight: 400; font-size: 8pt; opacity: .8; }
+  .c-main { display: flex; }
+  .c-main .photo { width: 22mm; height: 22mm; margin: 1.5mm; }
+  .c-main table { flex: 1; min-width: 0; align-self: flex-start; }
+  .c-card tr { height: 6mm; border-bottom: .15mm solid #ccc; }
+  .c-card tr.sub { height: 6.5mm; font-weight: 700; border-bottom: none; background: #f0f0f0; }
+
+  /* forwarder invoice */
+  .inv .hdr1 .trade { font-size: 15pt; }
+  .inv .hdr1 .title { font-size: 20pt; letter-spacing: .3em; }
+  .inv .title small { display: block; font-size: 8.5pt; letter-spacing: .12em; font-weight: 400; color: #555; }
+  .ia th { height: 8mm; border-bottom: .5mm solid #111; }
+  .ia td { height: 19.5mm; border-bottom: .15mm solid #bbb; }
+  .ia .photo { width: 17mm; height: 17mm; }
+  .ib-row { height: 36mm; display: flex; gap: 5mm; align-items: center; border-bottom: .2mm solid #999; overflow: hidden; }
+  .ib-row .photo { width: 32mm; height: 32mm; }
+  .ib-row .name { font-size: 13pt; font-weight: 700; }
+  .ib-row .calc { margin-left: auto; text-align: right; flex: none; }
+  .ib-row .calc .amt { font-size: 13pt; font-weight: 700; }
+  .ic-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 4mm; }
+  .ic-card { height: 62mm; border: .25mm solid #999; padding: 2mm; overflow: hidden; position: relative; }
+  .ic-card .photo { width: 100%; height: 34mm; }
+  .ic-card .name { font-weight: 700; margin-top: 1.5mm; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ic-card .no { position: absolute; top: 2mm; left: 2mm; background: #111; color: #fff; font-size: 8pt; padding: .3mm 1.5mm; }
+  .ic-card .rowx { display: flex; justify-content: space-between; font-size: 9pt; margin-top: .8mm; }
+  .inv-total { display: flex; justify-content: flex-end; gap: 10mm; align-items: baseline; border-top: .6mm solid #111; padding-top: 2.5mm; margin-top: 2mm; }
+  .inv-total .big { font-size: 15pt; font-weight: 700; }
+
+  /* prototype chrome */
+  #switcher { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 50; }
+  .q legend { font-weight: 700; }
+</style>
+</head>
+<body class="bg-base-300 text-base-content">
+
+<header class="mx-auto max-w-6xl px-6 pt-8">
+  <div class="badge badge-warning badge-soft mb-3">Prototype - synthetic data - throwaway</div>
+  <h1 class="text-3xl font-bold">What do the two purchasing documents look like on the page?</h1>
+  <div class="badge badge-info badge-soft mb-2 mt-2">Round 4 - final check</div>
+  <div class="card bg-base-100 card-border max-w-4xl"><div class="card-body py-4 text-sm">
+    <div class="font-bold text-base">What you decided, drawn as the final documents</div>
+    <ul class="list-disc pl-5 space-y-1">
+      <li><b>Daftar Pesanan:</b> one document printed twice. Continuous ledger, 32 mm photo, one variant per line, quantity, Diterima box, empty Catatan column, total units and two signature lines. No price, no SKU code.</li>
+      <li><b>Reprint (tab 2):</b> only the current quantities, no trace of the old ones; lines cut to 0 disappear. I kept a "Dicetak" date in the header so two prints can be told apart.</li>
+      <li><b>1688 purchase (tab 3):</b> the same document; the header adds the Chinese local courier and tracking number when they are known. No forwarder, no marking code.</li>
+      <li><b>Forwarder invoice (tab 4):</b> classic table, 发票 / INVOICE, marking code on top, forwarder warehouse and address, supplier phone, courier and tracking number.</li>
+    </ul>
+    <div class="font-bold text-base mt-2">Proposal for a shortfall the supplier will resend</div>
+    <ol class="list-decimal pl-5 space-y-1">
+      <li>The short line closes with a new outcome, <b>To be resent</b>, beside Refunded and Loss. It no longer counts as on order.</li>
+      <li>niskora keeps the owed units per supplier and shows them on the supplier and in restock advice for that supplier.</li>
+      <li>When you start the next purchase order for that supplier, niskora offers the owed units as <b>resend lines</b>: no price, marked "kirim ulang" with the old order number (see Tempat Sampah, Biru in tab 1). The supplier is reminded on paper, the unloading team counts them, and they count as on order so restock advice does not order them twice.</li>
+      <li>When they arrive, the old shortfall is settled. If they are short again, the resend line gets its own outcome. You can also turn an owed line into Refunded or Loss at any time.</li>
+    </ol>
+    <div class="opacity-70">All names, codes, addresses and numbers are invented. Click anything on a page to leave a note.</div>
+  </div></div>
+
+  <div class="mt-6 flex flex-wrap items-center gap-4">
+    <div role="tablist" class="tabs tabs-box">
+      <button role="tab" class="tab" data-doc="po">1. Daftar Pesanan as sent</button>
+      <button role="tab" class="tab" data-doc="po2">2. Same document, reprinted for unloading</button>
+      <button role="tab" class="tab" data-doc="bk">3. Daftar Pesanan for a 1688 purchase</button>
+      <button role="tab" class="tab" data-doc="inv">4. Forwarder invoice (Chinese)</button>
+    </div>
+  </div>
+
+  <div class="card bg-base-100 card-border mt-4">
+    <div class="card-body py-4">
+      <h2 class="card-title text-lg" id="vTitle"></h2>
+      <div class="grid gap-4 md:grid-cols-3 text-sm">
+        <div><div class="font-bold opacity-60 uppercase text-xs">Shape</div><div id="vShape"></div></div>
+        <div><div class="font-bold text-success uppercase text-xs">Good at</div><div id="vGood"></div></div>
+        <div><div class="font-bold text-warning uppercase text-xs">Costs</div><div id="vCost"></div></div>
+      </div>
+      <div class="text-sm opacity-70" id="vStats"></div>
+    </div>
+  </div>
+</header>
+
+<main id="stage" class="mt-6"></main>
+
+<section class="mx-auto max-w-4xl px-6 pb-40" id="questions">
+  <h2 class="text-2xl font-bold">Questions</h2>
+  <p class="opacity-70 text-sm mb-4">Pick an answer, press "Queue answer" for each, then "Send to Agent" in the Lavish bar. Anything not covered here: click the spot on the page and write a note.</p>
+  <div id="qlist" class="grid gap-4"></div>
+</section>
+
+<div id="switcher" data-lavish-annotate="off">
+  <div class="join shadow-2xl border border-warning rounded-full bg-neutral text-neutral-content">
+    <button class="btn btn-ghost join-item rounded-l-full" id="prev" aria-label="Previous variant">←</button>
+    <div class="join-item flex items-center px-4 text-sm font-bold whitespace-nowrap" id="swLabel"></div>
+    <button class="btn btn-ghost join-item rounded-r-full" id="next" aria-label="Next variant">→</button>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------- synthetic data
+const TRADE = 'Sumber Niaga Jaya';
+const PO = { no: 'NK20260014', date: '15 November 2026', supplier: 'CV Maju Plastindo', city: 'Bandung, Jawa Barat' };
+const INV = { no: 'NK20260015', date: '2026年11月15日', supplier: '义乌市恒达日用品厂', order1688: '4012 3456 7890 1234 567' };
+
+const COL = [['MRH','Merah'],['BIR','Biru'],['HJU','Hijau'],['KNG','Kuning'],['HTM','Hitam'],['PTH','Putih'],['PNK','Pink'],['UNG','Ungu'],['ABU','Abu-abu'],['CKL','Cokelat'],['ORG','Oranye'],['TSC','Tosca'],['KRM','Krem']];
+function mk(code, name, price, n, hue) {
+  return { code, name, hue, vars: COL.slice(0, n).map(([c, l], i) => ({ sku: code + '-' + c, name: l, qty: 20 * (1 + (code.charCodeAt(1) * (i + 3)) % 7), price })) };
+}
+const rak = { code: 'RAK3T', name: 'Rak Serbaguna 3 Tingkat', hue: 28, vars: [] };
+COL.forEach(([c, l], i) => {
+  rak.vars.push({ sku: 'RAK3T-' + c + '-S', name: l + ' / Kecil', qty: 20 * (1 + (i * 5) % 4), price: 42000 });
+  rak.vars.push({ sku: 'RAK3T-' + c + '-L', name: l + ' / Besar', qty: 20 * (1 + (i * 3) % 5), price: 48000 });
+});
+const SPUS = [
+  mk('BTL500', 'Botol Minum 500 ml', 14500, 6, 205),
+  mk('LNB02', 'Kotak Makan 2 Sekat', 18000, 5, 140),
+  rak,
+  mk('GTG10', 'Gantungan Baju isi 10', 9500, 4, 320),
+  mk('TPS05', 'Tempat Sampah 5 L', 23500, 3, 80),
+  mk('KRJ20', 'Keranjang Laundry 20 L', 31000, 8, 260),
+  mk('SDK01', 'Sendok Takar Set', 6500, 2, 0),
+];
+SPUS[4].vars.push({ sku: 'TPS05-BIR-R', name: 'Biru', qty: 20, price: 0, resend: 'NK20260009' });
+const ITEMS = [
+  ['BTL500','塑料水杯 500ml',480,6.80],['LNB02','双格饭盒',360,8.50],['RAK3T','三层置物架 (小号)',520,19.80],['RAK3T','三层置物架 (大号)',600,22.50],
+  ['GTG10','防滑衣架 10个装',400,4.20],['TPS05','桌面垃圾桶 5L',240,11.00],['KRJ20','折叠洗衣篮 20L',640,14.60],['SDK01','量勺套装',200,2.90],
+  ['CST04','硅胶杯垫 4片装',300,3.50],['BOX30','折叠收纳箱 30L',180,26.00],['HOK06','厨房挂钩 6个装',500,2.40],['JAR10','玻璃密封罐 1L',260,9.90],
+  ['SPG05','清洁海绵擦 5片装',800,1.80],['BTL120','调料瓶 120ml',420,3.20],
+].map(([code, name, qty, price], i) => ({ code, name, qty, price, hue: (i * 47) % 360 }));
+
+const rp = n => 'Rp ' + n.toLocaleString('id-ID');
+const yuan = n => '¥ ' + n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const idn = n => n.toLocaleString('id-ID');
+const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
+const spuQty = s => sum(s.vars, v => qtyOf(v)), spuAmt = s => sum(s.vars, v => v.qty * v.price);
+const TOTAL = { spu: SPUS.length, sku: sum(SPUS, s => s.vars.length), qty: 0, amt: 0 };
+const photo = (hue, label) => `<div class="photo"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="hsl(${hue} 30% 86%)"/><circle cx="50" cy="44" r="24" fill="hsl(${hue} 35% 66%)"/><rect x="26" y="52" width="48" height="30" rx="5" fill="hsl(${hue} 35% 52%)"/><text x="50" y="96" font-size="9" text-anchor="middle" fill="hsl(${hue} 30% 30%)" font-family="Arial">foto ${label}</text></svg></div>`;
+
+// ---------------------------------------------------------------- pagination (all heights in mm)
+function paginate(spus, o) {
+  const cols = [[]]; let rem = o.cap(0);
+  const h = (n, last) => Math.max(o.minH, o.head + n * o.row + (last ? o.foot : 0)) + o.gap;
+  const next = () => { cols.push([]); rem = o.cap(cols.length - 1); };
+  for (const s of spus) {
+    let left = s.vars.slice(), cont = false;
+    while (left.length) {
+      const cur = cols[cols.length - 1], full = h(left.length, true);
+      if (full <= rem) { cur.push({ s, rows: left, cont, last: true }); rem -= full; break; }
+      if (o.whole && cur.length && full <= o.cap(cols.length)) { next(); continue; }       // keep an SPU whole when a fresh page can hold it
+      let n = Math.floor((rem - o.gap - o.head) / o.row);
+      n = Math.min(n, left.length - 2);
+      if (cur.length && (n < 3 || h(n, false) > rem)) { next(); continue; }     // never leave a stub of 1-2 rows
+      n = Math.max(1, n);
+      cur.push({ s, rows: left.slice(0, n), cont, last: false }); left = left.slice(n); cont = true; next();
+    }
+  }
+  return { cols, rem };
+}
+const FWD = { name: 'Bintang Cargo', wh: 'Gudang Yiwu', mark: 'BC-778/YW' };
+const DOCS = {
+  po: { title: 'DAFTAR PESANAN', short: 'Daftar Pesanan', no: PO.no, date: PO.date, left: `<div class="to"><div class="lbl">Kepada</div><b>${PO.supplier}</b><br>${PO.city}</div>`, meta: '', who: PO.supplier },
+  po2: { title: 'DAFTAR PESANAN', short: 'Daftar Pesanan', no: PO.no, date: PO.date, left: `<div class="to"><div class="lbl">Kepada</div><b>${PO.supplier}</b><br>${PO.city}</div>`,
+        meta: `<span>Dicetak</span><b>24 November 2026</b>`, who: PO.supplier },
+  bk: { title: 'DAFTAR PESANAN', short: 'Daftar Pesanan', no: INV.no, date: PO.date, left: `<div class="to"><div class="lbl">Pemasok</div><b>${INV.supplier}</b></div>`,
+        meta: `<span>Kurir lokal</span><b>中通快运</b><span>No. resi</span><b style="font-family:Consolas,monospace">ZT 7730 1234 5678</b>`, who: INV.supplier },
+};
+let D = DOCS.po;
+const REV = { 'BTL500-KNG': 0, 'LNB02-HJU': 60, 'RAK3T-BIR-L': 40, 'SDK01-MRH': 0, 'SDK01-BIR': 0 };
+const qtyOf = v => doc === 'po2' && v.sku in REV ? REV[v.sku] : v.qty;
+const qcell = v => doc === 'po2' && v.sku in REV ? `<b>${idn(REV[v.sku])}</b> <span class="was">${idn(v.qty)}</span>` : `<b>${idn(v.qty)}</b>`;
+const poHdr1 = h => `<div class="hdr1" style="height:${h}mm"><div><div class="trade">${TRADE}</div>${D.left}</div>
+  <div><div class="title">${D.title}</div><div class="meta"><span>No. Pesanan</span><b>${D.no}</b><span>Tanggal</span><b>${D.date}</b>${D.meta}</div></div></div><div style="height:4mm"></div>`;
+const poHdrN = () => `<div class="hdrN"><b>${TRADE}</b><span>${D.short} <b>${D.no}</b> - ${D.who} <span class="muted">(lanjutan)</span></span></div>`;
+const poFoot = (i, n) => `<div class="pfoot"><span>${D.no} - ${D.date}</span><span>Halaman ${i + 1} dari ${n}</span></div>`;
+const poEnd = () => `<div class="endblock" style="height:38mm;padding-top:4mm">
+  <div class="sign"><div>Dipesan oleh<div class="line">${TRADE}</div></div><div>Diterima dan dihitung oleh<div class="line">Nama / tanggal</div></div></div>
+  <div class="grand"><div class="lbl">Total pesanan</div><div class="big">${idn(sum(SPUS, spuQty))} pcs</div><div style="margin-top:1mm">${TOTAL.spu} produk - ${TOTAL.sku} varian</div></div></div>`;
+const contTag = c => c.cont ? ' <span class="cont">(lanjutan)</span>' : '';
+const END_H = 40;
+const CAP = i => i === 0 ? 205 : 240;
+const blockHead = c => `<div class="a-head"><span class="code">${c.s.code}</span><span>${c.s.name}</span>${contTag(c)}<span class="tot">${c.last ? 'Total ' + idn(spuQty(c.s)) + ' pcs' : ''}</span></div>`;
+const wrapPages = (cols, body) => cols.map((chunks, i) => `<div class="page">${i ? poHdrN() : poHdr1(44)}${chunks.map(body).join('')}${i === cols.length - 1 ? poEnd() : ''}${poFoot(i, cols.length)}</div>`);
+
+function poFinal() {
+  const o = { head: 8, row: 7, foot: 0, gap: 0, minH: 43, cap: i => CAP(i) - 7 };
+  const src = SPUS.map(s => ({ ...s, vars: s.vars.filter(v => qtyOf(v) > 0) })).filter(s => s.vars.length);
+  const { cols, rem } = paginate(src, o); if (rem < END_H) cols.push([]);
+  const units = sum(src, s => sum(s.vars, qtyOf)), skus = sum(src, s => s.vars.length);
+  const end = `<div class="endblock" style="height:38mm;padding-top:4mm">
+    <div class="sign"><div>Dipesan oleh<div class="line">${TRADE}</div></div><div>Diterima dan dihitung oleh<div class="line">Nama / tanggal</div></div></div>
+    <div class="grand"><div class="lbl">Total pesanan</div><div class="big">${idn(units)} pcs</div><div style="margin-top:1mm">${src.length} produk - ${skus} varian</div></div></div>`;
+  return cols.map((chunks, i) => `<div class="page">${i ? poHdrN() : poHdr1(44)}${chunks.length ? `<table class="f-table">
+    <colgroup><col style="width:37mm"><col><col style="width:22mm"><col style="width:30mm"><col style="width:42mm"></colgroup>
+    <tr class="th"><th>Foto</th><th>Varian</th><th class="num">Jumlah</th><th class="ctr">Diterima</th><th>Catatan</th></tr>
+    ${chunks.map(c => { const span = Math.max(c.rows.length, 5), pad = span - c.rows.length;
+      return `<tr class="spu"><td colspan="5"><span class="code">${c.s.code}</span> <b>${c.s.name}</b>${c.cont ? ' <span class="muted" style="font-size:8.5pt">(lanjutan)</span>' : ''}<span class="tot">${c.last ? 'Total ' + idn(sum(c.s.vars, qtyOf)) + ' pcs' : ''}</span></td></tr>`
+        + c.rows.map((v, k) => `<tr>${k === 0 ? `<td class="ph" rowspan="${span}">${photo(c.s.hue, c.s.code)}</td>` : ''}<td>${v.name}${v.resend ? ` <span class="rs">kirim ulang dari ${v.resend}</span>` : ''}</td><td class="num"><b>${idn(qtyOf(v))}</b></td><td><span class="recv"></span></td><td></td></tr>`).join('')
+        + '<tr class="pad"><td></td><td></td><td></td><td></td></tr>'.repeat(pad); }).join('')}
+    </table>` : ''}${i === cols.length - 1 ? end : ''}${poFoot(i, cols.length)}</div>`);
+}
+function poA() {
+  const o = { head: 14, row: 7, foot: 0, gap: 5, minH: 32, cap: CAP };
+  const { cols, rem } = paginate(SPUS, o); if (rem < END_H) cols.push([]);
+  return wrapPages(cols, c => `<div class="a-block" style="margin-bottom:${o.gap}mm">${photo(c.s.hue, c.s.code)}<div class="a-body">${blockHead(c)}
+      <table><colgroup><col><col style="width:26mm"><col style="width:30mm"><col style="width:44mm"></colgroup>
+      <tr class="th"><th>Varian</th><th class="num">Jumlah</th><th class="ctr">Diterima</th><th>Catatan</th></tr>
+      ${c.rows.map(v => `<tr><td>${v.name}</td><td class="num">${qcell(v)}</td><td><span class="recv"></span></td><td><span class="note"></span></td></tr>`).join('')}
+      </table></div></div>`);
+}
+function poB() {
+  const o = { head: 14, row: 7, foot: 0, gap: 5, minH: 32, cap: CAP };
+  const { cols, rem } = paginate(SPUS.map(s => ({ ...s, src: s, vars: Array(Math.ceil(s.vars.length / 2)).fill(0) })), o); if (rem < END_H) cols.push([]);
+  const used = new Map();
+  cols.forEach(chunks => chunks.forEach(c => { const src = c.s.src, k = used.get(src) || 0, n = c.last ? src.vars.length - k : c.rows.length * 2;
+    c.items = src.vars.slice(k, k + n); used.set(src, k + n); c.s = src; }));
+  const half = its => `<table><colgroup><col><col style="width:17mm"><col style="width:20mm"></colgroup>
+      <tr class="th"><th>Varian</th><th class="num">Jml</th><th class="ctr">Diterima</th></tr>
+      ${its.map(v => `<tr><td>${v.name}</td><td class="num">${qcell(v)}</td><td><span class="recv"></span></td></tr>`).join('')}</table>`;
+  return wrapPages(cols, c => { const m = Math.ceil(c.items.length / 2);
+    return `<div class="a-block" style="margin-bottom:${o.gap}mm">${photo(c.s.hue, c.s.code)}<div class="a-body">${blockHead(c)}
+      <div class="twocol"><div>${half(c.items.slice(0, m))}</div><div>${c.items.length > m ? half(c.items.slice(m)) : ''}</div></div></div></div>`; });
+}
+
+// ---------------------------------------------------------------- forwarder invoice
+const INVT = { qty: sum(ITEMS, x => x.qty), amt: sum(ITEMS, x => x.qty * x.price) };
+const invHdr1 = () => `<div class="hdr1" style="height:44mm"><div><div class="to" style="margin-top:0"><div class="lbl">唛头</div><div class="trade" style="font-family:Consolas,monospace;font-size:22pt;letter-spacing:.04em">${FWD.mark}</div></div>
+  <div class="to" style="margin-top:1.5mm"><div class="lbl">收货仓库</div><b>星辰国际货运 义乌仓</b> - 浙江省义乌市稠江街道示例路 88 号</div>
+  <div class="to" style="margin-top:1.5mm"><div class="lbl">供应商</div><b>${INV.supplier}</b> &nbsp; 电话 138 0000 0000</div></div>
+  <div><div class="title">发票<small>INVOICE</small></div><div class="meta"><span>物流公司</span><b>中通快运</b><span>运单号码</span><b style="font-family:Consolas,monospace">ZT 7730 1234 5678</b></div></div></div><div style="height:4mm"></div>`;
+const invHdrN = () => `<div class="hdrN"><b style="font-family:Consolas,monospace">唛头 ${FWD.mark}</b><span>发票 - 运单号码 ZT 7730 1234 5678 <span class="muted">(续)</span></span></div>`;
+const invFoot = (i, n) => `<div class="pfoot"><span>唛头 ${FWD.mark}</span><span>第 ${i + 1} 页 / 共 ${n} 页</span></div>`;
+const invEnd = () => `<div class="inv-total"><span>共 ${ITEMS.length} 项</span><span>总数量 <b>${INVT.qty.toLocaleString('zh-CN')}</b> 件</span><span>合计金额</span><span class="big">${yuan(INVT.amt)}</span></div>`;
+function split(items, first, other) { const pages = [items.slice(0, first)]; for (let i = first; i < items.length; i += other) pages.push(items.slice(i, i + other)); return pages; }
+function invWrap(pages, body) { let no = 0; return pages.map((its, i) => `<div class="page inv">${i ? invHdrN() : invHdr1()}${body(its, () => ++no)}${i === pages.length - 1 ? invEnd() : ''}${invFoot(i, pages.length)}</div>`); }
+function invA() {
+  return invWrap(split(ITEMS, 9, 11), (its, no) => `<table class="ia"><colgroup><col style="width:10mm"><col style="width:22mm"><col><col style="width:24mm"><col style="width:26mm"><col style="width:32mm"></colgroup>
+    <tr><th class="ctr">序号</th><th>图片</th><th>品名</th><th class="num">数量 (件)</th><th class="num">单价 (元)</th><th class="num">金额 (元)</th></tr>
+    ${its.map(x => `<tr><td class="ctr">${no()}</td><td>${photo(x.hue, '')}</td><td style="font-size:11pt">${x.name}</td><td class="num">${x.qty.toLocaleString('zh-CN')}</td><td class="num">${yuan(x.price)}</td><td class="num"><b>${yuan(x.qty * x.price)}</b></td></tr>`).join('')}</table>`);
+}
+function invB() {
+  return invWrap(split(ITEMS, 5, 6), (its, no) => its.map(x => `<div class="ib-row"><div class="muted" style="width:7mm;font-size:12pt">${no()}</div>${photo(x.hue, '')}
+    <div style="min-width:0"><div class="name">${x.name}</div><div class="muted" style="margin-top:1.5mm">数量 <b style="color:#111;font-size:12pt">${x.qty.toLocaleString('zh-CN')}</b> 件</div></div>
+    <div class="calc"><div class="muted">${x.qty.toLocaleString('zh-CN')} × ${yuan(x.price)}</div><div class="amt">${yuan(x.qty * x.price)}</div></div></div>`).join(''));
+}
+function invC() {
+  return invWrap(split(ITEMS, 9, 9), (its, no) => `<div class="ic-grid">${its.map(x => `<div class="ic-card">${photo(x.hue, '')}<span class="no">${no()}</span>
+    <div class="name">${x.name}</div><div class="rowx"><span class="muted">数量 × 单价</span><span>${x.qty.toLocaleString('zh-CN')} × ${yuan(x.price)}</span></div>
+    <div class="rowx"><span class="muted">金额</span><b>${yuan(x.qty * x.price)}</b></div></div>`).join('')}</div>`);
+}
+
+// ---------------------------------------------------------------- variants and switcher
+const V0 = {
+  po: [
+    { key: 'Final', name: 'Continuous ledger, 32 mm photo', w: 210, render: poFinal, shape: 'One ruled table from top to bottom. A grey title row per SPU, a 32 mm photo, one line per variant with the quantity, a box for the count and empty space for a note.', good: 'Everything you picked: large photo, one variant per line, pages filled, no price, no SKU code, no dotted line.', cost: 'An SPU with fewer than five variants still takes the height of its photo.' },
+  ],
+  inv: [
+    { key: 'A', name: 'Classic table', w: 210, render: invA, shape: 'A4 portrait. Numbered table with a 17 mm photo, item name, quantity, unit price and amount.', good: 'Looks like the invoice a forwarder expects. About 10 items per page.', cost: 'Photos are only big enough to tell items apart, not to inspect them.' },
+    false && { key: 'B', name: 'Photo-led rows', w: 210, render: invB, shape: 'A4 portrait. One tall row per item with a 32 mm photo, large Chinese name and the sum written out as quantity × price.', good: 'Easy to check goods against the paper at the forwarder warehouse.', cost: 'Five or six items per page, so a 30-item order runs to five pages or more.' },
+    false && { key: 'C', name: 'Photo grid', w: 210, render: invC, shape: 'A4 portrait. Cards three across, photo on top, figures below.', good: 'Nine items per page with large photos.', cost: 'Not a table, so it reads less like an invoice and amounts do not line up in a column.' },
+  ],
+};
+V0.inv = V0.inv.filter(Boolean);
+const V = { po: V0.po, po2: V0.po, bk: V0.po, inv: V0.inv };
+const qs = new URLSearchParams(location.search);
+let doc = V[qs.get('doc')] ? qs.get('doc') : 'po';
+let vi = Math.max(0, V[doc].findIndex(v => v.key === qs.get('variant')));
+const $ = id => document.getElementById(id);
+function render() {
+  D = DOCS[doc] || DOCS.po; const v = V[doc][vi], pages = v.render();
+  const avail = Math.min(document.documentElement.clientWidth - 32, 1180), pxw = v.w * 96 / 25.4, zoom = Math.min(1, avail / pxw);
+  $('stage').innerHTML = pages.map((p, i) => `<div><div class="pagelabel">Page ${i + 1} of ${pages.length}</div><div class="pagewrap" style="zoom:${zoom}">${p}</div></div>`).join('');
+  document.querySelectorAll('[data-doc]').forEach(b => b.classList.toggle('tab-active', b.dataset.doc === doc));
+  
+  $('vTitle').textContent = `Variant ${v.key}: ${v.name}`; $('vShape').textContent = v.shape; $('vGood').textContent = v.good; $('vCost').textContent = v.cost;
+  $('vStats').textContent = doc !== 'inv'
+    ? (doc === 'po2' ? `Reprint after the supplier changed the order: one colour of the bottle and the whole measuring spoon set were cut and have disappeared, two quantities are lower. ${pages.length} pages.` : `This sample order: one SPU has 26 variants to force a page break, and one line is a resend owed from an earlier purchase order (Tempat Sampah, Biru). ${pages.length} pages.`)
+    : `This sample order: ${ITEMS.length} rows, one per Chinese item name and price (the rack appears twice because its two sizes differ in price), ${pages.length} pages in this layout.`;
+  $('switcher').style.display = V[doc].length > 1 ? '' : 'none';
+  $('swLabel').textContent = `${{ po: 'As sent', po2: 'Reprint for unloading', bk: 'Import version', inv: 'Invoice' }[doc]} - ${v.key} (${v.name})`;
+  const u = new URL(location.href); u.searchParams.set('doc', doc); u.searchParams.set('variant', v.key); history.replaceState(null, '', u);
+}
+function step(d) { vi = (vi + d + V[doc].length) % V[doc].length; render(); window.scrollTo({ top: $('stage').offsetTop - 220 }); }
+$('prev').onclick = () => step(-1); $('next').onclick = () => step(1);
+document.addEventListener('keydown', e => { if (e.target.closest('input, textarea, select, [contenteditable]')) return; if (e.key === 'ArrowLeft') step(-1); if (e.key === 'ArrowRight') step(1); });
+document.querySelectorAll('[data-doc]').forEach(b => b.onclick = () => { doc = b.dataset.doc; vi = 0; render(); });
+
+window.addEventListener('resize', render);
+
+// ---------------------------------------------------------------- questions
+const Q = [
+  ['final-po', 'Is the Daftar Pesanan in tabs 1 to 3 right?', ['Yes, this is it', 'Almost (I will annotate what to change)']],
+  ['catatan', 'You removed the dotted line. Keep the empty Catatan column?', ['Yes, keep the column, just empty (as shown)', 'No, remove the column and give the space to the variant name']],
+  ['dicetak', 'Print date ("Dicetak") in the header of a reprint', ['Keep it', 'Remove it']],
+  ['resend', 'The resend proposal above', ['Yes, as proposed', 'Simpler: only remind me of the owed units, I add them myself', 'Different (I will write how)']],
+  ['resend-print', 'Should a resend line be marked on the paper ("kirim ulang dari NK...")?', ['Yes (as shown)', 'No, show it as a normal line']],
+  ['final-inv', 'Is the forwarder invoice in tab 4 right?', ['Yes, this is it', 'Almost (I will annotate what to change)']],
+];
+$('qlist').innerHTML = Q.map(([id, text, opts], qi) => `<form class="q card bg-base-100 card-border" data-lavish-question="${id}"><div class="card-body py-4">
+  <fieldset class="fieldset"><legend class="fieldset-legend text-base">${qi + 1}. ${text}</legend>
+  ${opts.map(o => `<label class="label text-base-content gap-3 py-1"><input type="radio" class="radio radio-sm" name="${id}" value="${o.replace(/"/g, '&quot;')}"> ${o}</label>`).join('')}
+  <input class="input input-sm w-full mt-2" name="${id}-note" placeholder="Optional note"></fieldset>
+  <div class="flex items-center gap-3"><button class="btn btn-primary btn-sm" type="submit">Queue answer</button><span class="text-sm text-success" data-state></span></div></div></form>`).join('');
+document.querySelectorAll('form.q').forEach((f, qi) => {
+  f.addEventListener('submit', e => {
+    e.preventDefault();
+    const [id, text] = Q[qi], fd = new FormData(f), a = fd.get(id), note = (fd.get(id + '-note') || '').trim();
+    const st = f.querySelector('[data-state]');
+    if (!a && !note) { st.textContent = 'Pick an option or write a note first.'; return; }
+    const msg = `${text} -> ${a || '(no option picked)'}${note ? ' | note: ' + note : ''}`;
+    if (window.lavish?.queuePrompt) { window.lavish.queuePrompt(msg, { tag: 'choice', text: msg, element: f, queueKey: id, data: { question: id, answer: a, note } }); st.textContent = 'Queued: ' + (a || note); }
+    else st.textContent = 'Selected (open through Lavish to send): ' + (a || note);
+  });
+  f.addEventListener('change', () => { f.querySelector('[data-state]').textContent = ''; });
+});
+render();
+</script>
+</body>
+</html>
