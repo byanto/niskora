@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en" data-theme="corporate">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>niskora - main screens prototype</title>
+<!--
+  PROTOTYPE - throwaway. Ticket: "Main screens and navigation" (byanto/niskora issue 25).
+  Plan: three navigation variants (A sidebar by job, B top bar by capability, C worklist first),
+  each a clickable shell over the same rough screens, switchable via ?variant=A|B|C and the
+  floating bar at the bottom. Standalone file because no frontend exists yet.
+  All data is synthetic. Nothing here is saved.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { background: var(--color-base-200); color: var(--color-base-content); font-size: 16px; }
+  .table { font-size: 0.95rem; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, td, th) { overflow-wrap: anywhere; }
+  .ph { background: repeating-linear-gradient(45deg, #d8dde3, #d8dde3 6px, #e8ecf0 6px, #e8ecf0 12px); border-radius: 6px; flex: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tile { position: absolute; width: 5.4%; aspect-ratio: 1; border-radius: 4px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+  #switcher { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 60; background: #111827; color: #fff; border-radius: 999px; padding: 6px 10px; display: flex; gap: 8px; align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,.35); font-size: 13px; }
+  #switcher button { background: #374151; color: #fff; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  #switcher button:hover { background: #4b5563; }
+  main { padding-bottom: 90px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="switcher">
+  <button id="prev" aria-label="Previous variant">&larr;</button>
+  <span id="vlabel" style="min-width: 24em; text-align: center"></span>
+  <button id="next" aria-label="Next variant">&rarr;</button>
+  <button id="openq" style="background:#2563eb">Round 2: 3 questions</button>
+</div>
+
+<dialog id="questions" class="modal">
+  <div class="modal-box max-w-3xl">
+    <h3 class="text-lg font-bold">Round 2 questions</h3><div class="text-sm mb-2">Recorded from round 1: sidebar by job (A), overview Home, the agent on its own page only, roomier tables, and desktop, tablet and phone.</div>
+    <p class="text-sm opacity-70 mb-4">Answer what you can, press "Queue answer" on each, then "Send to Agent" in the Lavish bar. You can also click anything on any screen to leave a note on it.</p>
+    <div id="qlist" class="space-y-4"></div>
+    <div class="modal-action"><form method="dialog"><button class="btn">Close</button></form></div>
+  </div>
+</dialog>
+
+<script>
+// ---------- small helpers ----------
+const rp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+const b = (text, kind = 'ghost') => `<span class="badge badge-soft badge-${kind} badge-sm whitespace-nowrap">${text}</span>`;
+const ph = (w = 40, h = 40) => `<div class="ph" style="width:${w}px;height:${h}px"></div>`;
+const tbl = (heads, rows, cls = '') => `<div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100"><table class="table ${cls}"><thead><tr>${heads.map(h => `<th class="${h.startsWith('#') ? 'num' : ''}">${h.replace(/^#/, '')}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr class="hover:bg-base-200">${r.map((c, i) => `<td class="${heads[i] && heads[i].startsWith('#') ? 'num' : ''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const page = (title, sub, actions, body) => `<div class="flex flex-wrap items-start justify-between gap-3 mb-4"><div><h1 class="text-2xl font-bold">${title}</h1><p class="text-sm opacity-70">${sub || ''}</p></div><div class="flex flex-wrap gap-2">${actions || ''}</div></div>${body}`;
+const card = (title, body, extra = '') => `<div class="card card-border bg-base-100 ${extra}"><div class="card-body p-4">${title ? `<h2 class="font-semibold">${title}</h2>` : ''}${body}</div></div>`;
+const stat = (t, v, d = '') => `<div class="stat p-3"><div class="stat-title text-xs">${t}</div><div class="stat-value text-xl">${v}</div><div class="stat-desc">${d}</div></div>`;
+const L = (id, text, cls = 'link link-primary') => `<a href="#${id}" class="${cls}">${text}</a>`;
+const filt = (...names) => `<div class="flex flex-wrap gap-2 mb-3">${names.map(n => n.startsWith('?') ? `<input class="input input-sm w-64" placeholder="${n.slice(1)}">` : `<select class="select select-sm w-auto"><option>${n}</option></select>`).join('')}</div>`;
+const tabs = (items, active = 0) => `<div role="tablist" class="tabs tabs-border mb-3">${items.map((t, i) => `<button role="tab" class="tab ${i === active ? 'tab-active' : ''}">${t}</button>`).join('')}</div>`;
+
+// ---------- synthetic data ----------
+const fresh = [
+  ['Orders', 'today 08:12', 'Fresh', 'success'],
+  ['Inventory snapshot', 'today 08:14', 'Fresh', 'success'],
+  ['Stock movements', '41 hours ago', 'Stale', 'error'],
+  ['Merchant SKU list', '6 days ago', 'Fresh', 'success'],
+];
+const attention = [
+  ['Stock movements are stale', 'Last import 41 hours ago. Sales rates may miss stockout days.', 'imports', 'error', 'Upload'],
+  ['3 held packages', 'A line names a Merchant SKU the catalogue does not know yet. Import a newer Merchant SKU list.', 'packages', 'warning', 'View'],
+  ['4 unmatched stock-ins', 'Purchase Stock-In movements waiting for a purchase order match.', 'stockin', 'warning', 'Match'],
+  ['2 overdue purchase orders', 'Open lines past the expected arrival.', 'pos', 'warning', 'View'],
+  ['5 unresolved shortfalls', 'Closed lines that received less than ordered.', 'po', 'warning', 'Resolve'],
+  ['27 unmatched destination spellings', 'Covering 312 packages. Correct each spelling once.', 'aliases', 'info', 'Correct'],
+  ['41 Single SKUs with sales but no supply source', 'No restock advice is possible for them.', 'suppliers', 'info', 'Add'],
+  ['13 abandoned packages', 'Never shipped, ordered more than 90 days ago.', 'packages', 'ghost', 'View'],
+  ['6 Merchant SKUs not seen', 'Missing from the latest Merchant SKU list. Not deleted.', 'spus', 'ghost', 'View'],
+  ['2 stock history gaps, 1 unseen movement type', 'Found by the last stock movement import.', 'import', 'ghost', 'View'],
+];
+
+// ---------- screens ----------
+const S = {};
+
+S.home = v => v === 'C' ? homeWorklist() : page('Home', 'Sunday 15 Nov 2026 &middot; Jakarta time', L('imports', 'Upload exports', 'btn btn-primary btn-sm'),
+  `<div class="grid gap-4 lg:grid-cols-3">
+    <div class="lg:col-span-2 space-y-4">
+      ${card('Data freshness', `<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">${fresh.map(f => `<div class="rounded-box border border-base-content/10 p-3"><div class="text-xs opacity-70">${f[0]}</div><div class="font-semibold">${f[1]}</div>${b(f[2], f[3])}</div>`).join('')}</div>`)}
+      ${card('Needs attention', `<ul class="divide-y divide-base-content/10">${attention.map(a => `<li class="flex items-center gap-3 py-2"><span class="status status-${a[3] === 'ghost' ? 'neutral' : a[3]}"></span><div class="grow"><div class="font-medium">${a[0]}</div><div class="text-xs opacity-70">${a[1]}</div></div>${L(a[2], a[4], 'btn btn-xs')}</li>`).join('')}</ul>`)}
+    </div>
+    <div class="space-y-4">
+      ${card('Restock advice', `<div class="stats stats-vertical w-full">${stat('Late', '38', 'will run out before goods can arrive')}${stat('Order now', '214', 'below the reorder point')}${stat('Suppliers to order from', '17', '')}</div>${L('restock', 'Open restock advice', 'btn btn-sm btn-primary mt-2')}`)}
+      ${card('Purchase orders', `<div class="stats stats-vertical w-full">${stat('Placed, waiting', '9', '2 overdue')}${stat('Drafts', '3', '')}${stat('Arriving this week', '4', '')}</div>${L('pos', 'Open purchase orders', 'btn btn-sm mt-2')}`)}
+      ${card('Yesterday', `<div class="stats stats-vertical w-full">${stat('Packages', '268', '+6% vs the same weekday last week')}${stat('Units of demand', '1,284', '')}</div>`)}
+    </div>
+  </div>`);
+
+function homeWorklist() {
+  const step = (n, title, state, body) => `<div class="card card-border bg-base-100"><div class="card-body p-4"><div class="flex items-center gap-3"><div class="rounded-full bg-neutral text-neutral-content w-8 h-8 flex items-center justify-center font-bold flex-none">${n}</div><h2 class="font-semibold grow">${title}</h2>${state}</div><div class="pl-11">${body}</div></div></div>`;
+  return page('Today', 'Sunday 15 Nov 2026 &middot; work from top to bottom', '',
+    `<div class="space-y-3 max-w-4xl">
+      ${step(1, 'Upload today\'s exports', b('1 of 3 daily sets missing', 'error'), `<div class="grid gap-2 sm:grid-cols-4 mb-2">${fresh.map(f => `<div class="rounded-box border border-base-content/10 p-2 text-sm"><div class="text-xs opacity-70">${f[0]}</div>${f[1]} ${b(f[2], f[3])}</div>`).join('')}</div><div class="border-2 border-dashed border-base-content/20 rounded-box p-4 text-center text-sm">Drop BigSeller exports here (zip, xlsx or csv). The type is detected. ${L('imports', 'See past imports')}</div>`)}
+      ${step(2, 'Clear what needs attention', b('10 items', 'warning'), `<ul class="divide-y divide-base-content/10">${attention.slice(1, 6).map(a => `<li class="flex items-center gap-3 py-1.5 text-sm"><div class="grow"><span class="font-medium">${a[0]}</span> <span class="opacity-60">${a[1]}</span></div>${L(a[2], a[4], 'btn btn-xs')}</li>`).join('')}</ul><p class="text-xs opacity-60 mt-1">and 4 more that can wait</p>`)}
+      ${step(3, 'Review restock advice', b('38 Late, 214 Order now', 'warning'), `<p class="text-sm">17 suppliers have something to order. Start with the 6 suppliers that have Late lines.</p>${L('restock', 'Open restock advice', 'btn btn-sm btn-primary mt-2')}`)}
+      ${step(4, 'Follow up purchase orders', b('2 overdue', 'warning'), `<p class="text-sm">9 placed and waiting, 4 arriving this week, 3 drafts not yet placed.</p>${L('pos', 'Open purchase orders', 'btn btn-sm mt-2')}`)}
+    </div>`);
+}
+
+S.imports = () => page('Imports', 'One upload of one export, accepted or rejected as a whole', '',
+  `<div class="border-2 border-dashed border-base-content/30 bg-base-100 rounded-box p-8 text-center mb-4"><div class="text-lg font-semibold">Drop BigSeller exports here</div><div class="text-sm opacity-70">zip, xlsx or csv &middot; several at once &middot; niskora detects which data set each file is</div><button class="btn btn-primary btn-sm mt-3">Choose files</button></div>
+  ${card('What to upload each day', `<div class="grid gap-2 md:grid-cols-4 text-sm">${[['Orders', 'Daily, "90 Days" preset'], ['Inventory snapshot', 'Daily'], ['Stock movements', 'Daily, last 7 days'], ['Merchant SKU list', 'At least weekly']].map((d, i) => `<div class="rounded-box border border-base-content/10 p-3"><div class="font-medium">${d[0]}</div><div class="opacity-70 text-xs">${d[1]}</div><div class="mt-1">${fresh[i][1]} ${b(fresh[i][2], fresh[i][3])}</div></div>`).join('')}</div>`, 'mb-4')}
+  ${tbl(['When', 'File', 'Detected as', 'Covers', 'Result', 'What changed', 'By', ''], [
+    ['Today 08:14', 'Inventory_List_20261115.xlsx', 'Inventory snapshot', '15 Nov', b('Accepted', 'success'), '8,240 Merchant SKUs', 'Rina', L('import', 'Report')],
+    ['Today 08:12', 'Order_20261115_081022.zip', 'Orders', '17 Aug to 15 Nov', b('Accepted', 'success'), '431 new, 812 changed, 3 held', 'Rina', L('import', 'Report')],
+    ['Today 08:11', 'Order_List.xlsx', 'Not recognised', '', b('Rejected', 'error'), 'Column "Package No" is missing', 'Rina', L('import', 'Report')],
+    ['13 Nov 15:02', 'Inventory_Log_20261113.xlsx', 'Stock movements', '6 to 13 Nov', b('Accepted', 'success'), '2,918 new, 2 gaps, 1 unseen type', 'Rina', L('import', 'Report')],
+    ['9 Nov 09:40', 'Merchant_SKU_20261109.xlsx', 'Merchant SKU list', '9 Nov', b('Accepted', 'success'), '14 added, 6 not seen', 'Budi', L('import', 'Report')],
+  ])}`);
+
+S.import = () => page('Import report', 'Order_20261115_081022.zip &middot; Orders &middot; uploaded today 08:12 by Rina', `${b('Accepted', 'success')} <button class="btn btn-sm">Download original file</button>`,
+  `<div class="stats bg-base-100 border border-base-content/10 w-full mb-4 stats-vertical md:stats-horizontal">${stat('Packages in file', '24,350', '17 Aug to 15 Nov, read from Order Time')}${stat('New', '262')}${stat('Changed', '530', 'replaced as a set')}${stat('Unchanged', '23,817')}${stat('Held', '3', 'unknown Merchant SKU')}</div>
+  <div class="grid gap-4 lg:grid-cols-2">
+    ${card('Held packages', tbl(['Package No', 'Store', 'Unknown Merchant SKU', 'Status'], [[L('package', 'BG2611150081'), 'Kirana Official (Shopee)', 'AG2290-BLU-L', 'To Ship'], [L('package', 'BG2611150117'), 'Senja Mall (TikTok)', 'AG2290-BLU-L', 'To Ship'], [L('package', 'BG2611150203'), 'Manual Orders', 'LK0775-XL', 'To Ship']]) + '<p class="text-xs opacity-70 mt-2">They enter the order history once a newer Merchant SKU list is imported.</p>')}
+    ${card('Other findings', `<ul class="text-sm space-y-2"><li>${b('Not seen', 'warning')} 2 open packages from the last export are not in this one. Nothing was deleted.</li><li>${b('Hub', 'ghost')} 11 hub packages (no price on any line), kept out of demand.</li><li>${b('Unmapped', 'ghost')} 4 lines whose Merchant SKU BigSeller no longer knows.</li><li>${b('Destinations', 'info')} 5 new spellings match no place. ${L('aliases', 'Correct them')}</li></ul>`)}
+  </div>`);
+
+const spuRows = [
+  ['AG1021', 'Hair clip, pearl, large', 'Kirana', 12, 1840, '41.3', b('Order now', 'warning')],
+  ['AG1107', 'Scrunchie, satin, set of 3', 'Kirana', 8, 310, '22.0', b('Late', 'error')],
+  ['AM0412', 'Phone strap, beaded', 'Senja', 24, 5120, '63.8', b('Fine', 'success')],
+  ['AM0530', 'Key ring, acrylic letter', 'Senja', 26, 7904, '18.4', b('Fine', 'success')],
+  ['LK0775', 'Socks, ankle, cotton', 'Lumio', 15, 960, '55.1', b('Order now', 'warning')],
+  ['LK0810', 'Hat, bucket, corduroy', 'Lumio', 6, 44, '0.0', b('Discontinued', 'ghost')],
+];
+S.spus = () => page('Catalogue', '8,240 Merchant SKUs in 1,450 SPUs &middot; inventory snapshot of today 08:14', '<button class="btn btn-sm">Export CSV</button>',
+  tabs(['SPUs', 'Merchant SKUs (flat list)', 'Combination SKUs (51)']) + filt('?Search code or name', 'All companies', 'Active', 'Any restock level', 'Any supplier') +
+  tbl(['', 'SPU', 'Name', 'Company', '#Merchant SKUs', '#Available', '#Sales rate / day', 'Restock'], spuRows.map(r => [ph(52, 52), L('spu', r[0], 'link font-mono'), r[2 - 1], r[2], r[3], r[4].toLocaleString(), r[5], r[6]])) +
+  '<div class="flex justify-between items-center mt-3 text-sm opacity-70"><span>1 to 50 of 1,450</span><div class="join"><button class="join-item btn btn-xs">Prev</button><button class="join-item btn btn-xs">Next</button></div></div>');
+
+S.spu = () => page('AG1021 &middot; Hair clip, pearl, large', `Kirana &middot; 12 Single SKUs &middot; preferred supplier ${L('supplier', 'Toko Sumber Makmur')}`, '<button class="btn btn-sm">Discontinue SPU</button>' + L('restock', 'Restock advice for this SPU', 'btn btn-sm btn-primary'),
+  `<div class="flex gap-4 mb-4">${ph(120, 120)}<div class="stats bg-base-100 border border-base-content/10 grow stats-vertical md:stats-horizontal">${stat('On hand', '2,010')}${stat('Allocated', '170')}${stat('Available', '1,840')}${stat('On order', '600', L('po', 'PO-2026-0142'))}${stat('Sales rate', '41.3 / day', '90 countable days')}</div></div>
+  ${tbl(['Merchant SKU', 'Variant', '#On hand', '#Allocated', '#Available', '#On order', '#Sales rate', '#Days left', '#Weighted Average Cost', 'Restock'], [
+    ['AG1021-WHT', 'White', 420, 31, 389, 0, '9.8', 40, rp(3850), b('Fine', 'success')],
+    ['AG1021-BLK', 'Black', 96, 22, 74, 0, '8.1', 9, rp(3850), b('Late', 'error')],
+    ['AG1021-PNK', 'Pink', 150, 18, 132, 300, '6.4', 21, rp(3910), b('Fine', 'success')],
+    ['AG1021-BRN', 'Brown', 61, 9, 52, 0, '3.2', 16, rp(3850), b('Order now', 'warning')],
+    ['AG1021-GRN', 'Green', 0, 0, 0, 300, '2.9', 0, rp(3850), b('Fine', 'success') + ' ' + b('Stockout', 'ghost')],
+  ].map(r => [L('sku', r[0], 'link font-mono'), ...r.slice(1)]))}
+  <p class="text-xs opacity-60 mt-2">7 more rows. Also sold inside 2 Combination SKUs: AGSET-014, AGSET-020.</p>
+  <div class="mt-4">${card('Where it sells', `<p class="text-sm">Top provinces in the last 30 days: Jawa Barat 212 packages, DKI Jakarta 188, Jawa Timur 121. ${L('locations', 'Open location analysis for this SPU')}</p>`)}</div>`);
+
+const spark = () => { let p = '', d = [4, 9, 7, 11, 8, 0, 0, 0, 10, 12, 9, 13, 30, 12, 8, 9, 11, 7, 10, 12, 9, 8, 14, 10, 9, 7, 6, 9, 8, 7]; d.forEach((y, i) => p += `<rect x="${i * 14}" y="${60 - y * 1.8}" width="10" height="${y * 1.8}" fill="${y === 0 ? '#ef4444' : i === 12 ? '#f59e0b' : '#3b82f6'}"/>`); return `<svg viewBox="0 0 420 62" class="w-full h-24">${p}<rect x="70" y="58" width="38" height="4" fill="#ef4444"/></svg><div class="text-xs opacity-70 flex gap-4"><span><span class="inline-block w-3 h-3 bg-blue-500 align-middle"></span> demand on a countable day</span><span><span class="inline-block w-3 h-3 bg-red-500 align-middle"></span> stockout day (left out)</span><span><span class="inline-block w-3 h-3 bg-amber-500 align-middle"></span> campaign day (left out)</span></div>`; };
+S.sku = () => page('AG1021-BLK &middot; Hair clip, pearl, large, Black', `Single SKU &middot; SPU ${L('spu', 'AG1021')} &middot; Kirana`, b('Late', 'error') + '<button class="btn btn-sm">Discontinue</button>',
+  `<div class="stats bg-base-100 border border-base-content/10 w-full mb-4 stats-vertical md:stats-horizontal">${stat('On hand', '96')}${stat('Allocated', '22')}${stat('Available', '74')}${stat('On order', '0')}${stat('Sales rate', '8.1 / day')}${stat('Weighted Average Cost', rp(3850))}</div>
+  <div class="grid gap-4 lg:grid-cols-2">
+    ${card('Demand per business day, last 30 days', spark())}
+    ${card('Restock advice and its working', `<div class="text-sm space-y-1"><div>Sales rate: 729 units over 90 countable days = <b>8.1 / day</b> (looked back 104 days: 11 stockout days and 3 campaign days left out)</div><div>Reorder point: 8.1 x (lead time 14 + safety days 7) = <b>170</b></div><div>Available 74 + on order 0 = <b>74</b>, below 170, so reorder</div><div>Order up to: 8.1 x (14 + order cycle 14 + 7) = 284, so <b>210</b>, rounded to a multiple of 12 = <b>216 units</b></div><div class="text-error">Late: 74 units last 9 days, the lead time is 14 days</div></div>`)}
+    ${card('Supply sources', tbl(['Supplier', 'Preferred', '#Goods price', '#Lead time', '#Multiple', '#Minimum'], [[L('supplier', 'Toko Sumber Makmur'), 'Yes', rp(3600), '14 days', 12, 60], ['义乌晨光饰品厂 (1688)', '', '¥1.35', '50 days', 100, 500]]) + '<button class="btn btn-xs mt-2">Add supply source</button>')}
+    ${card('Stock movements', tbl(['When', 'Type', '#Change', '#After', 'Document'], [['15 Nov 07:55', 'Sales Outbound', -2, 96, 'BG2611150044'], ['14 Nov 16:20', 'Sales Outbound', -1, 98, 'BG2611140391'], ['2 Nov 10:12', 'Purchase Stock-In', '+240', 251, L('po', 'matched to PO-2026-0131')], ['30 Oct 09:00', 'Stock gap', '', 11, b('Stock history gap', 'warning')]]))}
+  </div>`);
+
+S.packages = () => page('Packages', 'The order history as imported &middot; orders of today 08:12', '<button class="btn btn-sm">Export CSV</button>',
+  tabs(['All', 'Held (3)', 'Abandoned (13)', 'Hub packages', 'With unmapped lines']) + filt('?Package No, Order No or Merchant SKU', 'All marketplaces', 'All stores', 'Any status', 'Last 30 days') +
+  tbl(['Package No', 'Order No', 'Store', 'Order Time', 'Status', '#Lines', '#Units', '#Goods value', 'Destination'], [
+    ['BG2611150044', '2611158KQ3XT7A', 'Kirana Official (Shopee)', '15 Nov 07:31', b('To Ship', 'info'), 2, 3, rp(48500), 'Kota Bandung, Jawa Barat'],
+    ['BG2611150081', '2611159MM20PLZ', 'Kirana Official (Shopee)', '15 Nov 07:02', b('To Ship', 'info') + ' ' + b('Held', 'warning'), 1, 1, rp(22000), 'Kota Medan, Sumatera Utara'],
+    ['BG2611140391', '581204457781', 'Senja Mall (TikTok)', '14 Nov 21:48', b('Shipped', 'info'), 1, 2, rp(31000), 'Kab. Sleman, DI Yogyakarta'],
+    ['BG2611140377', '1790442218', 'Lumio (Lazada)', '14 Nov 20:10', b('Completed', 'success'), 3, 6, rp(102000), '<span class="opacity-60">Unknown (masked)</span>'],
+    ['BG2611140350', 'WA-1114-07', 'Manual Orders', '14 Nov 18:30', b('Completed', 'success'), 5, 240, rp(1920000), 'Kota Makassar, Sulawesi Selatan'],
+    ['BG2611130912', '2611137HH1QQ02', 'Kirana Official (Shopee)', '13 Nov 12:15', b('Canceled', 'ghost'), 1, 1, rp(19000), 'Kota Surabaya, Jawa Timur'],
+  ].map(r => [L('package', r[0], 'link font-mono'), ...r.slice(1)])));
+
+S.package = () => page('Package BG2611150044', 'Order No 2611158KQ3XT7A &middot; Kirana Official (Shopee) &middot; Order Time 15 Nov 2026 07:31', b('To Ship', 'info') + ' ' + b('Counts as demand', 'success'),
+  `<div class="grid gap-4 lg:grid-cols-3"><div class="lg:col-span-2 space-y-4">
+    ${card('Package lines', tbl(['Merchant SKU', 'Name', 'Kind', '#Quantity', '#Price', 'Demand'], [
+      [L('sku', 'AG1021-BLK', 'link font-mono'), 'Hair clip, pearl, large, Black', 'Single SKU', 2, rp(12500), '2 units'],
+      ['<span class="font-mono">AGSET-014</span>', 'Hair clip set, 3 colours', 'Combination SKU', 1, rp(23500), '<span class="opacity-60">none (its components count)</span>'],
+      ['<span class="font-mono pl-4">AG1021-WHT</span>', 'component line', 'Component', 1, '', '1 unit'],
+      ['<span class="font-mono pl-4">AG1021-PNK</span>', 'component line', 'Component', 1, '', '1 unit'],
+      ['<span class="font-mono pl-4">AG1021-BRN</span>', 'component line', 'Component', 1, '', '1 unit'],
+    ]))}
+    ${card('Import trail', '<ul class="text-sm space-y-1"><li>15 Nov 08:12 &middot; first seen, status To Ship</li></ul>')}
+  </div><div class="space-y-4">
+    ${card('Destination', `<div class="text-sm">As exported: <span class="font-mono">KOTA BANDUNG / JAWA BARAT / COBLONG</span></div><div class="text-sm mt-1">Matched place: Coblong, Kota Bandung, Jawa Barat</div>`)}
+    ${card('Buyer', `<div class="text-xs opacity-70 mb-2">Personal data. Shown only on this page, never in analysis, CSV or agent answers.</div><div class="text-sm">Name: S*** W***<br>Phone: ******4821<br>Address: (as the marketplace reveals it)</div>`, 'border-warning')}
+    ${card('Shipping', '<div class="text-sm">Courier: SPX Standard<br>Tracking: SPXID0481234567</div>')}
+  </div></div>`);
+
+const advLine = (sku, v, avail, onord, rate, days, qty, lvl, check = true) => `<tr><td><input type="checkbox" class="checkbox checkbox-xs" ${check ? 'checked' : ''}></td><td>${L('sku', sku, 'link font-mono')}</td><td>${v}</td><td class="num">${avail}</td><td class="num">${onord}</td><td class="num">${rate}</td><td class="num">${days}</td><td>${lvl}</td><td class="num"><input class="input input-xs w-20 text-right" value="${qty}"></td><td><details><summary class="link text-xs">working</summary><div class="text-xs opacity-80 w-64">reorder point ${rate} x (14 + 7) = ${Math.round(rate * 21)}; order up to ${rate} x 35 = ${Math.round(rate * 35)}; rounded to multiple 12</div></details></td></tr>`;
+const advSpu = (code, name, lines) => `<tr class="bg-base-200"><td colspan="10"><div class="flex items-center gap-2">${ph(48, 48)}${L('spu', code, 'link font-mono font-semibold')} <span>${name}</span></div></td></tr>${lines}`;
+const advSupplier = (name, meta, levels, body, open) => `<div class="collapse collapse-arrow bg-base-100 border border-base-content/10 mb-3"><input type="checkbox" ${open ? 'checked' : ''}><div class="collapse-title flex flex-wrap items-center gap-3"><span class="font-semibold">${name}</span><span class="text-xs opacity-70">${meta}</span>${levels}</div><div class="collapse-content"><div class="overflow-x-auto"><table class="table"><thead><tr><th></th><th>Merchant SKU</th><th>Variant</th><th class="num">Available</th><th class="num">On order</th><th class="num">Sales rate</th><th class="num">Days left</th><th>Level</th><th class="num">Order</th><th></th></tr></thead><tbody>${body}</tbody></table></div><div class="flex flex-wrap items-center justify-between gap-2 mt-3"><span class="text-sm opacity-70">7 lines selected &middot; 1,260 units &middot; ${rp(4536000)} &middot; about 0.4 m3</span>${L('po', 'Create draft purchase order', 'btn btn-primary btn-sm')}</div></div></div>`;
+S.restock = () => page('Restock advice', 'Per Single SKU, grouped by supplier then SPU &middot; sales rates from orders of today 08:12', '<label class="label text-sm"><input type="checkbox" class="toggle toggle-sm" checked> Include top-ups</label>',
+  `<div role="alert" class="alert alert-error alert-soft mb-3"><span>Stock movements are stale (41 hours). Stockout days after 13 Nov are not known yet, so some sales rates may be low. ${L('imports', 'Upload')}</span></div>` +
+  filt('?Search supplier, SPU or Merchant SKU', 'All companies', 'Late and Order now', 'Local and China') +
+  advSupplier('Toko Sumber Makmur', 'local &middot; lead time 14 days &middot; order cycle 14 days &middot; last purchase order 1 Nov', b('3 Late', 'error') + b('9 Order now', 'warning') + b('6 top-ups', 'ghost'),
+    advSpu('AG1021', 'Hair clip, pearl, large', advLine('AG1021-BLK', 'Black', 74, 0, 8.1, 9, 216, b('Late', 'error')) + advLine('AG1021-BRN', 'Brown', 52, 0, 3.2, 16, 60, b('Order now', 'warning')) + advLine('AG1021-WHT', 'White', 389, 0, 9.8, 40, 0, b('Fine', 'success') + ' ' + b('top-up', 'ghost'), false)) +
+    advSpu('AG1107', 'Scrunchie, satin, set of 3', advLine('AG1107-MIX1', 'Mix 1', 40, 0, 6.5, 6, 192, b('Late', 'error')) + advLine('AG1107-MIX2', 'Mix 2', 88, 0, 5.0, 17, 96, b('Order now', 'warning'))), true) +
+  advSupplier('义乌晨光饰品厂 (1688)', 'China &middot; lead time 50 days &middot; order cycle 30 days &middot; forwarder Lintas Samudra', b('1 Late', 'error') + b('22 Order now', 'warning'), advSpu('AM0412', 'Phone strap, beaded', advLine('AM0412-A07', 'A07', 310, 0, 5.9, 52, 500, b('Order now', 'warning'))), false) +
+  advSupplier('CV Kaos Kaki Nusantara', 'local &middot; lead time 10 days &middot; order cycle 14 days', b('14 Order now', 'warning'), '', false) +
+  `<p class="text-sm opacity-70">14 more suppliers. Not advised: zero sales, thin history, Discontinued, Retired and Combination SKUs. 41 Single SKUs with sales have no supply source. ${L('suppliers', 'Add supply sources')}</p>`);
+
+S.pos = () => page('Purchase orders', 'niskora\'s own purchase orders, one supplier each', '<button class="btn btn-primary btn-sm">New purchase order</button>',
+  tabs(['Open (12)', 'Drafts (3)', 'Completed', 'Cancelled', 'Shortfalls (5)']) + filt('?Number, supplier or Merchant SKU', 'All suppliers', 'Any status') +
+  tbl(['Number', 'Supplier', 'Status', 'Placed', 'Expected arrival', '#Lines', '#Units', '#Received', '#Goods total', ''], [
+    ['PO-2026-0142', 'Toko Sumber Makmur', b('Placed', 'info'), '3 Nov', '17 Nov', 14, '2,160', '0', rp(7776000), ''],
+    ['PO-2026-0139', 'CV Kaos Kaki Nusantara', b('Placed', 'info') + ' ' + b('Overdue', 'error'), '28 Oct', '7 Nov', 9, '1,800', '1,200', rp(9900000), '3 lines open'],
+    ['PO-2026-0131', 'Toko Sumber Makmur', b('Placed', 'info'), '18 Oct', '1 Nov', 11, '1,920', '1,896', rp(6912000), b('24 short, unresolved', 'warning')],
+    ['PO-2026-0127', '义乌晨光饰品厂 (1688)', b('Placed', 'info'), '2 Oct', '21 Nov', 31, '18,400', '0', '¥26,180', 'Lintas Samudra &middot; Yiwu'],
+    ['PO-2026-0144', 'UD Pita Jaya', b('Draft', 'ghost'), '', '', 6, '720', '', rp(2160000), 'from restock advice'],
+  ].map(r => [L('po', r[0], 'link font-mono'), ...r.slice(1)])));
+
+S.po = () => page('PO-2026-0131 &middot; Toko Sumber Makmur', 'Placed 18 Oct 2026 by Budi &middot; expected arrival 1 Nov &middot; currency IDR', b('Placed', 'info') + '<div class="dropdown dropdown-end"><div tabindex="0" role="button" class="btn btn-sm">Documents</div><ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow z-10 w-64 p-2"><li><a>Daftar Pesanan (PDF)</a></li><li><a>Forwarder invoice (PDF, 1688 only)</a></li><li><a>BigSeller import file (xlsx)</a></li></ul></div><button class="btn btn-sm">Add line</button><button class="btn btn-sm btn-error btn-outline">Cancel</button>',
+  `<div class="stats bg-base-100 border border-base-content/10 w-full mb-4 stats-vertical md:stats-horizontal">${stat('Ordered', '1,920 units', '11 lines in 3 SPUs')}${stat('Received', '1,896', 'from 1 Purchase Stock-In')}${stat('Open lines', '1', 'rest still coming')}${stat('Shortfall', '24 units', '1 unresolved')}${stat('Goods total', rp(6912000), 'goods price only')}${stat('Volume estimate', '0.6 m3', '8 cartons')}</div>
+  <div class="overflow-x-auto rounded-box border border-base-content/10 bg-base-100"><table class="table"><thead><tr><th>Merchant SKU</th><th>Variant</th><th class="num">Ordered</th><th class="num">Received</th><th class="num">Goods price</th><th>Line</th><th>Shortfall</th></tr></thead><tbody>
+  <tr class="bg-base-200"><td colspan="7"><div class="flex items-center gap-2">${ph(48, 48)}<span class="font-mono font-semibold">AG1021</span> Hair clip, pearl, large</div></td></tr>
+  <tr><td class="font-mono">AG1021-BLK</td><td>Black</td><td class="num">240</td><td class="num">240</td><td class="num">${rp(3600)}</td><td>${b('Closed', 'success')}</td><td></td></tr>
+  <tr><td class="font-mono">AG1021-WHT</td><td>White</td><td class="num">240</td><td class="num">216</td><td class="num">${rp(3600)}</td><td>${b('Closed', 'success')}</td><td><select class="select select-xs w-auto"><option>24 short: Unresolved</option><option>Refunded</option><option>Loss</option><option>To be resent</option></select></td></tr>
+  <tr><td class="font-mono">AG1021-PNK</td><td>Pink</td><td class="num">300</td><td class="num">0</td><td class="num">${rp(3600)}</td><td>${b('Open', 'info')} <span class="text-xs opacity-70">rest still coming</span></td><td><button class="btn btn-xs">Close line</button></td></tr>
+  <tr class="bg-base-200"><td colspan="7"><div class="flex items-center gap-2">${ph(48, 48)}<span class="font-mono font-semibold">AG1107</span> Scrunchie, satin, set of 3</div></td></tr>
+  <tr><td class="font-mono">AG1107-MIX1</td><td>Mix 1</td><td class="num">192</td><td class="num">192</td><td class="num">${rp(5400)}</td><td>${b('Closed', 'success')}</td><td></td></tr>
+  <tr><td class="font-mono">AG1107-MIX3</td><td>Mix 3</td><td class="num">48</td><td class="num">48</td><td class="num"><span class="opacity-60">resend line</span></td><td>${b('Closed', 'success')}</td><td><span class="text-xs opacity-70">owed from PO-2026-0118</span></td></tr>
+  </tbody></table></div>
+  <div class="grid gap-4 lg:grid-cols-2 mt-4">
+    ${card('Matched stock-ins', tbl(['BigSeller document', 'Date', '#Units', 'Matched by'], [['PI2611020007', '2 Nov 10:12', '1,896', 'Rina, 2 Nov 14:30']]) + L('stockin', 'Match another stock-in', 'btn btn-xs mt-2'))}
+    ${card('Audit trail', '<ul class="text-sm space-y-1"><li>2 Nov 14:31 &middot; Rina marked AG1021-PNK "rest still coming"</li><li>2 Nov 14:30 &middot; Rina confirmed stock-in PI2611020007</li><li>20 Oct 09:12 &middot; Budi changed AG1021-PNK from 240 to 300</li><li>18 Oct 16:40 &middot; Budi placed the purchase order</li><li>18 Oct 16:02 &middot; Budi created the draft from restock advice (working kept per line)</li></ul>')}
+  </div>`);
+
+S.stockin = () => page('Match stock-ins', 'Purchase Stock-In movements from BigSeller, matched to purchase orders by a user', '',
+  `<div class="grid gap-4 lg:grid-cols-5"><div class="lg:col-span-2">${card('Unmatched stock-ins (4)', `<ul class="menu p-0 w-full">${[['PI2611140003', '14 Nov', '1,200 units, 6 Merchant SKUs', true], ['PI2611130011', '13 Nov', '480 units, 2 Merchant SKUs'], ['PI2611120002', '12 Nov', '60 units, 1 Merchant SKU'], ['PI2611090008', '9 Nov', '3,400 units, 19 Merchant SKUs']].map(s => `<li><a class="${s[3] ? 'menu-active' : ''}"><div><div class="font-mono">${s[0]}</div><div class="text-xs opacity-70">${s[1]} &middot; ${s[2]}</div></div></a></li>`).join('')}</ul>`)}</div>
+  <div class="lg:col-span-3">${card('PI2611140003 &middot; 14 Nov 2026 09:40', `<p class="text-sm mb-2">Best match: ${L('po', 'PO-2026-0139')} CV Kaos Kaki Nusantara (6 of 6 Merchant SKUs are open lines)</p>` + tbl(['Merchant SKU', '#Stocked in', '#Ordered', '#Already received', 'After confirming'], [
+    ['LK0775-BLK-M', 300, 300, 0, b('Closes, complete', 'success')], ['LK0775-WHT-M', 300, 300, 0, b('Closes, complete', 'success')], ['LK0775-GRY-M', 200, 300, 0, b('Closes, 100 short', 'warning') + ' <label class="text-xs"><input type="checkbox" class="checkbox checkbox-xs"> rest still coming</label>'], ['LK0775-BLK-L', 150, 150, 0, b('Closes, complete', 'success')], ['LK0775-WHT-L', 150, 150, 0, b('Closes, complete', 'success')], ['LK0775-NVY-L', 100, 90, 0, b('Closes, 10 over', 'info')]]) +
+    `<div class="flex flex-wrap gap-2 mt-3"><button class="btn btn-primary btn-sm">Confirm match</button><select class="select select-sm w-auto"><option>Match to another purchase order</option></select><button class="btn btn-sm">Bought outside niskora</button></div>`)}</div></div>`);
+
+S.suppliers = () => page('Suppliers', 'niskora keeps the suppliers and the supply sources', '<button class="btn btn-primary btn-sm">New supplier</button>',
+  tabs(['Suppliers (63)', 'Single SKUs without a supply source (41)']) + filt('?Search supplier', 'Local and China', 'Any currency') +
+  tbl(['Supplier', 'Where', 'Currency', '#Lead time', '#Order cycle', '#Safety days', '#Supply sources', '#Open purchase orders', 'Forwarder'], [
+    [L('supplier', 'Toko Sumber Makmur'), 'Local, Bandung', 'IDR', '14 days', '14 days', '7', 412, 2, ''],
+    [L('supplier', 'CV Kaos Kaki Nusantara'), 'Local, Bandung', 'IDR', '10 days', '14 days', '7', 96, 1, ''],
+    [L('supplier', '义乌晨光饰品厂'), 'China, 1688', 'CNY', '50 days', '30 days', '14', 1380, 1, 'Lintas Samudra'],
+    [L('supplier', 'UD Pita Jaya'), 'Local, Jakarta', 'IDR', '7 days', '14 days', '7', 58, 0, ''],
+  ]));
+
+S.supplier = () => page('Toko Sumber Makmur', 'Local supplier &middot; Bandung &middot; IDR', '<button class="btn btn-sm">Edit</button>' + L('restock', 'Restock advice for this supplier', 'btn btn-sm btn-primary'),
+  `<div class="grid gap-4 lg:grid-cols-3 mb-4">${card('Ordering', '<div class="text-sm space-y-1"><div>Lead time: <b>14 days</b></div><div>Order cycle: <b>14 days</b></div><div>Safety days: <b>7</b></div><div>Contact name and WhatsApp number</div></div>')}${card('Purchase orders', `<div class="text-sm">2 open &middot; 31 completed &middot; last placed 3 Nov<br>Owed by the supplier: 48 units To be resent</div>${L('pos', 'See purchase orders', 'link link-primary text-sm')}`)}${card('Notes', '<textarea class="textarea w-full" rows="3" placeholder="Free notes about this supplier"></textarea>')}</div>
+  ${tabs(['Supply sources (412)', 'Cartons per SPU'])}
+  ${tbl(['', 'SPU', 'Merchant SKU', 'Preferred', '#Goods price', '#Lead time', '#Multiple', '#Minimum', 'Carton'], [
+    [ph(48, 48), L('spu', 'AG1021', 'link font-mono'), 'all 12', 'Yes', rp(3600), 'supplier\'s', 12, 60, '240 units, 50 x 40 x 30 cm'],
+    [ph(48, 48), L('spu', 'AG1107', 'link font-mono'), 'all 8', 'Yes', rp(5400), 'supplier\'s', 12, 48, '192 units, 60 x 40 x 40 cm'],
+    [ph(48, 48), L('spu', 'LK0810', 'link font-mono'), 'LK0810-BGE only', 'No', rp(21000), '21 days', 1, 20, 'not set'],
+  ])}<p class="text-xs opacity-60 mt-2">Supply sources can be set for a whole SPU at once or per Merchant SKU.</p>`);
+
+S.forwarders = () => page('Forwarders', 'Freight companies that carry goods bought in China', '<button class="btn btn-primary btn-sm">New forwarder</button>',
+  tbl(['Forwarder', 'Marking code', 'Forwarder warehouses', 'Used by'], [['Lintas Samudra', '<span class="font-mono">LS-BDG-0417</span>', 'Yiwu, Guangzhou', '4 suppliers'], ['Mitra Kargo Asia', '<span class="font-mono">MKA/8821</span>', 'Guangzhou', '1 supplier']]));
+
+const provs = [['Aceh',0,0,3],['Sumut',1,1,41],['Riau',2,1,22],['Kepri',3,1,9],['Sumbar',1,2,14],['Jambi',2,2,8],['Babel',3,2,4],['Bengkulu',1,3,3],['Sumsel',2,3,19],['Lampung',2,4,17],['Banten',3,5,96],['Jakarta',4,4,188],['Jabar',4,5,212],['Jateng',5,5,104],['DIY',5,6,38],['Jatim',6,5,121],['Bali',7,6,29],['NTB',8,6,6],['NTT',9,6,2],['Kalbar',5,2,11],['Kalteng',6,2,5],['Kalsel',6,3,13],['Kaltim',7,2,18],['Kaltara',7,1,1],['Gorontalo',9,1,1],['Sulut',10,1,7],['Sulteng',9,2,3],['Sulbar',9,3,1],['Sulsel',9,4,24],['Sultra',10,3,4],['Malut',12,1,1],['Maluku',12,3,2],['PBD',13,2,1],['Pabar',14,2,1],['Pateng',15,3,0],['Papua',16,2,3],['Papeg',16,3,0],['Pasel',16,4,0]];
+const map = () => `<div class="relative w-full" style="aspect-ratio: 17/7.4">${provs.map(p => { const a = Math.min(1, .08 + p[3] / 212); return `<div class="tile" title="${p[0]}: ${p[3]} packages" style="left:${p[1] * 5.85}%;top:${p[2] * 14}%;background:rgba(37,99,235,${a});color:${a > .5 ? '#fff' : '#1f2937'}">${p[0].slice(0, 5)}</div>`; }).join('')}</div><p class="text-xs opacity-60">Rough tile stand-in. The real screen draws the true province outlines, shaded the same way.</p>`;
+S.locations = () => page('Location analysis', 'Where packages go, for aiming place-targeted ads &middot; counts the same packages as demand', '<button class="btn btn-sm">Export CSV</button>',
+  `<div class="flex flex-wrap gap-2 mb-3 items-center"><div class="join"><button class="join-item btn btn-sm btn-active">Places for an SPU</button><button class="join-item btn btn-sm">SPUs for a place</button></div><input class="input input-sm w-72" value="AG1021 Hair clip, pearl, large"><select class="select select-sm w-auto"><option>Last 30 days vs the 30 before</option></select><select class="select select-sm w-auto"><option>All marketplaces</option></select><select class="select select-sm w-auto"><option>Measure: packages</option><option>units</option><option>goods value</option></select></div>
+  <div class="grid gap-4 xl:grid-cols-2">
+    <div>${tabs(['Province', 'City', 'District (Shopee and Blibli only)'])}${tbl(['#', 'Province', '#Packages', '#Before', '#Change', '#Units', '#Goods value', '#Share'], [
+      [1, 'Jawa Barat', 212, 187, '<span class="text-success">+13%</span>', 388, rp(4850000), '17.4%'], [2, 'DKI Jakarta', 188, 201, '<span class="text-error">-6%</span>', 301, rp(3762500), '15.4%'], [3, 'Jawa Timur', 121, 98, '<span class="text-success">+23%</span>', 204, rp(2550000), '9.9%'], [4, 'Jawa Tengah', 104, 101, '+3%', 171, rp(2137500), '8.5%'], [5, 'Banten', 96, 90, '+7%', 150, rp(1875000), '7.9%'], [6, 'Sumatera Utara', 41, 33, '<span class="text-success">+24%</span>', 66, rp(825000), '3.4%'],
+      ['', '<span class="opacity-60">Unknown (masked or empty, mostly Lazada)</span>', 143, 150, '-5%', 229, rp(2862500), '11.7%'], ['', `<span class="opacity-60">Unmatched spelling</span> ${L('aliases', 'correct')}`, 9, 4, '', 12, rp(150000), '0.7%'],
+    ])}<p class="text-xs opacity-60 mt-2">Click a province to see its cities. 32 more rows.</p></div>
+    ${card('Packages by province', map())}
+  </div>`);
+
+S.aliases = () => page('Place aliases', 'Spellings the marketplaces use, mapped to official places. Correct a spelling once and every package follows.', '',
+  tabs(['Unmatched (27)', 'All aliases (4,112)', 'Official places']) +
+  tbl(['Level', 'Spelling as exported', 'Inside', 'Marketplace', '#Packages', 'Maps to', ''], [
+    ['City', '<span class="font-mono">KOTA ADM. JAKARTA SELATAN</span>', 'DKI Jakarta', 'TikTok', 96, '<select class="select select-xs w-auto"><option>Suggested: Kota Jakarta Selatan</option></select>', '<button class="btn btn-xs btn-primary">Save</button>'],
+    ['District', '<span class="font-mono">CIBEUNYING KIDUL (CICADAS)</span>', 'Kota Bandung', 'Shopee', 41, '<select class="select select-xs w-auto"><option>Suggested: Cibeunying Kidul</option></select>', '<button class="btn btn-xs btn-primary">Save</button>'],
+    ['City', '<span class="font-mono">KAB. PASANGKAYU</span>', 'Sulawesi Barat', 'Shopee', 3, '<select class="select select-xs w-auto"><option>Choose a place</option></select>', '<button class="btn btn-xs">Save</button>'],
+    ['Province', '<span class="font-mono">D.I. ACEH</span>', '', 'Blibli', 2, '<select class="select select-xs w-auto"><option>Suggested: Aceh</option></select>', '<button class="btn btn-xs btn-primary">Save</button>'],
+  ]) + '<button class="btn btn-sm mt-3">Accept all 19 suggestions</button>');
+
+S.campaign = () => page('Campaign days', 'Business days marked as sales events. They are left out when sales rates are measured.', '',
+  `<div class="grid gap-4 lg:grid-cols-3"><div class="lg:col-span-2">${tbl(['Date', 'Name', 'Marked by', '#Packages that day', '#Usual', ''], [['11 Nov 2026', '11.11', 'Budi', '1,380', '270', '<button class="btn btn-xs">Remove</button>'], ['10 Oct 2026', '10.10', 'Budi', '860', '265', '<button class="btn btn-xs">Remove</button>'], ['9 Sep 2026', '9.9', 'Rina', '1,040', '255', '<button class="btn btn-xs">Remove</button>'], ['25 Aug 2026', 'Payday sale', 'Rina', '610', '250', '<button class="btn btn-xs">Remove</button>']])}
+  <div class="mt-4">${card('Days that look like a campaign and are not marked', tbl(['Date', '#Packages', '#Usual', ''], [['25 Oct 2026', '690', '268', '<button class="btn btn-xs btn-primary">Mark</button>']]))}</div></div>
+  ${card('Mark a day', '<fieldset class="fieldset"><legend class="fieldset-legend">Date or range</legend><input type="date" class="input input-sm"><legend class="fieldset-legend">Name</legend><input class="input input-sm" placeholder="12.12"><p class="label">Changing campaign days rebuilds the sales rates.</p><button class="btn btn-primary btn-sm mt-2">Mark</button></fieldset>')}</div>`);
+
+const chat = (compact) => `<div class="space-y-3 ${compact ? 'text-sm' : ''}">
+  <div class="chat chat-end"><div class="chat-bubble chat-bubble-primary">Which hair clips will run out before the next delivery?</div></div>
+  <div class="chat chat-start"><div class="chat-bubble bg-base-100 text-base-content border border-base-content/10"><p>3 Single SKUs of hair clips are Late: they run out before goods ordered today could arrive.</p>
+  ${compact ? '' : tbl(['Merchant SKU', '#Available', '#Sales rate', '#Days left', '#Lead time'], [['AG1021-BLK', 74, 8.1, 9, 14], ['AG1033-GLD', 20, 4.0, 5, 14], ['AG1040-MIX', 12, 1.9, 6, 14]])}
+  <div class="mt-2 text-xs opacity-70">Tools used: restock_advice(level=Late, search="hair clip")</div>
+  <div class="text-xs opacity-70">Data: orders today 08:12 &middot; inventory today 08:14 &middot; <span class="text-error">stock movements stale (41 hours)</span></div>
+  <div class="mt-1">${L('restock', 'Open this in Restock advice', 'link link-primary text-xs')}</div></div></div>
+  </div><div class="join w-full mt-3"><input class="input input-sm join-item grow" placeholder="Ask about stock, demand, purchase orders or places"><button class="btn btn-primary btn-sm join-item">Ask</button></div><p class="text-xs opacity-60 mt-1">The agent only reads. It never returns buyer data. 118 of 125 questions left today.</p>`;
+S.agent = () => page('Ask niskora', 'The agent answers from niskora\'s own data, in the language of the question', '',
+  `<div class="grid gap-4 lg:grid-cols-4"><div>${card('My conversations', `<button class="btn btn-sm btn-primary w-full mb-2">New conversation</button><ul class="menu p-0 w-full text-sm"><li><a class="menu-active">Hair clips running out</a></li><li><a>Stok kaos kaki minggu ini</a></li><li><a>Top cities for phone straps</a></li><li><a>Overdue purchase orders</a></li></ul>`)}</div><div class="lg:col-span-3">${card('Hair clips running out', chat(false))}</div></div>`);
+
+S.users = () => page('Users', 'Everyone who can log in. Every user can do everything in v1.', '<button class="btn btn-primary btn-sm">Add user</button>',
+  tbl(['Name', 'Login', 'Last login', ''], [['Budi', 'budi', 'today 07:40', '<button class="btn btn-xs">Reset password</button>'], ['Rina', 'rina', 'today 08:05', '<button class="btn btn-xs">Reset password</button> <button class="btn btn-xs">Disable</button>'], ['Gudang 1', 'gudang1', '12 Nov', '<button class="btn btn-xs">Reset password</button> <button class="btn btn-xs">Disable</button>']]));
+
+S.login = () => `<div class="min-h-[70vh] flex items-center justify-center"><div class="card card-border bg-base-100 w-96"><div class="card-body"><h1 class="text-2xl font-bold">niskora</h1><p class="text-sm opacity-70">Log in to continue</p><fieldset class="fieldset"><legend class="fieldset-legend">Login name</legend><input class="input w-full"><legend class="fieldset-legend">Password</legend><input type="password" class="input w-full"></fieldset>${L('home', 'Log in', 'btn btn-primary mt-2')}</div></div></div>`;
+
+// ---------- navigation model ----------
+const NAV = {
+  A: [['Daily', [['home', 'Home'], ['imports', 'Imports']]], ['Catalogue', [['spus', 'SPUs and Merchant SKUs'], ['packages', 'Packages']]], ['Buying', [['restock', 'Restock advice'], ['pos', 'Purchase orders'], ['stockin', 'Match stock-ins'], ['suppliers', 'Suppliers']]], ['Analysis', [['locations', 'Location analysis'], ['agent', 'Ask niskora']]], ['Setup', [['campaign', 'Campaign days'], ['aliases', 'Place aliases'], ['forwarders', 'Forwarders'], ['users', 'Users']]]],
+  B: [['Home', [['home', 'Overview'], ['imports', 'Imports']]], ['Catalogue', [['spus', 'SPUs and Merchant SKUs'], ['packages', 'Packages']]], ['Restock', [['restock', 'Advice'], ['campaign', 'Campaign days']]], ['Purchasing', [['pos', 'Purchase orders'], ['stockin', 'Match stock-ins'], ['suppliers', 'Suppliers'], ['forwarders', 'Forwarders']]], ['Locations', [['locations', 'Analysis'], ['aliases', 'Place aliases']]], ['Ask', [['agent', 'Ask niskora']]]],
+};
+const PARENT = { import: 'imports', spu: 'spus', sku: 'spus', package: 'packages', po: 'pos', supplier: 'suppliers' };
+const VARIANTS = { A: 'Sidebar by job - chosen, now roomier and phone-ready', B: 'Top bar - not chosen', C: 'Worklist - not chosen' };
+let variant = (new URLSearchParams(location.search).get('variant') || 'A').toUpperCase();
+if (!VARIANTS[variant]) variant = 'A';
+const cur = () => (location.hash.slice(1) || 'home');
+const navId = () => PARENT[cur()] || cur();
+const freshChip = () => `<a href="#imports" class="badge badge-soft badge-error gap-1">1 data set stale</a>`;
+const crumb = () => PARENT[cur()] ? `<div class="breadcrumbs text-sm mb-2"><ul><li>${L(PARENT[cur()], 'Back to list')}</li><li>${cur()}</li></ul></div>` : '';
+
+function shellA(body) {
+  return `<div class="drawer lg:drawer-open"><input id="nav" type="checkbox" class="drawer-toggle">
+  <div class="drawer-content"><div class="flex gap-2 items-center p-3 lg:hidden bg-base-100 border-b border-base-content/10 sticky top-0 z-30"><label for="nav" class="btn btn-sm">Menu</label><a href="#home" class="font-bold text-lg">niskora</a><span class="grow"></span>${freshChip()}</div>
+  <main class="p-4 lg:p-6"><div class="flex justify-between gap-3 mb-3"><input class="input w-full max-w-md" placeholder="Search Merchant SKU, SPU, package, purchase order"><span class="hidden lg:inline">${freshChip()}</span></div>${crumb()}${body}</main></div>
+  <div class="drawer-side z-40"><label for="nav" aria-label="close menu" class="drawer-overlay"></label><aside class="w-64 min-h-full bg-base-100 border-r border-base-content/10 p-3"><a href="#home" class="text-xl font-bold px-2">niskora</a>
+  <ul class="menu menu-lg w-full p-0 mt-3">${NAV.A.map(g => '<li class="menu-title">' + g[0] + '</li>' + g[1].map(i => '<li><a href="#' + i[0] + '" class="' + (navId() === i[0] ? 'menu-active' : '') + '">' + i[1] + (i[0] === 'home' ? ' <span class="badge badge-warning badge-sm">10</span>' : '') + (i[0] === 'restock' ? ' <span class="badge badge-error badge-sm">38</span>' : '') + (i[0] === 'stockin' ? ' <span class="badge badge-sm">4</span>' : '') + '</a></li>').join('')).join('')}</ul>
+  <div class="mt-6 px-2 text-sm opacity-70">Rina &middot; ${L('login', 'Log out')}</div></aside></div></div>`;
+}
+function shellB(body) {
+  const g = NAV.B.find(g => g[1].some(i => i[0] === navId())) || [null, []];
+  return `<div class="min-h-screen"><div class="navbar bg-neutral text-neutral-content px-4 min-h-12"><a href="#home" class="text-xl font-bold mr-6">niskora</a><div class="flex gap-1 grow">${NAV.B.map(x => `<a href="#${x[1][0][0]}" class="btn btn-sm ${x === g ? 'btn-primary' : 'btn-ghost'}">${x[0]}</a>`).join('')}</div><input class="input input-sm w-64 text-base-content mr-3" placeholder="Search">${freshChip()}<div class="dropdown dropdown-end ml-3"><div tabindex="0" role="button" class="btn btn-ghost btn-sm">Rina</div><ul tabindex="0" class="dropdown-content menu bg-base-100 text-base-content rounded-box shadow z-10 w-40 p-2"><li><a href="#users">Users</a></li><li><a href="#login">Log out</a></li></ul></div></div>
+  ${g[1].length > 1 ? `<div class="bg-base-100 border-b border-base-content/10 px-4"><div role="tablist" class="tabs tabs-border">${g[1].map(i => `<a role="tab" href="#${i[0]}" class="tab ${navId() === i[0] ? 'tab-active' : ''}">${i[1]}</a>`).join('')}</div></div>` : ''}
+  <main class="p-6 max-w-[1500px] mx-auto">${crumb()}${body}</main></div>`;
+}
+function shellC(body) {
+  const rail = [['home', 'Today'], ['spus', 'Catalogue'], ['packages', 'Packages'], ['restock', 'Restock'], ['pos', 'Purchase orders'], ['suppliers', 'Suppliers'], ['locations', 'Locations']];
+  return `<div class="flex min-h-screen"><aside class="w-24 flex-none bg-neutral text-neutral-content sticky top-0 h-screen flex flex-col items-stretch py-3 gap-1 text-center text-[11px]"><a href="#home" class="font-bold text-sm mb-2">niskora</a>${rail.map(r => `<a href="#${r[0]}" class="py-2 ${navId() === r[0] ? 'bg-primary text-primary-content' : 'hover:bg-base-content/20'}">${r[1]}</a>`).join('')}<div class="grow"></div><div class="dropdown dropdown-right dropdown-end"><div tabindex="0" role="button" class="py-2 cursor-pointer">More</div><ul tabindex="0" class="dropdown-content menu bg-base-100 text-base-content rounded-box shadow z-10 w-48 p-2 text-sm text-left">${[['imports', 'Imports'], ['stockin', 'Match stock-ins'], ['campaign', 'Campaign days'], ['aliases', 'Place aliases'], ['forwarders', 'Forwarders'], ['users', 'Users'], ['agent', 'All conversations'], ['login', 'Log out']].map(i => `<li><a href="#${i[0]}">${i[1]}</a></li>`).join('')}</ul></div></aside>
+  <main class="grow p-6"><div class="flex justify-between mb-3 gap-3"><input class="input input-sm grow max-w-xl" placeholder="Jump to anything: a Merchant SKU, a supplier, a screen (Ctrl+K)">${freshChip()}</div>${crumb()}${body}</main>
+  ${cur() === 'agent' || cur() === 'login' ? '' : `<aside class="w-80 flex-none bg-base-100 border-l border-base-content/10 p-3 sticky top-0 h-screen overflow-y-auto hidden xl:block"><div class="font-semibold mb-2">Ask niskora <span class="text-xs font-normal opacity-60">about this screen or anything else</span></div>${chat(true)}</aside>`}</div>`;
+}
+
+function render() {
+  const id = S[cur()] ? cur() : 'home';
+  const body = S[id](variant);
+  document.getElementById('app').innerHTML = id === 'login' ? `<main class="p-6">${body}</main>` : ({ A: shellA, B: shellB, C: shellC })[variant](body);
+  document.getElementById('vlabel').textContent = `${variant} (${VARIANTS[variant]})`;
+  window.scrollTo(0, 0);
+}
+function setVariant(d) {
+  const keys = Object.keys(VARIANTS);
+  variant = keys[(keys.indexOf(variant) + d + keys.length) % keys.length];
+  const u = new URL(location.href); u.searchParams.set('variant', variant); history.replaceState(null, '', u);
+  render();
+}
+document.getElementById('prev').onclick = () => setVariant(-1);
+document.getElementById('next').onclick = () => setVariant(1);
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+  if (e.key === 'ArrowLeft') setVariant(-1);
+  if (e.key === 'ArrowRight') setVariant(1);
+});
+window.addEventListener('hashchange', render);
+
+// ---------- questions for the owner ----------
+const QS = [
+  ['small-screens', 'You chose desktop, tablet and phone. Which jobs must work well on a phone or tablet? The rest only has to be usable there.', 'checkbox', ['Home: freshness and needs attention', 'Upload exports', 'Look up a Merchant SKU or SPU (stock, sales rate)', 'Look up a package', 'Review restock advice and create a draft purchase order', 'Open a purchase order and its documents', 'Match stock-ins while unloading', 'Location analysis', 'Ask niskora (the agent)']],
+  ['screen-list', 'Is the list of screens right?', 'radio', ['Yes, nothing missing and nothing to remove', 'No, see my note']],
+  ['anything-else', 'Anything else about how the screens look or behave?', 'text', []],
+];
+document.getElementById('qlist').innerHTML = QS.map(q => `<form data-lavish-question="${q[0]}" class="rounded-box border border-base-content/10 p-3"><div class="font-semibold mb-2">${q[1]}</div>${q[3].map(o => `<label class="flex gap-2 items-start text-sm py-0.5"><input type="${q[2]}" name="${q[0]}" value="${o}" class="${q[2]} ${q[2]}-sm"> ${o}</label>`).join('')}<textarea name="note" class="textarea textarea-sm w-full mt-2" rows="${q[2] === 'text' ? 3 : 1}" placeholder="${q[2] === 'text' ? 'Your answer' : 'Optional note'}"></textarea><div class="flex items-center gap-2 mt-2"><button type="submit" class="btn btn-sm btn-primary">Queue answer</button><span class="text-xs opacity-70" data-status></span></div></form>`).join('');
+document.getElementById('qlist').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target, fd = new FormData(f), key = f.dataset.lavishQuestion;
+  const answers = fd.getAll(key), note = (fd.get('note') || '').trim();
+  const st = f.querySelector('[data-status]');
+  if (!answers.length && !note) { st.textContent = 'Nothing chosen yet.'; return; }
+  const text = `${key}: ${answers.join('; ')}${note ? ' | note: ' + note : ''}`;
+  if (window.lavish && window.lavish.queuePrompt) {
+    window.lavish.queuePrompt('Answer to prototype question "' + key + '": ' + text, { tag: 'choice', text, element: f, queueKey: key, data: { question: key, answers, note } });
+    st.textContent = 'Queued. Press "Send to Agent" when you are done.';
+  } else st.textContent = 'Lavish is not running. Copy this into the chat: ' + text;
+});
+document.getElementById('openq').onclick = () => document.getElementById('questions').showModal();
+
+render();
+</script>
+</body>
+</html>
