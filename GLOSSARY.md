@@ -21,7 +21,7 @@ The one-off import of all past orders and stock movements that BigSeller still h
 _Avoid_: Backfill, migration
 
 **Held package**:
-A package kept out of the order history because one of its lines names a Merchant SKU the catalogue does not know yet.
+A package kept out of the order history because one of its lines names a Merchant SKU the catalogue does not know yet. Only a package that is not in a final status is held, and only until a Merchant SKU list newer than its export has been imported; a line still unknown then becomes an unmapped line.
 _Avoid_: Failed row, quarantined order, rejected package
 
 **Not seen**:
@@ -104,6 +104,10 @@ _Avoid_: Order line, order item, row
 A package line created for one component of a Combination SKU that the package contains. It sits beside the Combination SKU's own package line.
 _Avoid_: Expanded line, child line
 
+**Unmapped line**:
+A package line with no Merchant SKU, because BigSeller no longer knows the Merchant SKU or never knew it. It keeps the code and title as exported, belongs to no SPU and is never demand.
+_Avoid_: Deleted SKU line, unknown line, orphan line
+
 **Hub package**:
 A package that moves stock to a Shopee hub for an order Shopee fulfils. It mirrors the buyer's package and is never a customer order.
 _Avoid_: Matched package, FBS order, hub order
@@ -112,8 +116,12 @@ _Avoid_: Matched package, FBS order, hub order
 A package status that will not change again: Completed, Canceled, or Return & Refund.
 _Avoid_: Closed, done, terminal status
 
+**Abandoned package**:
+A package that is not in a final status, never left the warehouse, and was ordered more than 90 days before the newest order export. It is never demand and is left out of location analysis.
+_Avoid_: Stuck package, expired order, dead order
+
 **Demand**:
-The units of a Single SKU that buyers ordered, counted from the package lines and component lines of every package that is not Canceled, on the business day of its Order Time. A returned package still counts. A Combination SKU's own line, a hub package and a stock movement are never demand.
+The units of a Single SKU that buyers ordered, counted from the package lines and component lines of every package that is neither Canceled nor abandoned, on the business day of its Order Time. A returned package still counts, and so does a package that shipped and never reached a final status. A Combination SKU's own line, an unmapped line, a hub package and a stock movement are never demand.
 _Avoid_: Sales, units sold, consumption
 
 **Buyer**:
@@ -165,7 +173,7 @@ BigSeller's Inventory List as exported on one business day: the stock figures an
 _Avoid_: Stock snapshot, stock level, balance
 
 **Stock movement**:
-One recorded change to a Single SKU's on-hand stock, with the stock before and after, its type and the document that caused it.
+One recorded change to a Single SKU's on-hand stock, with the stock before and after, its type and the document that caused it. A move between shelves changes no total and is not a stock movement.
 _Avoid_: Stock transaction, stock in/out record, inventory log
 
 **Purchase Stock-In**:
