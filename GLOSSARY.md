@@ -287,8 +287,16 @@ A purchase order line that expects no more goods. A line closes on its first Pur
 _Avoid_: Fulfilled line, done line
 
 **Shortfall**:
-The units by which a closed line's received quantity falls below its ordered quantity. Each shortfall ends as Refunded or as a Loss, and is Unresolved until then.
+The units by which a closed line's received quantity falls below its ordered quantity. Each shortfall ends as Refunded, as a Loss or as To be resent, and is Unresolved until then.
 _Avoid_: Short delivery, missing goods, shortage
+
+**To be resent**:
+Said of a shortfall the supplier has agreed to make good with a later delivery. Its units are owed by the supplier and do not count as on order until they are put on a purchase order as a resend line.
+_Avoid_: Backorder, pending resend
+
+**Resend line**:
+A purchase order line that asks the supplier for units owed from a shortfall on an earlier purchase order. It has no goods price and counts as on order like any other line.
+_Avoid_: Replacement line, free line, backorder line
 
 **Overage**:
 The units by which a line's received quantity exceeds its ordered quantity.
@@ -303,15 +311,27 @@ The date a placed purchase order's goods should be in the warehouse: the day it 
 _Avoid_: ETA, due date, delivery date
 
 **Forwarder**:
-The freight company that carries goods bought in China to the warehouse.
+The freight company that carries goods bought in China to the warehouse. The business uses several.
 _Avoid_: Shipper, cargo agent, expedition
 
+**Marking code**:
+The code a forwarder gives the business to mark its goods. There is one per forwarder, the same at all of that forwarder's warehouses.
+_Avoid_: Shipping mark, customer code
+
+**Forwarder warehouse**:
+A forwarder's receiving address in China, such as Yiwu or Guangzhou, where a Chinese supplier delivers the goods of a purchase order.
+_Avoid_: China warehouse, drop-off point
+
 **Forwarder invoice**:
-The Chinese-language document niskora produces from a purchase order for the forwarder, listing each item with its quantity and goods price in yuan.
+The Chinese-language document niskora produces from a purchase order for the forwarder, headed by the marking code and listing each item with its quantity and goods price in yuan. The forwarder uses it for customs.
 _Avoid_: Packing list, commercial invoice
 
+**Daftar Pesanan**:
+The Bahasa Indonesia document niskora prints from a purchase order's current lines, showing quantities and never prices. It is given to a local supplier when the purchase order is placed and printed again for the unloading team when the goods arrive.
+_Avoid_: Purchase order PDF, unloading sheet, receiving sheet
+
 **Trading name**:
-The one neutral name printed as the purchasing party on every purchase order document. No company or store name ever appears there.
+The one neutral name printed as the purchasing party on the Daftar Pesanan. No company or store name ever appears on a purchase order document.
 _Avoid_: Buyer name, company name
 
 **Carton**:
