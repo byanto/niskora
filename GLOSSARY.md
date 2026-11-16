@@ -109,11 +109,11 @@ A package line with no Merchant SKU, because BigSeller no longer knows the Merch
 _Avoid_: Deleted SKU line, unknown line, orphan line
 
 **Hub package**:
-A package that moves stock to a Shopee hub for an order Shopee fulfils. It mirrors the buyer's package and is never a customer order.
+A package that sends one unit ahead to a Shopee hub before any buyer has ordered it. Shopee later matches it to a buyer's order, and the buyer's own package is the customer order. A hub package is never a customer order and never demand.
 _Avoid_: Matched package, FBS order, hub order
 
 **Final status**:
-A package status that will not change again: Completed, Canceled, or Return & Refund.
+A package status in which its lines no longer change: Completed, Canceled, or Return & Refund. Other details can still be updated, and a Return & Refund package can go back to Completed.
 _Avoid_: Closed, done, terminal status
 
 **Abandoned package**:
