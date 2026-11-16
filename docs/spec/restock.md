@@ -4,20 +4,6 @@ How niskora decides what to reorder, when and how much. Rule ids start with `RST
 
 Read [README.md](README.md) first, then [foundation.md](foundation.md), which defines [demand](../../GLOSSARY.md#orders), stock and freshness. Terms are defined in [`GLOSSARY.md`](../../GLOSSARY.md) and are not redefined here.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **The default order cycle (RST-22).** The restock decision gave a Single SKU with no supply source a default lead time of 14 days and a default order cycle of 30 days. The later ticket on outside data changed the default lead time to 60 days and did not mention the order cycle. RST-22 keeps a default order cycle of 30 days, changeable in Setup.
-2. **Which lead time and order cycle a Single SKU uses (RST-20, RST-21).** The tickets say the preferred supply source "decides the lead time". RST-20 spells out the order: the preferred supply source's own lead time, else its supplier's. The order cycle always comes from that supplier.
-3. **On order for a line marked "rest still coming" (RST-25).** No ticket says how many units such a line still counts for after a first delivery. RST-25 counts the ordered quantity minus the received quantity, and never less than zero.
-4. **Fewer than 90 countable days (RST-9).** The sales rate is "over the most recent 90 countable days, looking back at most 365 days", and a Single SKU with fewer than 14 gets no advice. For 14 to 89 countable days, RST-9 divides by the countable days there are.
-5. **Whole units and the order of rounding (RST-17).** The formula can give a fraction. RST-17 rounds up to a whole unit, then raises to the minimum quantity, then rounds up to the order multiple, so the result always satisfies both. The tickets name the two steps without an order.
-6. **What the navigation count counts (RST-39).** "A count of SKUs needing action" is read as the Single SKUs at Late or Order now. Top-ups at Fine are not counted.
-7. **Filtering by buying channel (RST-37).** A Single SKU can have supply sources on several buying channels. RST-37 filters on the buying channel of its preferred supply source. Single SKUs with no supply source have no buying channel and show only when the filter is off.
-8. **Level and order of the "No supplier" block (RST-33).** The block uses the default lead time for the level and the sum. With the default at 60 days, many of these Single SKUs will show as Late or Order now until they are given a supplier. Whether they are included in the navigation count is not settled. RST-39 includes them.
-9. **Owed units in the sum (RST-27).** Units a supplier owes as "To be resent" do not count as on order until they are on a purchase order. They are shown beside the supplier's advice, and the suggested quantity is not lowered for them.
-
 ## 1. What restock advice is
 
 - **RST-1** [Restock advice](../../GLOSSARY.md#restock) is worked out per [Single SKU](../../GLOSSARY.md#catalogue): whether to reorder now, and how many units.
@@ -68,10 +54,10 @@ _Sources: [Restock calculation rules](https://github.com/byanto/niskora/issues/8
 - **RST-24** On order is niskora's own figure: the units on the open lines of [Placed](../../GLOSSARY.md#purchasing) purchase orders, [resend lines](../../GLOSSARY.md#purchasing) included. BigSeller's [on the way](../../GLOSSARY.md#stock) figure is never used. A Draft purchase order counts for nothing.
 - **RST-25** A line stops counting once it is a [closed line](../../GLOSSARY.md#purchasing), whatever was counted on arrival: a short delivery is usually final. A line a user has marked "rest still coming" stays open and counts for its ordered quantity minus its [received quantity](../../GLOSSARY.md#purchasing).
 - **RST-26** An [overage](../../GLOSSARY.md#purchasing) needs no rule: the extra units are on-hand stock.
-- **RST-27** Units owed by a supplier under a shortfall that is [To be resent](../../GLOSSARY.md#purchasing) do not count as on order until they are put on a purchase order as a resend line. The owed units are shown with that supplier's restock advice.
+- **RST-27** Units owed by a supplier under a shortfall that is [To be resent](../../GLOSSARY.md#purchasing) do not count as on order until they are put on a purchase order as a resend line. The owed units are shown with that supplier's restock advice, and the suggested quantity is not lowered for them. The Draft is adjusted at the moment a resend line is added to it ([purchasing.md](purchasing.md), PUR-91).
 - **RST-28** `purchasing` owns the on order figure and answers it per Single SKU. `restock` asks for it and never reads purchase orders.
 
-_Sources: [Restock calculation rules](https://github.com/byanto/niskora/issues/8), [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20)._
+_Sources: [Restock calculation rules](https://github.com/byanto/niskora/issues/8), [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 6. Who gets advice
 
@@ -97,11 +83,11 @@ _Sources: [Restock calculation rules](https://github.com/byanto/niskora/issues/8
 - **RST-36** Advice is sorted by the days it lasts minus the lead time, the most negative first. It is grouped by supplier, then by [SPU](../../GLOSSARY.md#catalogue), so that one supplier's list is ready to become one purchase order.
 - **RST-37** Advice can be filtered by buying channel, which is the buying channel of the preferred supply source.
 - **RST-38** The view of one supplier lists every Single SKU of that supplier with a suggested quantity above zero, those still at Fine included. These top-ups are marked apart from Late and Order now, and each can be removed. One purchase order then brings the supplier's whole range up to target, and the next can wait a full order cycle.
-- **RST-39** The navigation shows a count of the Single SKUs at Late or Order now.
+- **RST-39** The navigation shows a count of the Single SKUs at Late or Order now. Top-ups at Fine are not counted. The Single SKUs in the "No supplier" block are not counted either: they keep their level inside the block and are counted under "needs attention" (RST-32).
 - **RST-40** Every line shows its working: demand in the last 30 and the last 90 countable days, the sales rate, available, on order, the days it lasts, the lead time, the target days (lead time + order cycle + safety days), and the suggested quantity before and after rounding.
 - **RST-41** While orders, the inventory list or stock movements are [stale](../../GLOSSARY.md#imports), the restock screen says so (FND-84). While any package is a [held package](../../GLOSSARY.md#imports), it warns as well (FND-86). Nothing is blocked.
 
-_Sources: [Restock calculation rules](https://github.com/byanto/niskora/issues/8), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20)._
+_Sources: [Restock calculation rules](https://github.com/byanto/niskora/issues/8), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 8. From advice to a purchase order
 

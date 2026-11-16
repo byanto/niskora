@@ -6,16 +6,6 @@ How costs, selling prices, fees and margins are represented. Rule ids start with
 
 Read [README.md](../README.md) first. Terms are defined in [`GLOSSARY.md`](../../../GLOSSARY.md) and are not redefined here.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **Seeding from the Google Sheets workbooks (PRC-33, PRC-34).** The scope corrections said "the Google Sheet seeds it once". The later ticket on outside data found that a workbook row is a price group covering several Single SKUs, that matching rows to Merchant SKUs by name is unreliable, and that two of the three workbooks have not been examined. PRC-34 follows the later ticket: the load is part of building pricing and will most likely need a person to confirm each row. It is not an automatic one-off seed.
-2. **Any excess raises the cost flag (PRC-28).** The scope corrections say niskora "warns when the actual cost rises above" the pricing cost. The pricing model says "any excess". PRC-28 has no tolerance, so a difference of one rupiah raises the flag.
-3. **Which marketplaces are linked.** The pricing model names TikTok and Lazada as linked, Shopee as the anchor, and Manual and Blibli as independent. PRC-6 treats the role as a setting per marketplace, so a marketplace that appears later is given a role when it is first priced.
-4. **A store's own price on a linked marketplace (PRC-11).** A store "can have its own typed price", which replaces the selling price, the minimum buy and the wholesale tiers as one set. The model does not say whether this is allowed on a linked marketplace, where prices are otherwise never typed. PRC-11 allows it on every marketplace, because the listing check records a deliberate difference on one store this way.
-5. **A wholesale tier's planned profit (PRC-26).** "A wholesale tier spreads the fixed fees over the tier's own quantity" is read as: in the per-piece sum for a tier, fixed fees are divided by the tier's quantity and not by the minimum buy.
-
 ## 1. Scope
 
 - **PRC-1** Pricing models normal prices only. Promotions, special prices, vouchers and flash sales are not modelled.

@@ -4,19 +4,6 @@ Where packages go, by province, city and district, and for which products. Rule 
 
 Read [README.md](README.md) first, then [foundation.md](foundation.md), which defines [packages](../../GLOSSARY.md#orders), [destinations](../../GLOSSARY.md#orders) and [demand](../../GLOSSARY.md#orders). Terms are defined in [`GLOSSARY.md`](../../GLOSSARY.md) and are not redefined here.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **Where the official list of places comes from (LOC-20).** The decision says niskora ships "the current government list (Kemendagri codes, 38 provinces)". The boundary file research names one machine-readable copy (`cahyadsn/wilayah`, MIT licence) as a side note and did not assess it. LOC-20 fixes only what the list must be. The file itself is chosen and checked against the government decree in the build ticket.
-2. **What a spelling is (LOC-25, LOC-27).** The tickets map "a spelling" to a place, and match a city inside its province and a district inside its city. They do not say what a place alias is keyed on. LOC-25 reads it as: the level, the cleaned text and the place above it. An alias is shared by all marketplaces, although the correction page shows which marketplace each spelling came from.
-3. **The company filter (LOC-13).** A store belongs to at most one company and may sell any company's Merchant SKUs, so "company" could mean the store's or the Merchant SKU's. LOC-13 reads it as the company of the Merchant SKU on the line, the same way demand is narrowed to a company.
-4. **Value under a company filter (LOC-10, LOC-13).** A view filtered by SPU or Merchant SKU leaves the value of Combination SKUs out. The decision does not name the company filter. LOC-13 treats it like the unfiltered view: the Combination SKU's own line counts with its value under the company of that Combination SKU, and its component lines add no value.
-5. **Unmapped lines (LOC-5).** The history ticket says an unmapped line's package "still counts in location totals (packages, units, goods value)". LOC-5 counts it in totals and in views filtered by marketplace or store only. It can never appear under an SPU, a Merchant SKU or a company.
-6. **Unmatched destinations in the import report (LOC-30).** The report is owned by `imports`, which `locations` depends on. How the spellings reach the report without a dependency in the other direction is not settled. It is point 3 of "Check this" in [engineering.md](engineering.md).
-7. **Large islands missing from the map (LOC-37).** The simplified boundary file loses 12 polygons of 100 km² or more. The research did not find out why. It is looked at when the file is built.
-8. **The boundary file's licence (LOC-36).** BIG states no licence. Committing the file rests on a reading of the law, not on legal advice. If niskora is ever sold, BIG must be asked first.
-
 ## 1. Purpose and what is counted
 
 - **LOC-1** The analysis exists to decide where to aim ads that target by place, and for which products.
@@ -53,7 +40,7 @@ _Sources: [Customer location analysis](https://github.com/byanto/niskora/issues/
 
 ## 4. Places and automatic matching
 
-- **LOC-20** niskora ships the official list of [places](../../GLOSSARY.md#locations): the government's current provinces, cities and districts with their Kemendagri codes, 38 provinces among them. The list is updated with releases and is not edited by users.
+- **LOC-20** niskora ships the official list of [places](../../GLOSSARY.md#locations): the government's current provinces, cities and districts with their Kemendagri codes, 38 provinces among them. The list is updated with releases and is not edited by users. The file it is taken from is chosen in the build and checked against the government decree before it is committed.
 - **LOC-21** The lowest matched level decides the levels above it. A kabupaten lands in its current province whatever the marketplace wrote.
 - **LOC-22** Automatic matching is exact only, after ignoring letter case, punctuation and the words Kota, Kab., Kabupaten and Kota Administrasi. There is no fuzzy guessing.
 - **LOC-23** A seeded list of known variants is matched as well, such as English province names, "NAD" and "D.I. Aceh".
@@ -68,11 +55,11 @@ _Sources: [Customer location analysis](https://github.com/byanto/niskora/issues/
 - **LOC-27** A correction page lists every unmatched spelling with its marketplace and its number of packages, the biggest first.
 - **LOC-28** A user maps a spelling to a place. The mapping applies at once to every past and future package with that spelling. It can be changed at any time, and niskora records who changed it and when.
 - **LOC-29** niskora maps spellings and never sets a destination on a single package. A package with a masked or empty destination stays "Location unknown". A manual order is fixed in BigSeller, and the next export brings it in.
-- **LOC-30** Unmatched spellings also appear in the import report of the order import that brought them (FND-79).
+- **LOC-30** _Removed in the final review._ Unmatched spellings are not listed in an import report. "Unmatched" is a state that ends the moment a spelling is mapped, and a report is the record of one import. They live on the correction page only, with their count under "needs attention", and the order import report links to that page (FND-79).
 - **LOC-31** `orders` keeps the destination text exactly as exported (FND-57). `locations` owns the place list, the place aliases and the correction page. A mapping change therefore never touches the order history, and a re-import never loses a correction.
 - **LOC-32** `orders` hands over packages, units and goods value per destination text, already counted. `locations` rolls them up into places in code and reads no other module's tables ([ADR 0003](../adr/0003-one-database-schema-per-module.md)).
 
-_Sources: [Customer location analysis](https://github.com/byanto/niskora/issues/10), [Reporting and read model approach](https://github.com/byanto/niskora/issues/15)._
+_Sources: [Customer location analysis](https://github.com/byanto/niskora/issues/10), [Reporting and read model approach](https://github.com/byanto/niskora/issues/15), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 6. The province map
 
@@ -86,7 +73,10 @@ _Sources: [Customer location analysis](https://github.com/byanto/niskora/issues/
   1. For each province code `NN`, download `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_KABKOTA_AR/MapServer/0/query?where=KDPPUM='NN'&outFields=KDPPUM&outSR=4326&maxAllowableOffset=0.0005&f=geojson`. The service is slow and fails at times, so a download is tried again.
   2. Run `npx mapshaper@0.6.102 -i k*.geojson combine-files -merge-layers force name=provinces -dissolve2 KDPPUM -rename-fields code=KDPPUM -clean -simplify interval=2000 keep-shapes -clean -o provinces.topojson format=topojson quantization=10000`. The first `-clean` removes the slivers between regencies and must not be dropped.
 
-_Sources: [Boundary file for the province map](https://github.com/byanto/niskora/issues/31), [Customer location analysis](https://github.com/byanto/niskora/issues/10)._
+- **LOC-43** Every island of 100 km² or more is drawn. The simplified file of the research lost 12 such polygons for a reason not yet known. The build step that adds the map is done only when each of them is drawn, or is listed here with the reason it is missing.
+- **LOC-44** BIG states no licence for the boundaries. Committing the file rests on a reading of Indonesian geospatial law, which is accepted for internal use. If niskora is ever sold, BIG is asked first.
+
+_Sources: [Boundary file for the province map](https://github.com/byanto/niskora/issues/31), [Customer location analysis](https://github.com/byanto/niskora/issues/10), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 7. Personal data and speed
 

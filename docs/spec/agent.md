@@ -4,18 +4,6 @@ What the agent answers, the tools it answers with, the model behind it, and how 
 
 Read [README.md](README.md) first. Terms are defined in [`GLOSSARY.md`](../../GLOSSARY.md) and are not redefined here.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **A fallback model, after "no automatic fallback" (AGT-27).** The ticket that read the free tier limits noted the second Flash-Lite model "as a fact only; v1 has no automatic fallback". The amendment to the agent decision, made after it, adds exactly that model as a fallback on the same key. AGT-27 follows the amendment. What stays ruled out is falling back to a second provider.
-2. **Whether the two models' limits are really separate (AGT-27).** This is read from the rate limit page and has never been proven by hitting a limit. If they share one limit, the fallback gains nothing and costs nothing.
-3. **The limit message for a per-minute limit (AGT-29).** The decision says the page tells "when it resets" and gives the daily reset only. AGT-29 says "try again in a minute" for a per-minute limit.
-4. **The free tier limits can change (AGT-25).** They are per project and Google no longer publishes them. The figures in AGT-25 were read on 15 Nov 2026 and are read again each time the question set is run.
-5. **What leaves niskora (AGT-24).** Questions and tool results go to Google under the free tier's terms, which allow Google to use them and human reviewers to read them. That covers sales figures, costs, goods prices and supplier names. The owner accepted this. It is listed here so that it is confirmed once more with the whole spec in view.
-6. **Deleting a conversation (AGT-9).** Conversations are "kept until deleted". AGT-9 reads this as: the user who owns a conversation deletes it, and nobody else can.
-7. **The purchasing tools (AGT-13).** The tool table was written before buying channels, forwarders and resend lines were decided. AGT-13 keeps the eleven tools as decided and adds none. Owed units and buying channels appear in tool results only as far as the public queries of `purchasing` and `restock` already return them.
-
 ## 1. What the agent is
 
 - **AGT-1** The [agent](../../GLOSSARY.md#agent) answers a [user](../../GLOSSARY.md#people)'s questions in plain language from niskora's own data: the catalogue, demand, stock, restock advice, purchase orders and location analysis. It gives no general business advice and uses no outside knowledge.
@@ -81,10 +69,10 @@ _Sources: [AI agent design and provider](https://github.com/byanto/niskora/issue
 - **AGT-26** An optional fallback model is `gemini-3.1-flash-lite`, which has its own limits of the same size. The fallback can be left empty.
 - **AGT-27** When Gemini answers that a limit is reached (HTTP 429) on the main model, the agent tries that same request once more on the fallback model: the same provider, the same API key and the same data terms.
 - **AGT-28** There is no automatic fallback to a second provider.
-- **AGT-29** When the fallback is limited as well, or none is configured, the agent page says that the limit is reached and when it resets. A daily limit resets at midnight Pacific time. For a per-minute limit the page says to try again in a minute. The rest of niskora is unaffected.
+- **AGT-29** When the fallback is limited as well, or none is configured, the agent page says that the limit is reached and when it resets. A daily limit resets at midnight Pacific time, and the page shows that moment in Jakarta time as well. For a per-minute limit the page says to try again in a minute. The rest of niskora is unaffected.
 - **AGT-30** The Flash models allow 20 requests a day on the free tier and are not used. If Flash-Lite answers poorly on the question set, the choice between the paid tier and another provider is a new decision at that point.
 
-_Sources: [AI agent design and provider](https://github.com/byanto/niskora/issues/11), [Create a Gemini API key and read the free tier limits](https://github.com/byanto/niskora/issues/22)._
+_Sources: [AI agent design and provider](https://github.com/byanto/niskora/issues/11), [Create a Gemini API key and read the free tier limits](https://github.com/byanto/niskora/issues/22), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 6. Keeping buyer data out
 

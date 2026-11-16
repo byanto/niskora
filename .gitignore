@@ -2,3 +2,5 @@
 samples/
 .env
 .claude/worktrees/
+# Review pages made by the Lavish Editor
+.lavish/

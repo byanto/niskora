@@ -12,6 +12,10 @@ Where BigSeller has a name for a thing, niskora uses that name. niskora coins a 
 A file, or a zip of files, produced by BigSeller for one data set and one filter.
 _Avoid_: Dump, report, download
 
+**Export time**:
+The moment BigSeller made an export, read from the 17 digits at the end of the file's name. A renamed file has none.
+_Avoid_: File date, upload time
+
 **Import**:
 One upload of one export, accepted or rejected as a whole, with a report of what it changed.
 _Avoid_: Sync, load, ingestion

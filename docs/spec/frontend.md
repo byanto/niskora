@@ -6,23 +6,6 @@ Read [README.md](README.md) first. Terms are defined in [`GLOSSARY.md`](../../GL
 
 This file says which screens exist and what each one shows. What the figures on a screen mean, and what an action does, is in the area file the screen belongs to: [foundation.md](foundation.md), [restock.md](restock.md), [purchasing.md](purchasing.md), [locations.md](locations.md), [agent.md](agent.md) and [platform.md](platform.md). Where this file and an area file disagree about behaviour, the area file wins.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **The menu drawer on a narrow window (FE-107).** The main screens decision said desktop and laptop only, so "the prototype's narrow-screen menu drawer is not needed". The later visual design decision brings a drawer back below 1024 px, for WCAG Reflow and for scaled laptop screens. Its "amends" note names the frontend architecture ticket only, not the main screens ticket. FE-107 follows the later decision. Tablet and phone layouts stay out of scope.
-2. **A Settings screen (FE-36).** The owner confirmed 21 screens as complete. The later ticket on outside data puts two things "in Setup" that none of the 21 holds: the read-only prefix table and the default [lead time](../../GLOSSARY.md#purchasing) for a [Single SKU](../../GLOSSARY.md#catalogue) with no [supply source](../../GLOSSARY.md#purchasing). FE-36 adds a 22nd screen, Settings, under Setup. No ticket names it.
-3. **Where the supply source sheet is downloaded and uploaded (FE-29).** The ticket on outside data says "from the supply sources screen". There is no screen of that name among the 21. Supply sources show on the Supplier page and the Merchant SKU page. FE-29 puts the download and upload on the Suppliers screen, for all suppliers at once.
-4. **Single SKUs with no supply source.** The main screens prototype listed them as a tab on the Suppliers screen and said no [restock advice](../../GLOSSARY.md#restock) is possible for them. The later ticket on outside data gives them advice in a "No supplier" block on the Restock advice screen, with the assign action there. FE-22 follows the later ticket, and this spec gives the Suppliers screen no such tab.
-5. **What the search box searches (FE-3).** The main screens decision puts a search box above every screen and does not say what it finds. FE-3 reads it as a jump to one thing by its code, number or name: an SPU, a Merchant SKU, a package, a purchase order or a supplier. It never searches buyer fields.
-6. **Disabling a user (FE-37).** The main screens prototype showed a "Disable" button on the Users screen. The decisions name only creating accounts and resetting passwords, and [platform.md](platform.md) has no rule for a disabled account. FE-37 leaves disabling out.
-7. **Money that is not rupiah (FE-70).** The format `Rp 1.250.000` is decided. A supplier's currency can be yuan, and no ticket gives the yuan format. FE-70 formats every amount with `Intl` in the Indonesian locale using the currency the backend sends.
-8. **The table header height (FE-95).** The visual design decision first gave 38 px and its own addendum changed it to 40 px, to keep every size on the 4 px scale. FE-95 uses 40 px.
-9. **Filtering restock advice by where the supplier is (FE-21).** The main screens prototype had a "Local and China" filter. The later ticket on outside data says restock advice can be filtered by [buying channel](../../GLOSSARY.md#purchasing). FE-21 has the buying channel filter and no "Local and China" filter.
-10. **The credit line for the province map (FE-89).** The boundary file decision requires the credit and does not say where it shows. FE-89 puts it under the map on the screen and beside the file in the repository.
-11. **Changing your own password (FE-8).** [platform.md](platform.md) lets any user change their own password, and no ticket says where. FE-8 puts it in the sidebar beside "Log out".
-12. **Home before the later build steps.** Home shows counts for restock advice and purchase orders, which do not exist until build steps 7 and 8. [build-order.md](build-order.md) has Home grow one card at a time. FE-9 describes the finished screen.
-
 ## 1. Shell and navigation
 
 - **FE-1** Every screen except Login sits inside one shell: a fixed left sidebar, and above the screen a search box and a data freshness chip.
@@ -38,7 +21,7 @@ Points where the closed tickets disagree, or leave a gap that a rule below had t
 
 - **FE-3** The search box takes a code, a number or a name and opens the matching [SPU](../../GLOSSARY.md#catalogue), [Merchant SKU](../../GLOSSARY.md#catalogue), [package](../../GLOSSARY.md#orders) (by Package No or Order No), [purchase order](../../GLOSSARY.md#purchasing) or [supplier](../../GLOSSARY.md#purchasing). It never searches buyer fields.
 - **FE-4** The data freshness chip says how many data sets are [stale](../../GLOSSARY.md#imports), or that all are fresh. It refreshes every minute and links to Imports. When a data set is stale is decided in [foundation.md](foundation.md).
-- **FE-5** The sidebar carries three counts: needs attention on Home, Late on Restock advice, and [unmatched stock-ins](../../GLOSSARY.md#purchasing) on Match stock-ins.
+- **FE-5** The sidebar carries three counts: needs attention on Home, Late or Order now on Restock advice (without the "No supplier" block, RST-39), and [unmatched stock-ins](../../GLOSSARY.md#purchasing) on Match stock-ins.
 - **FE-6** The sidebar shows that an import is running, on every screen, until its report is ready.
 - **FE-7** A detail page opens from its list and shows a way back to that list. The detail pages are Import report, SPU page, Merchant SKU page, Package page, Purchase order page and Supplier page.
 - **FE-8** The sidebar shows the name of the logged-in [user](../../GLOSSARY.md#people) with "Log out" and a way to change their own password.
@@ -86,8 +69,8 @@ v1 has 22 screens. Each has its own URL.
   5. Yesterday: packages and units of [demand](../../GLOSSARY.md#orders).
 - **FE-10** The items of "needs attention" are defined by the area files, not here. Each item has a severity, shown with the icons of FE-105. The ticket on outside data adds two: Single SKUs with no supply source, and SPUs whose prefix gives no [company](../../GLOSSARY.md#catalogue).
 - **FE-11** Business conditions, such as stale data, [held packages](../../GLOSSARY.md#imports), a rejected file and the agent's limit being reached, show on Home and nowhere outside the app ([platform.md](platform.md)).
-- **FE-12** **Imports** has one drop zone for every [export](../../GLOSSARY.md#imports) type, taking several files at once. Below it are the daily checklist (each data set, how often it is due and how fresh it is) and the list of imports: when, file, detected data set, the range it covers, accepted or rejected, what changed, and who uploaded it.
-- **FE-13** **Import report** shows one import: the file, the data set, who uploaded it and when, accepted or rejected, the counts of new, changed, unchanged, held and [not seen](../../GLOSSARY.md#imports), the other findings, and a link to download the original file. A rejected import shows the reason.
+- **FE-12** **Imports** has one drop zone for every [export](../../GLOSSARY.md#imports) type, taking several files at once. Beside it, the screen names the order export layout to pick, "by Merchant SKU" (FND-95). Below it are the daily checklist (each data set, how often it is due and how fresh it is) and the list of imports: when, file, detected data set, the range it covers, accepted or rejected, what changed, and who uploaded it.
+- **FE-13** **Import report** shows one import: the file, the data set, who uploaded it and when, accepted or rejected, the export time read from the file name, the counts of new, changed, unchanged, held and [not seen](../../GLOSSARY.md#imports), the other findings, and a link to download the original file. The report of an order import links to the Place aliases screen for unmatched spellings and does not list them. A rejected import shows the reason.
 
 ### Catalogue
 
@@ -122,8 +105,8 @@ v1 has 22 screens. Each has its own URL.
 ### Setup
 
 - **FE-35** **Campaign days** lists the marked days with who marked each, lists the days that look like a campaign and are not marked, and has a form to mark a day or a range. **Place aliases** has tabs for unmatched spellings, all [place aliases](../../GLOSSARY.md#locations) and the official places, and lets a user map a spelling to a place.
-- **FE-36** **Settings** shows the company prefix table, which is read-only, and the default lead time used for a Single SKU with no supply source, which is editable.
-- **FE-37** **Users** lists everyone who can log in, with "Add user" and "Reset password". There are no roles and there is no way to disable a user in v1.
+- **FE-36** **Settings** shows the company prefix table, which is read-only, and four editable settings: the default lead time and the default order cycle used for a Single SKU with no supply source (RST-22), the safety days (RST-18) and the trading name printed on the Daftar Pesanan (PUR-70). Every change is recorded with who made it and when.
+- **FE-37** **Users** lists every account, with "Add user", "Reset password", and "Disable" or "Enable" ([platform.md](platform.md), PLT-45). A user sees no "Disable" on their own row. There are no roles in v1.
 - **FE-38** **Login** takes a login name and a password and stands outside the shell.
 
 _Sources: [Main screens and navigation](https://github.com/byanto/niskora/issues/25), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Frontend architecture and libraries](https://github.com/byanto/niskora/issues/26), the `prototype/main-screens` branch._

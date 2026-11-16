@@ -4,21 +4,10 @@ The rules the codebase follows from the first commit. Rule ids start with `ENG`.
 
 Read [README.md](README.md) first. Terms are defined in [`GLOSSARY.md`](../../GLOSSARY.md) and are not redefined here.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **`purchasing` reads stock movements (ENG-10).** The module layout lists `purchasing` as depending on `catalogue` only. The later purchase order decision reads received quantities from Purchase Stock-In movements, which `stock` owns ([ADR 0004](../adr/0004-received-quantities-come-from-bigseller-stock-movements.md)). ENG-10 adds `stock` to what `purchasing` depends on. No ticket says so in these words.
-2. **`purchasing` and newly added Merchant SKUs (ENG-15).** The ticket on outside data says a Single SKU added by an import inherits its SPU's supply sources. The module layout names `orders` as the only listener to "Merchant SKUs added". ENG-15 lets `purchasing` listen to the same event, which stays within the two events decided.
-3. **Unmatched destinations in the import report.** The location analysis decision says unmatched spellings appear in the import report. `imports` owns the report and `locations` depends on `imports`, so `imports` cannot ask `locations`. How the report gets those spellings is not settled. This spec adds no rule; one way that needs no new dependency is for the report screen to ask both modules.
-4. **Excel and PDF libraries.** The stack research shortlisted an Excel reader and a PDF writer and chose neither, and no later ticket did. They are chosen in the build ticket that first needs them (ENG-6).
-5. **Spring Boot 4.2.** The stack research said to start on 4.1.2 because 4.2.0 was days away and its partners were not ready. By the time the build starts that may have changed. ENG-2 keeps 4.1.2 as decided and leaves the move to the dependency update rule (ENG-52).
-6. **Rules inside a module.** The conventions ticket left "rules inside a module" to the module layout ticket, which settled the layers only as far as ENG-17. Anything finer is decided when the first module is built and then enforced with ArchUnit.
-
 ## 1. Stack
 
 - **ENG-1** Java 25.
-- **ENG-2** Spring Boot 4.1.2, with the Spring Security and Spring Framework versions it manages. Spring Modulith 2.1.2 and Spring AI 2.0.2 through their own BOMs.
+- **ENG-2** Spring Boot 4, with the Spring Security and Spring Framework versions it manages, and Spring Modulith and Spring AI through their own BOMs. The first build step starts on the newest Spring Boot 4 release that Spring Modulith and Spring AI both support on that day, and writes the exact versions into this rule. The stack research found 4.1.2, Modulith 2.1.2 and Spring AI 2.0.2 aligned in November 2026.
 - **ENG-3** PostgreSQL 18, with Flyway (and `flyway-database-postgresql`), Testcontainers and the PostgreSQL driver in the versions Spring Boot manages. Liquibase is not used.
 - **ENG-4** springdoc-openapi generates the OpenAPI document.
 - **ENG-5** Every container image is built for `linux/arm64`, because production is an ARM machine.
@@ -26,7 +15,7 @@ Points where the closed tickets disagree, or leave a gap that a rule below had t
 - **ENG-7** Spring Boot 4 renamed its starters and defaults to Jackson 3, Testcontainers 2 renamed its artifacts and packages, and Spring AI 2.0 broke much of the 1.x API. Only documentation for these versions is followed.
 - **ENG-8** The code uses only standard PostgreSQL features, so the database can be moved to a managed service by a dump and a restore ([ADR 0001](../adr/0001-self-hosted-postgresql-on-the-app-machine.md)).
 
-_Sources: [Spring Boot 4 stack versions and compatibility](https://github.com/byanto/niskora/issues/3)._
+_Sources: [Spring Boot 4 stack versions and compatibility](https://github.com/byanto/niskora/issues/3), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 2. Modules
 

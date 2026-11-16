@@ -10,11 +10,11 @@ niskora complements BigSeller and never replaces it. BigSeller stays the source 
 
 ## The business it is built for
 
-- One business, internal use: the owner, a daily operator and staff. The owner maintains niskora remotely.
+- One business, internal use: the owner, a daily operator and staff.
 - Three [companies](../../GLOSSARY.md#catalogue) under the same owner, sharing one stock, one demand and one [warehouse](../../GLOSSARY.md#stock).
 - Stores on Shopee, Lazada, TikTok Shop and Blibli, plus manual (mostly WhatsApp) orders.
 - More than 10,000 active [Merchant SKUs](../../GLOSSARY.md#catalogue) and 300 to 500 orders a day.
-- Suppliers both local (1 to 2 weeks [lead time](../../GLOSSARY.md#purchasing)) and in China (1.5 to 2 months, some bought on 1688 through a [forwarder](../../GLOSSARY.md#purchasing)).
+- Suppliers both local and in China.
 
 ## What v1 covers
 
@@ -132,6 +132,6 @@ Suggested order: this file, then `foundation.md`, because every other area stand
 - Every rule has a stable id made of the file prefix and a number, such as `FND-12`. An id is never reused. A removed rule keeps its id with a "removed" note.
 - Terms link to [`GLOSSARY.md`](../../GLOSSARY.md). Reasons link to the decision records in [`docs/adr/`](../adr/).
 - Closed tickets appear only as source notes under each section. They are history, and so are the prototype branches.
-- Where two closed tickets disagreed and no "amends" note settled it, the later ticket wins and the case is listed in a "Check this" section at the top of the file, for the owner's review.
+- Where two closed tickets disagreed, or left a gap, the owner settled the case in the [final review of the v1 spec](https://github.com/byanto/niskora/issues/36). The rules here already say what was settled.
 
-_Sources: [Map: v1 spec for the business brain](https://github.com/byanto/niskora/issues/1), [v1 scope corrections from the export findings](https://github.com/byanto/niskora/issues/17), [Assemble the v1 spec and build order](https://github.com/byanto/niskora/issues/29)._
+_Sources: [Map: v1 spec for the business brain](https://github.com/byanto/niskora/issues/1), [v1 scope corrections from the export findings](https://github.com/byanto/niskora/issues/17), [Assemble the v1 spec and build order](https://github.com/byanto/niskora/issues/29), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._

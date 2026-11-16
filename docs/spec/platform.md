@@ -4,16 +4,6 @@ How v1 runs, who can get in, and how the owner learns that something is wrong. R
 
 Read [README.md](README.md) first. Terms are defined in [`GLOSSARY.md`](../../GLOSSARY.md) and are not redefined here.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **The first account (PLT-23).** The deployment decision had the owner create accounts with a command on the server. The later Users screen replaced that. A Users screen cannot create the first account, because nobody can log in yet. PLT-23 keeps the server command for that one case.
-2. **Telling history load files from daily uploads (PLT-33).** Daily uploads are deleted after 1 year and history load files are kept forever. No ticket says how the two are told apart. PLT-33 has the user mark an import as part of the history load, which stores its file under a separate prefix that the lifecycle rule skips.
-3. **The Object Storage free allowance (PLT-44).** It is believed to be 20 GB and is not verified. The owner reads it from the OCI console before check 6 is set up.
-4. **Secrets added after the deployment decision (PLT-12).** That decision listed the database password, the session key and the tunnel token. Later decisions add the Gemini API key, the Object Storage and R2 credentials, the backup encryption key and the Healthchecks.io ping addresses. PLT-12 puts them all in the same file. No ticket lists them together.
-5. **Machine size.** The stack research gave 2 OCPUs and 12 GB as the free total for the account. The owner's billing shows two such machines free. PLT-1 follows the later figure.
-
 ## 1. Machine
 
 - **PLT-1** Production is the OCI machine `instance-k3s`: ARM (`VM.Standard.A1.Flex`), 2 OCPUs, 12 GB RAM, a 100 GB boot disk, in the Singapore region, on Ubuntu 26.04. Nothing else runs on it in Docker.
@@ -37,9 +27,9 @@ _Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues
 - **PLT-9** SSH stays reachable with key-only login, and passwords are disabled.
 - **PLT-10** Deployments use a separate SSH key that is restricted to the deploy command.
 - **PLT-11** The unused rpcbind service on the machine is switched off.
-- **PLT-12** Secrets live in one file on the machine that only the service account can read. GitHub holds only the deploy key. No secret is ever in the repository or in an issue.
+- **PLT-12** Secrets live in one file on the machine that only the service account can read: the database password, the session key, the Cloudflare Tunnel token, the Gemini API key, the OCI Object Storage credentials, the Cloudflare R2 credentials, the backup encryption key and the Healthchecks.io ping addresses. GitHub holds only the deploy key. No secret is ever in the repository or in an issue.
 
-_Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues/12), [Create a Gemini API key and read the free tier limits](https://github.com/byanto/niskora/issues/22)._
+_Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues/12), [Create a Gemini API key and read the free tier limits](https://github.com/byanto/niskora/issues/22), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 4. Delivery
 
@@ -56,12 +46,13 @@ _Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues
 - **PLT-18** There is no self-signup and no reset by email. v1 sends no mail.
 - **PLT-19** Each person has one account, and accounts are never shared, so that imports, purchase orders and corrections record who made them.
 - **PLT-20** There are no roles in v1. Every [user](../../GLOSSARY.md#people) can see and do everything, the buyer fields on a package's page included.
-- **PLT-21** A Users screen lets any user create an account and reset another user's password.
+- **PLT-21** A Users screen lets any user create an account, reset another user's password, and disable or enable another user's account.
 - **PLT-22** Any user can change their own password.
 - **PLT-23** The first account is created with a command on the server.
 - **PLT-24** Repeated failed logins are slowed down.
+- **PLT-45** A disabled account cannot log in, and its open sessions end at once. An account is never deleted, so everything it did keeps its name. Nobody can disable their own account, so at least one account can always log in.
 
-_Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues/12), [Frontend architecture and libraries](https://github.com/byanto/niskora/issues/26), [Main screens and navigation](https://github.com/byanto/niskora/issues/25), [Customer location analysis](https://github.com/byanto/niskora/issues/10)._
+_Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues/12), [Frontend architecture and libraries](https://github.com/byanto/niskora/issues/26), [Main screens and navigation](https://github.com/byanto/niskora/issues/25), [Customer location analysis](https://github.com/byanto/niskora/issues/10), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 6. Backups and stored files
 

@@ -4,20 +4,6 @@ The nine steps in which niskora v1 is built. Each step has a goal, what it depen
 
 Read [README.md](README.md) first. This file orders the work and adds no behaviour: every rule a step builds is in the area file it names. It does not cut build tickets. That happens after the map, and one step becomes several tickets.
 
-## Check this
-
-Points where the closed tickets leave the place of something in the order open. The owner confirms or corrects each one in the final review.
-
-1. **What each step contains.** The decision names the nine steps in one line each. The goal, the "depends on" and the "done when" of every step below were worked out from the area decisions and the module dependencies. They are a reading, not a decision.
-2. **Home grows step by step.** Home is first built in step 3 with data freshness and "needs attention". Its restock advice counts arrive with step 7 and its purchase order counts with step 8. Each later step also adds its own items to "needs attention" and its own count to the sidebar.
-3. **The Users screen is in step 1.** The decision says "login" for step 1. Accounts must exist before the operator can upload in step 2, so the Users screen is built with login.
-4. **The "orders import within 3 days" check waits for step 3.** Step 1 sets up monitoring, but this one check of the eight would raise an alert every day until order imports exist. It is switched on at the end of step 3.
-5. **Forwarders are in step 8.** A [forwarder](../../GLOSSARY.md#purchasing) matters only for the [forwarder invoice](../../GLOSSARY.md#purchasing), so the Forwarders screen is built with the documents and not with suppliers in step 6.
-6. **Campaign days are in step 7.** A [campaign day](../../GLOSSARY.md#restock) only changes the [sales rate](../../GLOSSARY.md#restock), so the screen is built with restock advice.
-7. **The Settings screen is split.** Its read-only prefix table belongs to the catalogue (step 2) and its default lead time to supply sources (step 6). The screen appears in step 2 and gains the lead time in step 6.
-8. **The history load comes before the first daily stock movement import is trusted.** Step 4 builds the stock movement import and then runs the one-off [history load](../../GLOSSARY.md#imports) of orders and stock movements on production. Whether the operator starts the daily stock movement upload before or after the history load is run is not settled. Either order gives the same data, because movements are merged on a natural key.
-9. **Photos need Object Storage in step 2.** Photos are copied after the Merchant SKU list import, so the bucket that step 1 creates for uploads and backups is also used for photos from step 2.
-
 ## Why this order
 
 - Deployment is first, so that every later step is used on real data the day it merges.
@@ -51,9 +37,9 @@ The module dependencies are in [engineering.md](engineering.md). A module is cre
 
 **Builds.**
 
-- The repository scaffold: `backend/` on Maven, `frontend/` on Vite with pnpm, and the Compose stack, as in [engineering.md](engineering.md).
+- The repository scaffold, on the newest Spring Boot 4 release that Spring Modulith and Spring AI both support that day, with the exact versions written into [engineering.md](engineering.md) (ENG-2): `backend/` on Maven, `frontend/` on Vite with pnpm, and the Compose stack, as in [engineering.md](engineering.md).
 - The merge gate in CI with every check, the protected `main` branch, the weekly dependency updates and the first migration.
-- The `common` and `identity` modules: login, the session, the Users screen and changing your own password, as in [platform.md](platform.md).
+- The `common` and `identity` modules: login, the session, the Users screen (adding, resetting a password, disabling and enabling) and changing your own password, as in [platform.md](platform.md).
 - The frontend shell with its sidebar, the design tokens, `docs/design.md`, `frontend/CLAUDE.md`, the fixed loading, empty and error states, and the translation setup, as in [frontend.md](frontend.md).
 - Production on the OCI machine: the Compose stack, the Cloudflare Tunnel, the secrets file, the image build on merge and the manual deploy workflow.
 - Backups: the nightly dump to Object Storage, the weekly copy to Cloudflare R2 and the monthly restore test.
@@ -102,6 +88,7 @@ _Area files: [foundation.md](foundation.md), [frontend.md](frontend.md)._
 **Builds.**
 
 - The inventory list import into the `stock` module as an [inventory snapshot](../../GLOSSARY.md#stock).
+- A comparison of BigSeller's three per-line order layouts on a sample, to learn whether a file in the wrong layout can be rejected (FND-95).
 - The order import into the `orders` module: packages replaced as a set, [component lines](../../GLOSSARY.md#orders), [held packages](../../GLOSSARY.md#imports) and their release on "Merchant SKUs added", [hub packages](../../GLOSSARY.md#orders), [unmapped lines](../../GLOSSARY.md#orders), [abandoned packages](../../GLOSSARY.md#orders), [demand](../../GLOSSARY.md#orders), and the buyer personal data in its own schema.
 - Screens: Packages, Package page, and Home with data freshness, "needs attention" and yesterday's counts. The SPU page and the Merchant SKU page gain the stock figures and the demand chart.
 - The search box in the shell.
@@ -125,7 +112,7 @@ _Area files: [foundation.md](foundation.md), [frontend.md](frontend.md), [platfo
 
 **Builds.**
 
-- The stock movement import: the merge on a natural key, the skipped shelf moves, unseen movement types stored and flagged, and [stock history gaps](../../GLOSSARY.md#stock).
+- The stock movement import, which the operator uploads daily from the day it is deployed, with the history load run right after: the merge on a natural key, the skipped shelf moves, unseen movement types stored and flagged, and [stock history gaps](../../GLOSSARY.md#stock).
 - The history load: long-range order and stock movement exports accepted through the same upload, marked so that their files are kept forever.
 - The stock movements on the Merchant SKU page, and the findings of this import in the report and under "needs attention".
 
@@ -149,7 +136,8 @@ _Area files: [foundation.md](foundation.md), [platform.md](platform.md), [engine
 - The `locations` module: the official list of [places](../../GLOSSARY.md#locations), [place aliases](../../GLOSSARY.md#locations), matching of [destinations](../../GLOSSARY.md#orders) and the analysis in both directions.
 - The province boundary file and the map.
 - Screens: Location analysis with its table, map and CSV, and Place aliases. The Package page gains the matched place, and the SPU page its link to the analysis.
-- [Unmatched destinations](../../GLOSSARY.md#locations) in the import report and under "needs attention".
+- [Unmatched destinations](../../GLOSSARY.md#locations) under "needs attention", and the link from the order import report to the Place aliases screen. An import report does not list them.
+- The choice of the file the place list is taken from, checked against the government decree.
 
 **Done when.**
 
@@ -157,6 +145,7 @@ _Area files: [foundation.md](foundation.md), [platform.md](platform.md), [engine
 - Correcting one unmatched spelling moves every package with that spelling to its place.
 - Lazada packages show as unknown and never as a guessed place.
 - The CSV holds the same figures as the screen and no buyer field.
+- Every island of 100 km² or more is drawn on the map, or is listed in [locations.md](locations.md) with the reason it is missing (LOC-43).
 
 _Area files: [locations.md](locations.md), [frontend.md](frontend.md)._
 
@@ -190,7 +179,7 @@ _Area files: [purchasing.md](purchasing.md), [frontend.md](frontend.md)._
 **Builds.**
 
 - The `restock` module: the stored sales rates, rebuilt on "import completed", on a campaign day change and on a new calculation version, and the [restock advice](../../GLOSSARY.md#restock) worked out live from them.
-- Screens: Restock advice with its supplier blocks and the "No supplier" block, and Campaign days. The SPU page and the Merchant SKU page gain the sales rate, days left, the restock level and the working. Home and the sidebar gain the restock counts.
+- Screens: Restock advice with its supplier blocks and the "No supplier" block, and Campaign days. The SPU page and the Merchant SKU page gain the sales rate, days left, the restock level and the working. Home and the sidebar gain the restock counts. Settings gains the safety days and the default order cycle.
 
 **Done when.**
 
@@ -213,12 +202,12 @@ _Area files: [restock.md](restock.md), [frontend.md](frontend.md)._
 - The `purchasing` module, second part: purchase orders and their lines, the statuses, the audit trail, [shortfalls](../../GLOSSARY.md#purchasing) and their outcomes, [resend lines](../../GLOSSARY.md#purchasing), and [on order](../../GLOSSARY.md#purchasing) feeding back into restock advice.
 - The three documents: the [Daftar Pesanan](../../GLOSSARY.md#purchasing), the forwarder invoice and the BigSeller import file.
 - The stock-in match.
-- Screens: Purchase orders, Purchase order page, Match stock-ins and Forwarders. Restock advice gains "Create draft purchase order". Home and the sidebar gain the purchase order counts and the unmatched stock-in count.
+- Screens: Purchase orders, Purchase order page, Match stock-ins and Forwarders. Restock advice gains "Create draft purchase order". Home and the sidebar gain the purchase order counts and the unmatched stock-in count. Settings gains the trading name.
 
 **Done when.**
 
 - The owner creates a draft from restock advice on production, places it, and sends the Daftar Pesanan to a real supplier.
-- The BigSeller import file made by niskora is accepted by BigSeller.
+- The BigSeller import file made by niskora is accepted by BigSeller, including one with an empty Unit Price (PUR-93).
 - After the goods are stocked in through BigSeller and the next stock movement import, the operator confirms the match and the lines show their received quantities.
 - A purchase order through 1688 produces the forwarder invoice with the marking code.
 - Two users changing the same purchase order at once get the conflict message and lose nothing they typed.
@@ -251,4 +240,4 @@ _Area files: [agent.md](agent.md), [frontend.md](frontend.md)._
 
 v1 is complete. Pricing is the first feature after it, and its model is in [later/pricing.md](later/pricing.md).
 
-_Sources: [Assemble the v1 spec and build order](https://github.com/byanto/niskora/issues/29), [Bounded contexts and module layout](https://github.com/byanto/niskora/issues/6), [Deployment, login and roles](https://github.com/byanto/niskora/issues/12), [Monitoring and alerting](https://github.com/byanto/niskora/issues/27)._
+_Sources: [Assemble the v1 spec and build order](https://github.com/byanto/niskora/issues/29), [Bounded contexts and module layout](https://github.com/byanto/niskora/issues/6), [Deployment, login and roles](https://github.com/byanto/niskora/issues/12), [Monitoring and alerting](https://github.com/byanto/niskora/issues/27), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._

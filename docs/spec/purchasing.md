@@ -4,25 +4,6 @@ Who the business buys from, what a purchase order is, how received goods are mat
 
 Read [README.md](README.md) first, then [foundation.md](foundation.md) and [restock.md](restock.md). Terms are defined in [`GLOSSARY.md`](../../GLOSSARY.md) and are not redefined here.
 
-## Check this
-
-Points where the closed tickets disagree, or leave a gap that a rule below had to fill. The later ticket wins in each case. The owner confirms or corrects each one in the final review.
-
-1. **One supplier name, and no check against BigSeller (PUR-2, PUR-3).** The purchase order decision gave a supplier a separate "name BigSeller knows it by", and the import test said that name is "checked against the BigSeller supplier list when it is entered" and that a supplier without it gets no import file. The later ticket on outside data says nothing about suppliers is imported and that the supplier's name itself must equal the name in BigSeller. PUR-2 follows the later ticket: one name, typed to match BigSeller. niskora then has no list to check it against, so a wrong name still creates a supplier in BigSeller without a warning. PUR-3 only reminds the user.
-2. **Document language on the supplier (PUR-1).** The purchase order decision listed a document language per supplier. The later tickets let the buying channel decide the documents and list the supplier's fields without it. PUR-1 has no document language.
-3. **Supplier city and phone (PUR-1).** The Daftar Pesanan prints the supplier's city and the forwarder invoice an optional phone number. The later list of supplier fields has only "contact". PUR-1 keeps city and phone as optional fields beside a free contact note.
-4. **Uploading a photo by hand (PUR-80).** The purchase order decision let a user upload a photo where one is missing. The later ticket says there is no photo upload by hand in v1. PUR-80 follows the later ticket: a neutral placeholder is printed.
-5. **Where the product link and the Chinese item name live (PUR-9, PUR-10).** The purchase order decision kept a 1688 link per SPU and supplier. The later ticket puts a product link on each supply source. PUR-9 follows the later ticket. The Chinese item name, units per carton and carton size stay per SPU and supplier (PUR-10), and the sheet reads all of them from SPU rows only.
-6. **The forwarder warehouse belongs to a 1688 purchase (PUR-27).** The layout decision says "a purchase order for a Chinese supplier names the forwarder warehouse". The later ticket says the buying channel is the one thing that marks a 1688 purchase. PUR-27 asks for a forwarder warehouse on a purchase order whose buying channel is 1688.
-7. **A 1688 purchase from a supplier whose currency is rupiah (PUR-81).** The forwarder invoice prints prices in yuan. Buying channel and currency are separate fields, so the pair "1688 and rupiah" is possible. PUR-81 offers the forwarder invoice only when the supplier's currency is yuan.
-8. **An empty Unit Price in the BigSeller import file (PUR-85).** The file leaves Unit Price empty for a yuan supplier and for a resend line. The import test used a unit price on every row, so BigSeller accepting an empty one is not proven. This must be tried on the first real file.
-9. **Which lead time gives the expected arrival (PUR-34).** "The placed date plus lead time" does not say whose lead time when lines have their own. PUR-34 uses the supplier's lead time and lets the user change the date.
-10. **A line cut to zero (PUR-39).** A placed line can be set to 0 when the supplier cannot deliver it. No ticket says how such a line closes. PUR-39 treats it as closed, with no shortfall, so the purchase order can still become Completed.
-11. **"Round up to full cartons" needs the sales rate (PUR-48).** The extra units are spread "in proportion to their sales rate". `restock` depends on `purchasing`, so `purchasing` cannot ask `restock` for it. PUR-48 uses the sales rate frozen on each line made from restock advice, and spreads evenly over lines that have none. This is a reading; another way is for `restock` to do the rounding and hand the result to `purchasing`.
-12. **Adding a Single SKU with no supply source (PUR-24).** The purchase order decision says this creates the supply source. With buying channels, PUR-24 creates it on the purchase order's buying channel.
-13. **The 1688 order number (PUR-28).** It was to head the forwarder invoice and is no longer printed anywhere. PUR-28 keeps it as an optional field shown on screen only.
-14. **A BigSeller document that covers two purchase orders (PUR-56).** The tickets say one purchase order can be matched to several BigSeller documents. They do not say whether one BigSeller document can be split over several purchase orders. PUR-56 allows it, since the match is confirmed per Single SKU.
-
 ## 1. Suppliers
 
 - **PUR-1** niskora keeps the list of [suppliers](../../GLOSSARY.md#purchasing). A supplier has a name, a currency (rupiah or yuan), a [lead time](../../GLOSSARY.md#purchasing) and an [order cycle](../../GLOSSARY.md#purchasing) in days, a usual [buying channel](../../GLOSSARY.md#purchasing), and optionally a city, a phone number, a contact note and one link (a Shopee store or a 1688 shop).
@@ -48,8 +29,9 @@ _Sources: [Purchase order model and documents](https://github.com/byanto/niskora
 - **PUR-16** A Single SKU added by an import inherits its SPU's supply sources when every existing Single SKU of the SPU has the same ones (the same suppliers and buying channels). Otherwise it has none. How `purchasing` hears of the new Single SKU is in [engineering.md](engineering.md) (ENG-15).
 - **PUR-17** Assigning a supplier to ticked SPUs in the "No supplier" block of restock advice creates one supply source per Single SKU of those SPUs, on the supplier's usual buying channel.
 - **PUR-18** Every change to a supplier or a supply source goes to the audit trail: who, when, the old value and the new one.
+- **PUR-92** 1688 sells in yuan only. A supplier whose usual buying channel is 1688, a supply source on the 1688 buying channel and a purchase order on the 1688 buying channel all require a supplier whose currency is yuan, and are refused otherwise.
 
-_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28)._
+_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 3. The supply source sheet
 
@@ -73,7 +55,7 @@ _Sources: [Purchase order model and documents](https://github.com/byanto/niskora
   | Product link | no | |
 
 - **PUR-22** An upload adds and updates and never deletes. An empty cell never clears a stored value, and a missing row never removes a supply source. Every change goes to the audit trail together with its upload.
-- **PUR-23** Any faulty row rejects the whole file: an unknown supplier, an unknown code, a Combination SKU or a number that cannot be read. The answer lists every faulty row with its reason. An unknown supplier name never creates a supplier.
+- **PUR-23** Any faulty row rejects the whole file: an unknown supplier, an unknown code, a Combination SKU, a number that cannot be read or the 1688 buying channel for a supplier whose currency is rupiah (PUR-92). The answer lists every faulty row with its reason. An unknown supplier name never creates a supplier.
 
 _Sources: [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28)._
 
@@ -82,21 +64,21 @@ _Sources: [Bringing in the Google Sheets and Grist data](https://github.com/byan
 - **PUR-24** A [purchase order](../../GLOSSARY.md#purchasing) is for one supplier through one buying channel. It holds Single SKUs only, and Combination SKUs are refused. Merchant SKUs of different companies may be mixed. Adding a Single SKU that has no supply source for that supplier and buying channel creates it.
 - **PUR-25** A purchase order is made from one supplier's restock advice ([restock.md](restock.md), RST-42) or by hand.
 - **PUR-26** Its number is niskora's own running number per year with no separators, in the form `NK` + year + four digits, such as `NK20260001`. It is given when the Draft is created and is never reused.
-- **PUR-27** The buying channel comes from the supply sources of the lines and can be changed while the purchase order is a Draft. Changing it reads each line's goods price and product link again from the supply source of the new buying channel. A line with no supply source for that buying channel keeps its price and is flagged. A purchase order on the 1688 buying channel also names the [forwarder warehouse](../../GLOSSARY.md#purchasing) the goods go to.
+- **PUR-27** The buying channel comes from the supply sources of the lines and can be changed while the purchase order is a Draft. Changing it reads each line's goods price and product link again from the supply source of the new buying channel. A line with no supply source for that buying channel keeps its price and is flagged. A purchase order on the 1688 buying channel also names the [forwarder warehouse](../../GLOSSARY.md#purchasing) the goods go to. It may be empty on a Draft and is required before the purchase order is marked Placed.
 - **PUR-28** Optional fields: a free note, the local courier and tracking number (the Chinese courier that carries the goods to the forwarder), and the 1688 order number, which shows on screen only.
 - **PUR-29** A [purchase order line](../../GLOSSARY.md#purchasing) is one Single SKU with its ordered quantity and goods price. Lines are shown grouped by SPU. A line made from restock advice keeps the frozen working behind it (RST-43).
 - **PUR-30** The goods price of a new line comes from the supply source and can be changed on the line. Every line except a [resend line](../../GLOSSARY.md#purchasing) needs a goods price before the purchase order is placed, and the price can still be changed afterwards.
-- **PUR-31** When the purchase order is placed, each line's goods price is written back to its supply source. There is no price history table: past purchase orders are the history.
+- **PUR-31** When the purchase order is placed, each line's goods price is written back to its supply source. A goods price changed on a line after that is written back as well, so the supply source always holds the last price agreed. There is no price history table: past purchase orders are the history.
 - **PUR-32** A line holds the goods price only, in the supplier's currency. niskora stores no exchange rate and works out no landed cost. Once a line is received, niskora shows the stock-in price from the movement beside the goods price.
 
-_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Reporting and read model approach](https://github.com/byanto/niskora/issues/15)._
+_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Reporting and read model approach](https://github.com/byanto/niskora/issues/15), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 5. States and changes
 
 - **PUR-33** The states are Draft, [Placed](../../GLOSSARY.md#purchasing), Completed and Cancelled. A Draft counts for nothing. "Partly received" is derived from the lines and is not a state.
 - **PUR-34** A user marks a Draft as Placed after the supplier has been asked. [Expected arrival](../../GLOSSARY.md#purchasing) is then the placed date plus the supplier's lead time, and a user can change it.
 - **PUR-35** A Placed purchase order with open lines past its expected arrival is Overdue.
-- **PUR-36** A Placed purchase order can still change until a line is received: a quantity lowered or raised, a line set to 0, a line added or removed. This is how the supplier's own changes (out of stock, another variant offered) are recorded. Payment and shortfalls follow the current quantities.
+- **PUR-36** A Placed purchase order can still change, line by line. A line can be changed until its own first stock-in: its quantity lowered or raised, set to 0, or the line removed. A line can be added for as long as the purchase order is Placed. Once a line has a stock-in, only "rest still coming", closing by hand and the shortfall outcome remain for it. This is how the supplier's own changes (out of stock, another variant offered) are recorded. Payment and shortfalls follow the current quantities.
 - **PUR-37** Every change to a Placed purchase order is kept in the audit trail: who, when, the old value and the new one. There are no numbered revisions.
 - **PUR-38** A line is open from the moment the purchase order is placed. It becomes a [closed line](../../GLOSSARY.md#purchasing) on its first [Purchase Stock-In](../../GLOSSARY.md#stock) whatever the count, unless a user has marked it "rest still coming", or when a user closes it by hand.
 - **PUR-39** A line whose quantity is 0 expects nothing. It is closed and has no shortfall.
@@ -104,7 +86,7 @@ _Sources: [Purchase order model and documents](https://github.com/byanto/niskora
 - **PUR-41** A purchase order can be Cancelled only before any stock-in. After that, the lines that will not arrive are closed by hand.
 - **PUR-42** `purchasing` answers [on order](../../GLOSSARY.md#purchasing) per Single SKU: the units on the open lines of Placed purchase orders, resend lines included, as [restock.md](restock.md) reads it (RST-24, RST-25).
 
-_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Restock calculation rules](https://github.com/byanto/niskora/issues/8)._
+_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Restock calculation rules](https://github.com/byanto/niskora/issues/8), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 6. Cartons and volume
 
@@ -144,10 +126,11 @@ _Sources: [Purchase order model and documents](https://github.com/byanto/niskora
 - **PUR-59** An [overage](../../GLOSSARY.md#purchasing) is recorded as a fact with no follow-up.
 - **PUR-60** With To be resent the line stays closed and its units do not count as on order. niskora keeps the owed units per supplier and shows them on the supplier and with that supplier's restock advice.
 - **PUR-61** When the next purchase order for that supplier is started, niskora offers the owed units as resend lines. A resend line has no goods price, names the earlier purchase order and counts as on order like any other line.
+- **PUR-91** When a resend line is added to a Draft, niskora lowers the ordinary line of the same Single SKU on that Draft by the resend quantity, never below 0, and shows that it did. A user can raise it again. Without this, a Draft made from restock advice would bring in the suggested quantity and the owed units on top.
 - **PUR-62** The arrival of a resend line settles the earlier shortfall. If it comes short again, the resend line has a shortfall of its own with its own outcome.
 - **PUR-63** Owed units can be turned into Refunded or Loss at any time before they are resent.
 
-_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20)._
+_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 9. Forwarders
 
@@ -206,7 +189,7 @@ _Sources: [Layout of the supplier purchase order PDF and the forwarder invoice](
 
 In Chinese, A4 portrait, a classic table. It is given to the forwarder for customs only.
 
-- **PUR-81** It is offered for a purchase order on the 1688 buying channel whose supplier's currency is yuan. There is one per purchase order.
+- **PUR-81** It is offered for every purchase order on the 1688 buying channel, whose supplier's currency is always yuan (PUR-92). There is one per purchase order.
 - **PUR-82** Layout:
 
   | Part | Content |
@@ -221,7 +204,7 @@ In Chinese, A4 portrait, a classic table. It is given to the forwarder for custo
 - **PUR-83** There is one row per Chinese item name and goods price: an SPU whose Merchant SKUs differ in price gives one row per price. A row shows the total quantity of its lines. There are no variants, no SPU code and no carton columns.
 - **PUR-84** Never printed: the niskora purchase order number, the 1688 order number, the date, the currency and the trading name. When the purchase order changes, the forwarder invoice is exported again.
 
-_Sources: [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28)._
+_Sources: [Layout of the supplier purchase order PDF and the forwarder invoice](https://github.com/byanto/niskora/issues/20), [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 13. The BigSeller import file
 
@@ -243,10 +226,11 @@ _Sources: [Layout of the supplier purchase order PDF and the forwarder invoice](
 
 - **PUR-86** BigSeller only ever sees rupiah in v1. For a rupiah supplier the Unit Price is a starting value, and the owner overwrites it in BigSeller with the final cost, goods price plus delivery. For a yuan supplier the owner types the final rupiah cost there. niskora keeps yuan prices for the forwarder invoice.
 - **PUR-87** Every row of one file carries the same supplier, date and note. A line whose quantity is 0 is left out.
+- **PUR-93** That BigSeller accepts an empty Unit Price has not been seen yet: the import test had a price on every row. The build step for this file is done only after a file with an empty Unit Price has been loaded into BigSeller. If BigSeller refuses it, the file writes `0` there and PUR-85 is corrected.
 - **PUR-88** The file can be downloaded again and always reflects the current lines.
 - **PUR-89** The stock-in price the owner enters in BigSeller returns to niskora inside the [Weighted Average Cost](../../GLOSSARY.md#cost) and on the Purchase Stock-In movement.
 
-_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Test the BigSeller purchase order import with a small file](https://github.com/byanto/niskora/issues/21), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28)._
+_Sources: [Purchase order model and documents](https://github.com/byanto/niskora/issues/9), [Test the BigSeller purchase order import with a small file](https://github.com/byanto/niskora/issues/21), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
 ## 14. The 1688 flow
 
