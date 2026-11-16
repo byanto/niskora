@@ -263,15 +263,23 @@ _Avoid_: Actual profit, true margin
 ### Purchasing
 
 **Supplier**:
-A party the business buys Merchant SKUs from. niskora keeps the list.
+A party the business buys Merchant SKUs from. niskora keeps the list. A party the business buys from in two ways is still one supplier.
 _Avoid_: Vendor, seller, factory
 
+**Buying channel**:
+The way the business contacts a supplier and buys from it: Shopee (the supplier's Shopee store), WhatsApp, 1688 or Other. The same supplier can be bought from through more than one, at different prices. A supplier's usual buying channel is the one assumed when none is stated.
+_Avoid_: Supplier source, supplier type, purchase channel
+
 **Supply source**:
-The record that one supplier can supply one Merchant SKU. A Merchant SKU can have several, and niskora keeps them.
+The record that one supplier can supply one Merchant SKU through one buying channel, with the goods price of that channel. A Merchant SKU can have several, even from the same supplier, and niskora keeps them.
 _Avoid_: Supplier link, supplier catalogue, supplier item
 
+**Supply source sheet**:
+The spreadsheet niskora hands out and takes back to add or update many supply sources at once. A row names an SPU, meaning every Single SKU of it, or one Merchant SKU.
+_Avoid_: Supplier import, supplier catalogue file, price list
+
 **Purchase order**:
-niskora's document asking one supplier for stated quantities of Single SKUs, which may belong to different companies. It is a Draft until it is Placed with the supplier, Completed when every line is closed, or Cancelled. BigSeller's own purchase document, created when goods arrive, is not a purchase order.
+niskora's document asking one supplier, through one buying channel, for stated quantities of Single SKUs, which may belong to different companies. It is a Draft until it is Placed with the supplier, Completed when every line is closed, or Cancelled. BigSeller's own purchase document, created when goods arrive, is not a purchase order.
 _Avoid_: PO request, purchase plan, order
 
 **Purchase order line**:
@@ -355,7 +363,7 @@ The units on niskora's purchase orders that have been placed with a supplier and
 _Avoid_: On the way, incoming, in transit
 
 **Lead time**:
-The days from placing a purchase order with a supplier to the goods being in the warehouse. A supplier has one, and a supply source can have its own.
+The days from placing a purchase order with a supplier to the goods being in the warehouse. A supplier has one, and a supply source can have its own. A Single SKU with no supply source is given the default lead time.
 _Avoid_: Delivery time, shipping time
 
 **Order cycle**:
