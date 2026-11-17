@@ -1,0 +1,4 @@
+# Shell scripts run inside Linux containers, so they keep LF on every checkout.
+mvnw text eol=lf
+*.sh text eol=lf
+*.cmd text eol=crlf

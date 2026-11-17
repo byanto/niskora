@@ -7,7 +7,17 @@ Read [README.md](README.md) first. Terms are defined in [`GLOSSARY.md`](../../GL
 ## 1. Stack
 
 - **ENG-1** Java 25.
-- **ENG-2** Spring Boot 4, with the Spring Security and Spring Framework versions it manages, and Spring Modulith and Spring AI through their own BOMs. The first build step starts on the newest Spring Boot 4 release that Spring Modulith and Spring AI both support on that day, and writes the exact versions into this rule. The stack research found 4.1.2, Modulith 2.1.2 and Spring AI 2.0.2 aligned in November 2026.
+- **ENG-2** Spring Boot 4, with the Spring Security and Spring Framework versions it manages, and Spring Modulith and Spring AI through their own BOMs. The build started on 2026-11-17 on the newest Spring Boot 4 release that Spring Modulith and Spring AI both supported that day:
+
+  | Component | Version | How it is set |
+  | --- | --- | --- |
+  | Spring Boot | 4.1.2 | parent of `backend/pom.xml` |
+  | Spring Framework | 7.0.10 | managed by Spring Boot |
+  | Spring Security | 7.1.2 | managed by Spring Boot |
+  | Spring Modulith | 2.1.2 | `spring-modulith-bom` |
+  | Spring AI | 2.0.2 | `spring-ai-bom` |
+
+  Checked against each project's own sources: Maven Central lists these as the newest releases (Boot 4.2.0, Modulith 2.2.0 and Spring AI 2.1.0 are still release candidates), the Spring AI reference says "Spring AI 2.0.x supports Spring Boot 4.0.x and 4.1.x", and the Modulith 2.1.2 and Spring AI 2.0.2 build files are built on Spring Boot 4.1.2. A pull request that changes one of these versions updates this table.
 - **ENG-3** PostgreSQL 18, with Flyway (and `flyway-database-postgresql`), Testcontainers and the PostgreSQL driver in the versions Spring Boot manages. Liquibase is not used.
 - **ENG-4** springdoc-openapi generates the OpenAPI document.
 - **ENG-5** Every container image is built for `linux/arm64`, because production is an ARM machine.
@@ -166,7 +176,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
 
 ### Paths and identifiers
 
-- **ENG-68** Every endpoint lives under `/api/<module>/...`, with plural, lowercase, hyphenated nouns: `/api/purchasing/purchase-orders/{id}`. Paths carry no version.
+- **ENG-68** Every endpoint lives under `/api/<module>/...`, with plural, lowercase, hyphenated nouns: `/api/purchasing/purchase-orders/{id}`. Paths carry no version. The one exception is `/api/health`, an operational path and not a module endpoint: Actuator answers only on an internal management port that is never published, and the proxy forwards this single path to its health endpoint, so no other Actuator endpoint is reachable from outside.
 - **ENG-69** Create, read, edit and delete use the plain resource path with `POST`, `GET`, `PATCH` and `DELETE`. A path never carries a verb for one of these four.
 - **ENG-70** A state change that is a named domain operation is a verb sub-path, such as `POST /api/purchasing/purchase-orders/{id}/place`, within three limits:
   1. The verb is the last path segment, directly after a resource id.

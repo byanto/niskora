@@ -1,0 +1,23 @@
+# Serves the built React app and forwards /api to the backend, so the browser sees one
+# origin (PLT-5). TLS ends at the Cloudflare Tunnel in production, so Caddy listens on plain HTTP.
+:80 {
+	encode
+
+	# The one public health path. Actuator answers only on the backend's internal
+	# management port, and no other Actuator endpoint is reachable from outside (ENG-68).
+	handle /api/health {
+		rewrite * /actuator/health
+		reverse_proxy backend:8081
+	}
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	handle {
+		root * /srv
+		# A client-rendered app: every path that is not a file gets index.html.
+		try_files {path} /index.html
+		file_server
+	}
+}

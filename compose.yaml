@@ -1,0 +1,44 @@
+# The local stack: `docker compose up`, then open http://localhost:8000.
+# Production has the same shape plus the Cloudflare Tunnel connector (PLT-4).
+name: niskora
+
+services:
+  postgres:
+    image: postgres:18@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+    environment:
+      POSTGRES_DB: niskora
+      POSTGRES_USER: niskora
+      # A local-only password. Production reads its own from the secrets file (PLT-12).
+      POSTGRES_PASSWORD: niskora
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U niskora -d niskora"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/niskora
+      SPRING_DATASOURCE_USERNAME: niskora
+      SPRING_DATASOURCE_PASSWORD: niskora
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      # For the Vite dev server's /api proxy (FE-83), bound to this machine only: the API, then
+      # Actuator's management port. Production publishes neither.
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8081"
+
+  caddy:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:8000:80"
+
+volumes:
+  postgres-data:

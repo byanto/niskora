@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: niskora
+  # The datasource comes from SPRING_DATASOURCE_URL, _USERNAME and _PASSWORD (see compose.yaml).
+  jpa:
+    # Flyway owns the schema; Hibernate only checks that it matches (ENG-63).
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    # Each module keeps its migrations in db/migration/<module>/ (ENG-60).
+    locations: classpath:db/migration
+    clean-disabled: true
+
+management:
+  server:
+    # Actuator answers only on this internal port, which is never published to the internet.
+    # Caddy forwards the one public health path to it (ENG-68).
+    port: 8081

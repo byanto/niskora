@@ -42,6 +42,14 @@ In progress. The design for v1 is nearly complete and the implementation is star
 
 When a technical choice has to be made, development cost gets little weight. Quality, simplicity, robustness and long-term maintainability come first.
 
+## Running it locally
+
+You need Docker, JDK 25 and Node 24 with Corepack (for pnpm).
+
+- `docker compose up --build` starts PostgreSQL 18, the backend and Caddy. Open <http://localhost:8000>.
+- `pnpm dev` in `frontend/` starts the Vite dev server on <http://localhost:5173>. It forwards `/api` to the backend from Compose.
+- The local gate is `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`.
+
 ## How I work on it
 
 niskora is developed with an AI coding agent (Claude Code) in the loop. The agent does the legwork: research, drafting, and writing code. I make the decisions, and I read, question and approve every line before it lands. The decision map, the glossary and the ADRs exist so that both of us work from the same written ground truth instead of from memory.
