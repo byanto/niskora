@@ -2,5 +2,9 @@
 samples/
 .env
 .claude/worktrees/
+# Links made by `npx skills`; the skills themselves are committed in .agents/skills/
+.claude/skills/
+# Agent instructions are part of the repo, whatever a global gitignore says
+!CLAUDE.md
 # Review pages made by the Lavish Editor
 .lavish/
