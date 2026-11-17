@@ -21,6 +21,12 @@
     <java.version>25</java.version>
     <spring-modulith.version>2.1.2</spring-modulith.version>
     <spring-ai.version>2.0.2</spring-ai.version>
+    <!-- Build guard rails (ENG-49). Renovate keeps them current (ENG-52). -->
+    <error-prone.version>2.52.0</error-prone.version>
+    <nullaway.version>0.14.4</nullaway.version>
+    <spotless.version>3.11.0</spotless.version>
+    <google-java-format.version>2.0.0</google-java-format.version>
+    <jacoco.version>0.8.16</jacoco.version>
     <!-- Extended by the surefire argLine below; a coverage agent can add to it too. -->
     <argLine/>
   </properties>
@@ -66,6 +72,14 @@
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.springframework.modulith</groupId>
+      <artifactId>spring-modulith-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
@@ -74,6 +88,16 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.modulith</groupId>
+      <artifactId>spring-modulith-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -94,6 +118,55 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
+      <!-- Every compiler warning fails the build, Error Prone's and NullAway's included (ENG-49).
+           Error Prone needs the javac internals opened in .mvn/jvm.config. NullAway treats all of
+           com.niskora as null-marked, so a nullable value carries JSpecify's @Nullable. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <showWarnings>true</showWarnings>
+          <failOnWarning>true</failOnWarning>
+          <compilerArgs>
+            <arg>-Xlint:all</arg>
+            <arg>-XDcompilePolicy=simple</arg>
+            <arg>--should-stop=ifError=FLOW</arg>
+            <arg>-Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.niskora -XepOpt:NullAway:JSpecifyMode=true</arg>
+          </compilerArgs>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.google.errorprone</groupId>
+              <artifactId>error_prone_core</artifactId>
+              <version>${error-prone.version}</version>
+            </path>
+            <path>
+              <groupId>com.uber.nullaway</groupId>
+              <artifactId>nullaway</artifactId>
+              <version>${nullaway.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <!-- `./mvnw spotless:apply` fixes what this check reports. -->
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless.version}</version>
+        <configuration>
+          <java>
+            <googleJavaFormat>
+              <version>${google-java-format.version}</version>
+            </googleJavaFormat>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Mockito is loaded as a Java agent, since JDK 21+ warns on agents attached at runtime. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -112,6 +185,26 @@
         <configuration>
           <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
         </configuration>
+      </plugin>
+      <!-- Coverage is reported in target/site/jacoco, with no percentage gate (ENG-42). -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

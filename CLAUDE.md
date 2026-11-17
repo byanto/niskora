@@ -6,7 +6,7 @@ Real business data lives in the gitignored `samples/` folder. Never commit it or
 
 ## Before pushing
 
-Run the local gate and push only when it is green: `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`. Nothing runs it for you: there are no git hooks, and CI in `.github/workflows/` is the only gate (ENG-48).
+Run the local gate and push only when it is green: `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`. `./mvnw spotless:apply` fixes backend formatting, and a changed `docs/modules/` diagram is committed with the change. Nothing runs it for you: there are no git hooks, and CI in `.github/workflows/` is the only gate (ENG-48).
 
 ## Agent skills
 

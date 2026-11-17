@@ -49,6 +49,7 @@ You need Docker, JDK 25 and Node 24 with Corepack (for pnpm).
 - `docker compose up --build` starts PostgreSQL 18, the backend and Caddy. Open <http://localhost:8000>.
 - `pnpm dev` in `frontend/` starts the Vite dev server on <http://localhost:5173>. It forwards `/api` to the backend from Compose.
 - The local gate is `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`.
+- `./mvnw spotless:apply` in `backend/` fixes the formatting that the gate checks. `./mvnw verify` also regenerates the module diagram in `docs/modules/` and writes a coverage report to `backend/target/site/jacoco/`.
 
 ## How I work on it
 

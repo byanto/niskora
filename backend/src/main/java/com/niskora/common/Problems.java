@@ -1,0 +1,41 @@
+package com.niskora.common;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
+
+/**
+ * The error shape of the API: Problem Details (RFC 9457) with a stable error code in the {@value
+ * #CODE} property, which the frontend maps to a translation key (ENG-65).
+ *
+ * <p>A module refuses a request by throwing Spring's {@code ErrorResponseException} with a problem
+ * built here. An error that names no code of its own gets the name of its status, such as {@code
+ * NOT_FOUND}.
+ */
+public final class Problems {
+
+  /** The property that carries the stable error code. */
+  public static final String CODE = "code";
+
+  private Problems() {}
+
+  /** A problem with the given status, stable error code and human-readable detail. */
+  public static ProblemDetail of(HttpStatusCode status, String code, String detail) {
+    ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+    problem.setProperty(CODE, code);
+    return problem;
+  }
+
+  /** A problem with the given status, its name as the code and no detail. */
+  public static ProblemDetail of(HttpStatusCode status) {
+    ProblemDetail problem = ProblemDetail.forStatus(status);
+    problem.setProperty(CODE, codeOf(status));
+    return problem;
+  }
+
+  /** The code of an error that names none of its own: the name of its status. */
+  public static String codeOf(HttpStatusCode status) {
+    HttpStatus known = HttpStatus.resolve(status.value());
+    return known == null ? "HTTP_" + status.value() : known.name();
+  }
+}

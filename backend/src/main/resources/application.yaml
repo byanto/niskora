@@ -7,13 +7,33 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      # Moments are stored in UTC whatever zone the machine runs in (ENG-64).
+      hibernate.jdbc.time_zone: UTC
   flyway:
     # Each module keeps its migrations in db/migration/<module>/ (ENG-60).
     locations: classpath:db/migration
     clean-disabled: true
+
+logging:
+  structured:
+    # One JSON object per line on stdout, collected by Docker's journald driver (PLT-41).
+    format:
+      console: ecs
 
 management:
   server:
     # Actuator answers only on this internal port, which is never published to the internet.
     # Caddy forwards the one public health path to it (ENG-68).
     port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      # A bare {"status":"UP"} or "DOWN", with no components, details or group names (PLT-43).
+      show-components: never
+      show-details: never
+      probes:
+        enabled: false
