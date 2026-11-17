@@ -27,7 +27,7 @@ _Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues
 - **PLT-9** SSH stays reachable with key-only login, and passwords are disabled.
 - **PLT-10** Deployments use a separate SSH key that is restricted to the deploy command.
 - **PLT-11** The unused rpcbind service on the machine is switched off.
-- **PLT-12** Secrets live in one file on the machine that only the service account can read: the database password, the session key, the Cloudflare Tunnel token, the Gemini API key, the OCI Object Storage credentials, the Cloudflare R2 credentials, the backup encryption key and the Healthchecks.io ping addresses. GitHub holds only the deploy key. No secret is ever in the repository or in an issue.
+- **PLT-12** Secrets live in one file on the machine that only the service account can read: the database password, the session key, the Cloudflare Tunnel token, the Gemini API key, the OCI Object Storage credentials, the Cloudflare R2 credentials, the backup encryption key, the Healthchecks.io ping addresses and the real company prefix table (FND-21). GitHub holds only the deploy key. No secret is ever in the repository or in an issue.
 
 _Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues/12), [Create a Gemini API key and read the free tier limits](https://github.com/byanto/niskora/issues/22), [Final review of the v1 spec](https://github.com/byanto/niskora/issues/36)._
 
