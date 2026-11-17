@@ -1,0 +1,106 @@
+# The merge gate (ENG-46) and image publishing (PLT-13). It holds the ENG-47 checks that exist so
+# far; later tickets add theirs. Every push to a pull request runs the checks, including a build
+# of both images without pushing them. A merge to main runs the checks again and, when they pass,
+# pushes the linux/arm64 images (ENG-5) to GitHub's container registry, tagged by commit hash
+# (ENG-57). No step retries a failed test (ENG-41).
+# Actions are pinned by digest (ENG-53); the comment after each is the release it points at.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  # A newer push to a pull request makes the older run pointless. On main each commit has its own
+  # group, so no run is cancelled or dropped from the queue and every merged commit gets its images.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      # Testcontainers uses the runner's own Docker.
+      - run: ./mvnw -B verify
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Installs the pnpm named by packageManager in package.json and Node 24, then runs a frozen
+      # install.
+      - uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
+        with:
+          working-directory: frontend
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      - run: pnpm check
+
+  # Pull requests: both images must build. They run beside the tests, not after them.
+  images:
+    name: Image
+    if: github.event_name == 'pull_request'
+    # An ARM runner builds linux/arm64 natively, with no emulation.
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        image: [backend, frontend]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.image }}
+          platforms: linux/arm64
+          push: false
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  # main: the images are pushed only once the checks passed on the same commit.
+  publish:
+    name: Publish
+    if: github.event_name == 'push'
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        image: [backend, frontend]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.image }}
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository }}-${{ matrix.image }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max

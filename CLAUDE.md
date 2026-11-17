@@ -4,6 +4,10 @@ A "business brain" that complements BigSeller for a multi-store Indonesian e-com
 
 Real business data lives in the gitignored `samples/` folder. Never commit it or paste customer data into issues, docs or commits.
 
+## Before pushing
+
+Run the local gate and push only when it is green: `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`. Nothing runs it for you: there are no git hooks, and CI in `.github/workflows/` is the only gate (ENG-48).
+
 ## Agent skills
 
 ### Issue tracker
