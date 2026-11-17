@@ -11,6 +11,9 @@ COPY src src
 RUN sh mvnw -B package -DskipTests && cp target/niskora-backend-*.jar app.jar
 
 FROM eclipse-temurin:25-jre@sha256:945247f9d092703e0c6be92243ef3c51640229e23ab34d353c8dcdc73e6cd4e6
+# Sent on every response (ENG-92). CI passes the commit hash; a local build says "dev".
+ARG BUILD_ID=dev
+ENV NISKORA_BUILD_ID=${BUILD_ID}
 RUN useradd --system --no-create-home niskora
 USER niskora
 WORKDIR /app

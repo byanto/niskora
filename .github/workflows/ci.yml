@@ -1,8 +1,9 @@
 # The merge gate (ENG-46) and image publishing (PLT-13). It holds the ENG-47 checks that exist so
-# far; later tickets add theirs. Every push to a pull request runs the checks, including a build
-# of both images without pushing them. A merge to main runs the checks again and, when they pass,
-# pushes the linux/arm64 images (ENG-5) to GitHub's container registry, tagged by commit hash
-# (ENG-57). No step retries a failed test (ENG-41).
+# far; later tickets add theirs. The breaking-change check (ENG-91) is in api.yml. Every push to a
+# pull request runs the checks, including a build of both images without pushing them. A merge to
+# main runs the checks again and, when they pass, pushes the linux/arm64 images (ENG-5) to
+# GitHub's container registry, tagged by commit hash (ENG-57). No step retries a failed test
+# (ENG-41).
 # Actions are pinned by digest (ENG-53); the comment after each is the release it points at.
 name: CI
 
@@ -37,6 +38,13 @@ jobs:
           cache-dependency-path: backend/pom.xml
       # Testcontainers uses the runner's own Docker.
       - run: ./mvnw -B verify
+      # The OpenAPI drift check (ENG-89): the build regenerates the OpenAPI document, and the module
+      # diagram with it, so any difference from what is committed fails here.
+      - name: Generated files are committed
+        run: |
+          git status --porcelain
+          git --no-pager diff
+          test -z "$(git status --porcelain)"
 
   frontend:
     name: Frontend
@@ -54,7 +62,14 @@ jobs:
           runtime: node@24
           cache: true
           require-lockfile: true
+      # The OpenAPI drift check (ENG-89): pnpm check regenerates the API types from the committed
+      # OpenAPI document, so any difference from the committed types fails here.
       - run: pnpm check
+      - name: Generated files are committed
+        run: |
+          git status --porcelain
+          git --no-pager diff
+          test -z "$(git status --porcelain)"
 
   # Pull requests: both images must build. They run beside the tests, not after them.
   images:
@@ -102,5 +117,7 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ghcr.io/${{ github.repository }}-${{ matrix.image }}:${{ github.sha }}
+          # The backend sends it on every response (ENG-92).
+          build-args: BUILD_ID=${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max

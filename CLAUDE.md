@@ -6,7 +6,18 @@ Real business data lives in the gitignored `samples/` folder. Never commit it or
 
 ## Before pushing
 
-Run the local gate and push only when it is green: `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`. `./mvnw spotless:apply` fixes backend formatting, and a changed `docs/modules/` diagram is committed with the change. Nothing runs it for you: there are no git hooks, and CI in `.github/workflows/` is the only gate (ENG-48).
+Run the local gate and push only when it is green: `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`. `./mvnw spotless:apply` fixes backend formatting. The gate regenerates the `docs/modules/` diagram, `docs/api/openapi.yaml` and `frontend/src/api/schema.d.ts`; commit any change to them, since CI fails when a build leaves the tree different. Nothing runs the gate for you: there are no git hooks, and CI in `.github/workflows/` is the only gate (ENG-48).
+
+## API contract
+
+The backend is the source of truth for the API (ENG-89). A ticket that adds or changes an endpoint works contract first (ENG-90), in this order:
+
+1. Write the controller signature and the request and response types, with no behaviour yet.
+2. Regenerate the OpenAPI document: `./mvnw test -Dtest=OpenApiDocumentTest` in `backend/` writes `docs/api/openapi.yaml`.
+3. Regenerate the client types: `pnpm api:generate` in `frontend/` writes `src/api/schema.d.ts`.
+4. Only then write the behaviour, test first.
+
+A removal or a rename takes two releases (ENG-91). CI fails a pull request whose document breaks the one on `main`, unless it carries the `planned-removal` label.
 
 ## Agent skills
 

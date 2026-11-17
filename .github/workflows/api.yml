@@ -1,0 +1,45 @@
+# The breaking-change check (ENG-91). The API changes additively within one release, so a pull
+# request fails when its OpenAPI document breaks a client of the one on main, unless it carries the
+# planned-removal label: the second release of a removal or a rename. It is a workflow of its own
+# so that adding or removing the label reruns only this check.
+# Actions are pinned by digest (ENG-53); the comment after each is the release it points at.
+name: API
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  breaking:
+    name: OpenAPI breaking changes
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch the OpenAPI document on main
+        id: base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          if git cat-file -e "origin/$BASE_REF:docs/api/openapi.yaml" 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::$BASE_REF has no OpenAPI document yet, so nothing can break."
+          fi
+      # Without the label a breaking change fails the check. With it the changes are still listed.
+      # The document never leaves CI: no upload for a review page and no comment on the PR.
+      - if: steps.base.outputs.exists == 'true'
+        uses: oasdiff/oasdiff-action/breaking@0546e2ebdc9d3589d594cfcef445c61ca02cabf1 # v0.2.0
+        with:
+          base: origin/${{ github.base_ref }}:docs/api/openapi.yaml
+          revision: docs/api/openapi.yaml
+          fail-on: ${{ !contains(github.event.pull_request.labels.*.name, 'planned-removal') && 'ERR' || '' }}
+          review: "false"
+          github-token: ""

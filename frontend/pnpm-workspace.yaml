@@ -1,0 +1,5 @@
+# openapi-typescript 7.13 declares TypeScript 5 as its peer but works with TypeScript 6; its TS 6
+# support is pending upstream. Drop this rule once a release declares it.
+peerDependencyRules:
+  allowedVersions:
+    openapi-typescript>typescript: "6"

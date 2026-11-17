@@ -27,6 +27,8 @@
     <spotless.version>3.11.0</spotless.version>
     <google-java-format.version>2.0.0</google-java-format.version>
     <jacoco.version>0.8.16</jacoco.version>
+    <!-- 3.2.0 is built on Spring Boot 4.1.2, the version in ENG-2. -->
+    <springdoc.version>3.2.0</springdoc.version>
     <!-- Extended by the surefire argLine below; a coverage agent can add to it too. -->
     <argLine/>
   </properties>
@@ -74,6 +76,12 @@
     <dependency>
       <groupId>org.springframework.modulith</groupId>
       <artifactId>spring-modulith-api</artifactId>
+    </dependency>
+    <!-- The OpenAPI document only, without Swagger UI (ENG-4). -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+      <version>${springdoc.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jspecify</groupId>
