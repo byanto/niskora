@@ -8,8 +8,8 @@
     "config:best-practices",
     // Keeps the full release after each action's digest, as in `# v7.0.1`.
     "helpers:pinGitHubActionDigestsToSemver",
-    // Pull request titles follow Conventional Commits (ENG-55), for example
-    // `chore(deps): update spring family`.
+    // Pull request titles follow Conventional Commits (ENG-55): `fix(deps):` for runtime
+    // dependencies, `chore(deps):` for the rest.
     ":semanticCommits",
   ],
   timezone: "Asia/Jakarta",
@@ -31,6 +31,18 @@
         '"(?<depName>postgres):(?<currentValue>[\\w.-]+)@(?<currentDigest>sha256:[a-f0-9]{64})"',
       ],
       datasourceTemplate: "docker",
+    },
+    // Spotless names google-java-format by version only, with no Maven coordinates, so the maven
+    // manager does not see it.
+    {
+      customType: "regex",
+      description: "google-java-format in backend/pom.xml",
+      managerFilePatterns: ["/^backend/pom\\.xml$/"],
+      matchStrings: [
+        "<google-java-format\\.version>(?<currentValue>[^<]+)</google-java-format\\.version>",
+      ],
+      depNameTemplate: "com.google.googlejavaformat:google-java-format",
+      datasourceTemplate: "maven",
     },
     // The ENG-2 version table names the Spring versions set in backend/pom.xml. Renovate updates
     // these three rows in the same pull request; the owner updates Spring Framework and Spring
@@ -76,7 +88,8 @@
     {
       // The rest of the backend build: Error Prone, NullAway, Spotless, JaCoCo, the Maven wrapper.
       description: "Backend build tools in one pull request",
-      matchManagers: ["maven", "maven-wrapper"],
+      // By file, so that the google-java-format manager above lands here too.
+      matchFileNames: ["backend/pom.xml", "backend/.mvn/wrapper/maven-wrapper.properties"],
       groupName: "backend build tools",
     },
     {
