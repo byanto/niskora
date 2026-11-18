@@ -22,8 +22,8 @@ Colours are named by role, never by hue (FE-99), so a dark set can replace the v
 - Text `text-ink`, secondary text `text-muted`, links `text-link`.
 - Primary buttons and the active tab: `bg-primary text-primary-ink`. The current sidebar item: `bg-nav-active text-nav-active-ink`.
 - A state uses its three tokens together: `text-late bg-late-bg border-late-line`, and the same for `now` and `fine`. `late` also marks errors, `now` warnings and `fine` success.
-- A bare `border` is the light edge of cards, tables and dividers. A control's edge is `border-input-border`, which reaches the 3:1 a control needs (FE-101).
-- Every text and background pair reaches 4.5:1 (FE-100). A new pair goes into `palette.test.ts` with the component that uses it.
+- A bare `border` is the light edge of cards, tables and dividers, and of nothing else. A control's edge is `border-input-border`, which reaches the 3:1 a control needs (FE-101). A state badge's edge is its `-line` token; a neutral badge has no visible edge.
+- Every text and background pair reaches 4.5:1 (FE-100). A new pair goes into `palette.test.ts` with the component that uses it. A disabled control is the one exception: its `opacity-50` text is below 4.5:1, which WCAG 1.4.3 allows for an inactive control.
 
 Lint rejects a raw colour (`#0f6e66`, `rgb()`, `oklch()`) in any string in `src/` outside tests, in a class or a style. A colour that has no token yet gets one in `index.css` and a line here.
 

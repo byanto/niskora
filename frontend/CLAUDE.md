@@ -2,6 +2,8 @@
 
 The spec for screens is `docs/spec/frontend.md`. Build the look with `docs/design.md`: read it before you write or restyle a component.
 
+Import across the top-level folders of `src/` through `@/` (`@/ui/button`, `@/test/axe`), and within one folder by a relative path (`./health`). The shadcn CLI writes `@/` imports, and the feature boundary lint (FE-50) resolves both.
+
 ## niskora rules that win over any skill
 
 These hold whatever a skill such as `frontend-ui-engineering` says (FE-111):

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { expectNoAxeViolations } from "../test/axe";
+import { expectNoAxeViolations } from "@/test/axe";
 import { FreshnessBadge } from "./FreshnessBadge";
 
 // Freshness takes the restock level badges: Stale takes Late's, Fresh takes Fine's (FE-104).

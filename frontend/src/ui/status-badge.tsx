@@ -7,27 +7,28 @@ import TriangleAlert from "lucide-react/icons/triangle-alert";
 import type * as React from "react";
 import { Badge } from "./badge";
 
+type BadgeProps = React.ComponentProps<typeof Badge>;
+
 /**
  * The states niskora marks: a restock level (FE-103), data freshness (FE-104) and the severity
  * of a "needs attention" item (FE-105). Each has its own icon, so it reads without colour (FE-58).
  */
 export type Status = "late" | "now" | "fine" | "info";
 
-const icons: Record<Status, LucideIcon> = {
-  late: OctagonAlert,
-  now: TriangleAlert,
-  fine: CircleCheck,
-  info: Info,
+/** Each state's icon (FE-103) and badge tone: the one place they are paired. */
+const looks: Record<Status, { icon: LucideIcon; tone: NonNullable<BadgeProps["tone"]> }> = {
+  late: { icon: OctagonAlert, tone: "late" },
+  now: { icon: TriangleAlert, tone: "now" },
+  fine: { icon: CircleCheck, tone: "fine" },
+  info: { icon: Info, tone: "neutral" },
 };
-
-const tones = { late: "late", now: "now", fine: "fine", info: "neutral" } as const;
 
 /** The icon of a state, beside text that names it. */
 export function StatusIcon({
   status,
   ...props
 }: { status: Status } & React.ComponentProps<LucideIcon>) {
-  const Icon = icons[status];
+  const Icon = looks[status].icon;
   return <Icon aria-hidden="true" {...props} />;
 }
 
@@ -36,12 +37,9 @@ export function StatusBadge({
   status,
   children,
   ...props
-}: { status: Status; children: React.ReactNode } & Omit<
-  React.ComponentProps<typeof Badge>,
-  "tone"
->) {
+}: { status: Status; children: React.ReactNode } & Omit<BadgeProps, "tone">) {
   return (
-    <Badge tone={tones[status]} {...props}>
+    <Badge tone={looks[status].tone} {...props}>
       <StatusIcon status={status} />
       {children}
     </Badge>

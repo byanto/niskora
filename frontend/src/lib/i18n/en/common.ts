@@ -7,8 +7,4 @@ export const common = {
     up: "Up",
     down: "Down",
   },
-  freshness: {
-    FRESH: "Fresh",
-    STALE: "Stale",
-  },
 };

@@ -12,6 +12,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 // out: they need the app's tsconfig, and the rules under test need no types.
 const project = mkdtempSync(join(tmpdir(), "niskora-lint-"));
 const files = {
+  // The `@/` alias as the app's tsconfig.json declares it, so an aliased import resolves too.
+  "tsconfig.json": JSON.stringify({ compilerOptions: { paths: { "@/*": ["./src/*"] } } }),
   "src/features/purchasing/index.ts": 'export { supplierQuery } from "./queries";\n',
   "src/features/purchasing/queries.ts": "export const supplierQuery = 1;\n",
   "src/features/restock/queries.ts": "export const restockQuery = 1;\n",
@@ -30,8 +32,16 @@ const eslint = new ESLint({
   overrideConfigFile: resolve("eslint.config.js"),
   overrideConfig: [
     tseslint.configs.disableTypeChecked,
-    // The boundary patterns are read from the root of the copy, not from where the tests run.
-    { settings: { "boundaries/root-path": project } },
+    // The boundary patterns and the alias are read from the root of the copy, not from where the
+    // tests run.
+    {
+      settings: {
+        "boundaries/root-path": project,
+        "import/resolver": {
+          typescript: { alwaysTryTypes: true, project: join(project, "tsconfig.json") },
+        },
+      },
+    },
   ],
 });
 
@@ -49,6 +59,14 @@ async function ruleIdsFor(code: string, filePath: string) {
 describe("feature boundaries (FE-50)", () => {
   it("forbids a feature from importing another feature's internals", async () => {
     const code = 'export { supplierQuery } from "../purchasing/queries";\n';
+
+    expect(await ruleIdsFor(code, "src/features/restock/RestockScreen.ts")).toEqual([
+      "boundaries/dependencies",
+    ]);
+  });
+
+  it("forbids it through the @/ alias too", async () => {
+    const code = 'export { supplierQuery } from "@/features/purchasing/queries";\n';
 
     expect(await ruleIdsFor(code, "src/features/restock/RestockScreen.ts")).toEqual([
       "boundaries/dependencies",

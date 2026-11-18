@@ -11,6 +11,6 @@ const statuses: Record<Freshness, Status> = { FRESH: "fine", STALE: "late" };
 
 /** A data set's freshness with its icon and its word (FE-104). */
 export function FreshnessBadge({ freshness }: { freshness: Freshness }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("imports");
   return <StatusBadge status={statuses[freshness]}>{t(`freshness.${freshness}`)}</StatusBadge>;
 }

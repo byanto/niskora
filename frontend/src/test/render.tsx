@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
 import { render } from "@testing-library/react";
-import { createAppRouter } from "../app/router";
+import { createAppRouter } from "@/app/router";
 
 /**
  * Renders the whole app at a URL, as a user opening that link would see it, with its own router

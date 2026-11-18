@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { expectNoAxeViolations } from "../../test/axe";
+import { expectNoAxeViolations } from "@/test/axe";
 import { RestockLevelBadge } from "./RestockLevelBadge";
 
 // A level reads without colour: its own icon and its word, always shown (FE-58, FE-103).

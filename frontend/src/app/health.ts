@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { api } from "../lib/api/client";
+import { api } from "@/lib/api/client";
 
 /** Up only when the backend answers that it is; anything else, a failed request too, is down. */
 export type BackendStatus = "up" | "down";

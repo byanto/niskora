@@ -57,7 +57,7 @@ describe("palette (FE-99)", () => {
 
   // A control's edge and the focus outline must stand out from what they sit on (FE-101, FE-102).
   const edgePairs = ["input-border", "primary"].flatMap((edge) =>
-    ["bg", "surface"].map((background) => [edge, background] as const),
+    ["bg", "surface", "surface-2"].map((background) => [edge, background] as const),
   );
 
   it.each(edgePairs)("%s edge on %s reaches 3:1", (edge, background) => {
