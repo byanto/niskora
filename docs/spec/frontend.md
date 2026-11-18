@@ -136,7 +136,8 @@ _Sources: [Frontend architecture and libraries](https://github.com/byanto/niskor
   | `features/<module>/` | one folder per backend module that has screens (`catalogue`, `orders`, `imports`, `purchasing`, `restock`, `locations`, `agent`, `identity`), with its screens, components, query definitions and tests side by side |
   | `routes/` | thin route files: each declares the URL and its search parameters and renders a feature screen |
   | `ui/` | the shadcn components |
-  | `lib/` | the API client, formatting and translations |
+  | `lib/` | the API client, formatting, translations and the search parameters shared by routes |
+  | `test/` | the test setup: the fake network, rendering a route and the axe check |
 
 - **FE-50** A lint rule forbids one feature from importing another feature's internals.
 
@@ -169,7 +170,7 @@ _Sources: [Frontend architecture and libraries](https://github.com/byanto/niskor
 
 - **FE-64** Text comes from i18next (`react-i18next`) with typed keys and one namespace per backend module. No user-facing text is written straight into a component.
 - **FE-65** The UI is in English. Bahasa Indonesia can be added later as a second set of translations and is not part of v1.
-- **FE-66** Numbers and dates are shown in the Indonesian form: `1.250.000`, `16 Nov 2026`, and 24-hour times in Jakarta time.
+- **FE-66** Numbers and dates are shown in the Indonesian form: `1.250.000`, `16 Nov 2026`, and 24-hour times in Jakarta time. Month names are English and times take a colon, to match the English UI: `16 May 2026`, `14:05`.
 - **FE-67** The backend sends business dates as plain dates and moments in UTC. The frontend only formats them, with `Intl`.
 - **FE-68** The frontend never works out "today", "yesterday" or a period by itself. The backend does.
 - **FE-69** Terms on screen are the terms of [`GLOSSARY.md`](../../GLOSSARY.md), spelled the same way.

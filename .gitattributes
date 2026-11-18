@@ -5,6 +5,11 @@ mvnw text eol=lf
 # The generated API files are written with LF, so they keep LF on every checkout too, or a Windows
 # checkout shows them changed after the gate.
 docs/api/openapi.yaml text eol=lf
+# Frontend files keep LF on every checkout, the line ending Prettier writes and checks, so
+# `pnpm check` passes on a Windows checkout too.
+frontend/** text=auto eol=lf
 # Generated from docs/api/openapi.yaml by `pnpm api:generate`. The document itself stays expanded
 # in diffs, since it is where a reviewer sees an API change.
-frontend/src/api/schema.d.ts linguist-generated=true text eol=lf
+frontend/src/lib/api/schema.d.ts linguist-generated=true
+# Generated from src/routes by `pnpm routes:generate` (or the Vite plugin) and committed.
+frontend/src/routeTree.gen.ts linguist-generated=true
