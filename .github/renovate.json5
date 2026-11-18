@@ -1,0 +1,112 @@
+// Dependency updates (ENG-52, ENG-53). Renovate opens grouped pull requests once a week, and each
+// one goes through the full merge gate (ENG-46). Nothing merges by itself: the owner merges every
+// pull request (ENG-56).
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    // Includes pinning Docker images and GitHub Actions by digest (ENG-53).
+    "config:best-practices",
+    // Keeps the full release after each action's digest, as in `# v7.0.1`.
+    "helpers:pinGitHubActionDigestsToSemver",
+    // Pull request titles follow Conventional Commits (ENG-55): `fix(deps):` for runtime
+    // dependencies, `chore(deps):` for the rest.
+    ":semanticCommits",
+  ],
+  timezone: "Asia/Jakarta",
+  // Weekly: Monday before 06:00. Security fixes do not wait for it.
+  schedule: ["* 0-5 * * 1"],
+
+  customManagers: [
+    // The Testcontainers PostgreSQL image is pinned to the same digest as compose.yaml, so both are
+    // updated in the same pull request.
+    {
+      customType: "regex",
+      description: "PostgreSQL image in the backend tests",
+      managerFilePatterns: ["/^backend/src/test/java/.+\\.java$/"],
+      matchStrings: [
+        '"(?<depName>postgres):(?<currentValue>[\\w.-]+)@(?<currentDigest>sha256:[a-f0-9]{64})"',
+      ],
+      datasourceTemplate: "docker",
+    },
+    // Spotless names google-java-format by version only, with no Maven coordinates, so the maven
+    // manager does not see it.
+    {
+      customType: "regex",
+      description: "google-java-format in backend/pom.xml",
+      managerFilePatterns: ["/^backend/pom\\.xml$/"],
+      matchStrings: [
+        "<google-java-format\\.version>(?<currentValue>[^<]+)</google-java-format\\.version>",
+      ],
+      depNameTemplate: "com.google.googlejavaformat:google-java-format",
+      datasourceTemplate: "maven",
+    },
+    // The ENG-2 version table names the Spring versions set in backend/pom.xml. Renovate updates
+    // these three rows in the same pull request; the owner updates Spring Framework and Spring
+    // Security, which Spring Boot manages, before merging it.
+    {
+      customType: "regex",
+      description: "Spring Boot in the ENG-2 version table",
+      managerFilePatterns: ["/^docs/spec/engineering\\.md$/"],
+      matchStrings: ["\\| Spring Boot \\| (?<currentValue>[^\\s|]+) \\|"],
+      depNameTemplate: "org.springframework.boot:spring-boot-starter-parent",
+      datasourceTemplate: "maven",
+    },
+    {
+      customType: "regex",
+      description: "Spring Modulith in the ENG-2 version table",
+      managerFilePatterns: ["/^docs/spec/engineering\\.md$/"],
+      matchStrings: ["\\| Spring Modulith \\| (?<currentValue>[^\\s|]+) \\|"],
+      depNameTemplate: "org.springframework.modulith:spring-modulith-bom",
+      datasourceTemplate: "maven",
+    },
+    {
+      customType: "regex",
+      description: "Spring AI in the ENG-2 version table",
+      managerFilePatterns: ["/^docs/spec/engineering\\.md$/"],
+      matchStrings: ["\\| Spring AI \\| (?<currentValue>[^\\s|]+) \\|"],
+      depNameTemplate: "org.springframework.ai:spring-ai-bom",
+      datasourceTemplate: "maven",
+    },
+  ],
+
+  // Later rules override earlier ones. Major updates get a pull request of their own in each group.
+  packageRules: [
+    {
+      // The rest of the backend build: Error Prone, NullAway, Spotless, google-java-format, JaCoCo
+      // and the Maven wrapper. By file, so that the google-java-format manager lands here too.
+      description: "Backend build tools in one pull request",
+      matchFileNames: ["backend/pom.xml", "backend/.mvn/wrapper/maven-wrapper.properties"],
+      groupName: "backend build tools",
+    },
+    {
+      // springdoc is built against one Spring Boot version, so it moves with the family.
+      description: "The Spring family in one pull request",
+      matchPackageNames: [
+        "org.springframework.boot:**",
+        "org.springframework.modulith:**",
+        "org.springframework.ai:**",
+        "org.springdoc:**",
+      ],
+      groupName: "Spring family",
+      // A Spring minor can need code changes, so patches get a pull request of their own and are
+      // not held back while it waits.
+      separateMinorPatch: true,
+    },
+    {
+      description: "The frontend in one pull request",
+      matchManagers: ["npm"],
+      groupName: "frontend",
+    },
+    {
+      // The Dockerfiles, compose.yaml and the backend tests' PostgreSQL image.
+      description: "Docker images in one pull request",
+      matchDatasources: ["docker"],
+      groupName: "Docker images",
+    },
+    {
+      description: "GitHub Actions in one pull request",
+      matchManagers: ["github-actions"],
+      groupName: "GitHub Actions",
+    },
+  ],
+}
