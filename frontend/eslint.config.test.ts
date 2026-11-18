@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { ESLint } from "eslint";
 import tseslint from "typescript-eslint";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 // The project's own ESLint config, run on a throwaway copy of the folder layout (FE-49), so a rule
 // can be shown failing without any such code in the app. The boundary rule only judges an import
@@ -34,6 +34,12 @@ const eslint = new ESLint({
     { settings: { "boundaries/root-path": project } },
   ],
 });
+
+// The first run loads every plugin and the import resolver, which can take seconds on a busy
+// machine. It is paid here, under its own limit, so each test times only its own linting.
+beforeAll(async () => {
+  await eslint.lintText("export {};\n", { filePath: join(project, "src/warm-up.ts") });
+}, 60_000);
 
 async function ruleIdsFor(code: string, filePath: string) {
   const [result] = await eslint.lintText(code, { filePath: join(project, filePath) });
@@ -75,5 +81,48 @@ describe("user-facing text (FE-64)", () => {
     expect(await ruleIdsFor(code, "src/features/restock/Title.tsx")).toEqual([
       "i18next/no-literal-string",
     ]);
+  });
+});
+
+describe("design tokens (FE-46, FE-94)", () => {
+  it.each([
+    ["a hex colour", 'export const look = "bg-[#0f6e66]";\n'],
+    ["a colour function", 'export const look = { color: "rgb(15 110 102)" };\n'],
+    ["an oklch colour", 'export const look = "oklch(0.5 0.1 180)";\n'],
+    ["a step off the 4 px grid", 'export const look = "gap-1.5";\n'],
+    ["an arbitrary length", 'export const look = "w-[13px]";\n'],
+  ])("forbids %s in a component", async (_, code) => {
+    expect(await ruleIdsFor(code, "src/ui/look.ts")).toEqual(["no-restricted-syntax"]);
+  });
+
+  it("forbids a raw value in a template literal", async () => {
+    const code = "export const look = (on: boolean) => `p-4 ${on ? 'x' : 'y'} size-3.5`;\n";
+
+    expect(await ruleIdsFor(code, "src/ui/look.ts")).toEqual(["no-restricted-syntax"]);
+  });
+
+  it("allows tokens, grid steps and arbitrary variants", async () => {
+    const code =
+      'export const look = "h-control rounded-control border-input-border bg-surface p-4 text-sm text-ink data-[state=open]:bg-surface-2 [&>svg]:size-3 grid-cols-[1fr_auto] w-[50%]";\n';
+
+    expect(await ruleIdsFor(code, "src/ui/look.ts")).toEqual([]);
+  });
+});
+
+describe("icon and primitive imports", () => {
+  it.each([
+    ['import { Info } from "lucide-react";\nexport { Info };\n'],
+    ['import { Slot } from "radix-ui";\nexport { Slot };\n'],
+  ])("forbids the package index: %s", async (code) => {
+    expect(await ruleIdsFor(code, "src/ui/look.ts")).toEqual([
+      "@typescript-eslint/no-restricted-imports",
+    ]);
+  });
+
+  it("allows one icon, one primitive and the icon type", async () => {
+    const code =
+      'import type { LucideIcon } from "lucide-react";\nimport Info from "lucide-react/icons/info";\nimport * as Slot from "radix-ui/slot";\nexport type { LucideIcon };\nexport { Info, Slot };\n';
+
+    expect(await ruleIdsFor(code, "src/ui/look.ts")).toEqual([]);
   });
 });

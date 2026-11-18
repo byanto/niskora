@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
@@ -8,7 +10,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   // The router plugin reads tsr.config.json, the same file `pnpm routes:generate` reads, and adds
   // code splitting, which only a build does. It must come before react().
-  plugins: [tanstackRouter({ autoCodeSplitting: true }), react()],
+  plugins: [tanstackRouter({ autoCodeSplitting: true }), react(), tailwindcss()],
+  // `@/` is `src/`, as in tsconfig.json, so components added by the shadcn CLI resolve.
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   server: {
     proxy: {
       "/api/health": {
@@ -21,7 +25,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}", "eslint.config.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}", "*.test.ts"],
     restoreMocks: true,
   },
 });
