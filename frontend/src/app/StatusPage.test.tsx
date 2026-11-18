@@ -1,9 +1,9 @@
 import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
-import { expectNoAxeViolations } from "../test/axe";
-import { renderRoute } from "../test/render";
-import { server } from "../test/server";
+import { expectNoAxeViolations } from "@/test/axe";
+import { renderRoute } from "@/test/render";
+import { server } from "@/test/server";
 
 describe("Status page", () => {
   it("shows the backend as up when it answers UP", async () => {
