@@ -4,4 +4,5 @@ mvnw text eol=lf
 *.cmd text eol=crlf
 # Generated from docs/api/openapi.yaml by `pnpm api:generate`. The document itself stays expanded
 # in diffs, since it is where a reviewer sees an API change.
-frontend/src/api/schema.d.ts linguist-generated=true
+# It is written with LF, so it keeps LF on every checkout too, or a Windows checkout shows it changed.
+frontend/src/api/schema.d.ts linguist-generated=true text eol=lf

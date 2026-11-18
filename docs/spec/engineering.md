@@ -17,7 +17,7 @@ Read [README.md](README.md) first. Terms are defined in [`GLOSSARY.md`](../../GL
   | Spring Modulith | 2.1.2 | `spring-modulith-bom` |
   | Spring AI | 2.0.2 | `spring-ai-bom` |
 
-  Checked against each project's own sources: Maven Central lists these as the newest releases (Boot 4.2.0, Modulith 2.2.0 and Spring AI 2.1.0 are still release candidates), the Spring AI reference says "Spring AI 2.0.x supports Spring Boot 4.0.x and 4.1.x", and the Modulith 2.1.2 and Spring AI 2.0.2 build files are built on Spring Boot 4.1.2. A pull request that changes one of these versions updates this table.
+  Checked against each project's own sources: Maven Central lists these as the newest releases (Boot 4.2.0, Modulith 2.2.0 and Spring AI 2.1.0 are still release candidates), the Spring AI reference says "Spring AI 2.0.x supports Spring Boot 4.0.x and 4.1.x", and the Modulith 2.1.2 and Spring AI 2.0.2 build files are built on Spring Boot 4.1.2. Renovate updates the Spring Boot, Spring Modulith and Spring AI rows in the pull request that changes them (ENG-52). The owner updates the Spring Framework and Spring Security rows, which follow Spring Boot.
 - **ENG-3** PostgreSQL 18, with Flyway (and `flyway-database-postgresql`), Testcontainers and the PostgreSQL driver in the versions Spring Boot manages. Liquibase is not used.
 - **ENG-4** springdoc-openapi generates the OpenAPI document.
 - **ENG-5** Every container image is built for `linux/arm64`, because production is an ARM machine.

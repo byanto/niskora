@@ -1,0 +1,119 @@
+// Dependency updates (ENG-52, ENG-53). Renovate opens grouped pull requests once a week, and each
+// one goes through the full merge gate (ENG-46). Patch, minor and digest updates merge by
+// themselves once green. Major updates and new Spring Boot minors wait for the owner.
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    // Includes pinning Docker images and GitHub Actions by digest (ENG-53).
+    "config:best-practices",
+    // Keeps the full release after each action's digest, as in `# v7.0.1`.
+    "helpers:pinGitHubActionDigestsToSemver",
+    // Pull request titles follow Conventional Commits (ENG-55), for example
+    // `chore(deps): update spring family`.
+    ":semanticCommits",
+  ],
+  timezone: "Asia/Jakarta",
+  // Weekly: Monday before 06:00. Security fixes do not wait for it.
+  schedule: ["* 0-5 * * 1"],
+  // The pull request merges through GitHub's auto-merge, only once every required check is green,
+  // and squashed so that main stays one commit per change (ENG-54).
+  platformAutomerge: true,
+  automergeStrategy: "squash",
+
+  customManagers: [
+    // The Testcontainers PostgreSQL image is pinned to the same digest as compose.yaml, so both are
+    // updated in the same pull request.
+    {
+      customType: "regex",
+      description: "PostgreSQL image in the backend tests",
+      managerFilePatterns: ["/^backend/src/test/java/.+\\.java$/"],
+      matchStrings: [
+        '"(?<depName>postgres):(?<currentValue>[\\w.-]+)@(?<currentDigest>sha256:[a-f0-9]{64})"',
+      ],
+      datasourceTemplate: "docker",
+    },
+    // The ENG-2 version table names the Spring versions set in backend/pom.xml. Renovate updates
+    // these three rows in the same pull request; the owner updates Spring Framework and Spring
+    // Security, which Spring Boot manages.
+    {
+      customType: "regex",
+      description: "Spring Boot in the ENG-2 version table",
+      managerFilePatterns: ["/^docs/spec/engineering\\.md$/"],
+      matchStrings: ["\\| Spring Boot \\| (?<currentValue>[^\\s|]+) \\|"],
+      depNameTemplate: "org.springframework.boot:spring-boot-starter-parent",
+      datasourceTemplate: "maven",
+    },
+    {
+      customType: "regex",
+      description: "Spring Modulith in the ENG-2 version table",
+      managerFilePatterns: ["/^docs/spec/engineering\\.md$/"],
+      matchStrings: ["\\| Spring Modulith \\| (?<currentValue>[^\\s|]+) \\|"],
+      depNameTemplate: "org.springframework.modulith:spring-modulith-bom",
+      datasourceTemplate: "maven",
+    },
+    {
+      customType: "regex",
+      description: "Spring AI in the ENG-2 version table",
+      managerFilePatterns: ["/^docs/spec/engineering\\.md$/"],
+      matchStrings: ["\\| Spring AI \\| (?<currentValue>[^\\s|]+) \\|"],
+      depNameTemplate: "org.springframework.ai:spring-ai-bom",
+      datasourceTemplate: "maven",
+    },
+  ],
+
+  // Later rules override earlier ones.
+  packageRules: [
+    {
+      description: "Patch, minor and digest updates merge by themselves once green",
+      matchUpdateTypes: ["patch", "minor", "digest", "pin", "pinDigest"],
+      automerge: true,
+    },
+    {
+      description: "Major updates wait for the owner",
+      matchUpdateTypes: ["major"],
+      automerge: false,
+    },
+    {
+      // The rest of the backend build: Error Prone, NullAway, Spotless, JaCoCo, the Maven wrapper.
+      description: "Backend build tools in one pull request",
+      matchManagers: ["maven", "maven-wrapper"],
+      groupName: "backend build tools",
+    },
+    {
+      // springdoc is built against one Spring Boot version, so it moves with the family.
+      description: "The Spring family in one pull request",
+      matchPackageNames: [
+        "org.springframework.boot:**",
+        "org.springframework.modulith:**",
+        "org.springframework.ai:**",
+        "org.springdoc:**",
+      ],
+      groupName: "Spring family",
+      // A Spring Boot minor waits for the owner, so patches get a pull request of their own and
+      // are not held back with it.
+      separateMinorPatch: true,
+    },
+    {
+      description: "A new Spring Boot minor waits for the owner",
+      matchPackageNames: ["org.springframework.boot:**"],
+      matchUpdateTypes: ["minor"],
+      automerge: false,
+    },
+    {
+      description: "The frontend in one pull request",
+      matchManagers: ["npm"],
+      groupName: "frontend",
+    },
+    {
+      // The Dockerfiles, compose.yaml and the backend tests' PostgreSQL image.
+      description: "Docker images in one pull request",
+      matchDatasources: ["docker"],
+      groupName: "Docker images",
+    },
+    {
+      description: "GitHub Actions in one pull request",
+      matchManagers: ["github-actions"],
+      groupName: "GitHub Actions",
+    },
+  ],
+}
