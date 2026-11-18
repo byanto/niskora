@@ -1,6 +1,6 @@
 // Dependency updates (ENG-52, ENG-53). Renovate opens grouped pull requests once a week, and each
-// one goes through the full merge gate (ENG-46). Patch, minor and digest updates merge by
-// themselves once green. Major updates and new Spring Boot minors wait for the owner.
+// one goes through the full merge gate (ENG-46). Nothing merges by itself: the owner merges every
+// pull request (ENG-56).
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
@@ -15,10 +15,6 @@
   timezone: "Asia/Jakarta",
   // Weekly: Monday before 06:00. Security fixes do not wait for it.
   schedule: ["* 0-5 * * 1"],
-  // The pull request merges through GitHub's auto-merge, only once every required check is green,
-  // and squashed so that main stays one commit per change (ENG-54).
-  platformAutomerge: true,
-  automergeStrategy: "squash",
 
   customManagers: [
     // The Testcontainers PostgreSQL image is pinned to the same digest as compose.yaml, so both are
@@ -46,7 +42,7 @@
     },
     // The ENG-2 version table names the Spring versions set in backend/pom.xml. Renovate updates
     // these three rows in the same pull request; the owner updates Spring Framework and Spring
-    // Security, which Spring Boot manages.
+    // Security, which Spring Boot manages, before merging it.
     {
       customType: "regex",
       description: "Spring Boot in the ENG-2 version table",
@@ -73,22 +69,12 @@
     },
   ],
 
-  // Later rules override earlier ones.
+  // Later rules override earlier ones. Major updates get a pull request of their own in each group.
   packageRules: [
     {
-      description: "Patch, minor and digest updates merge by themselves once green",
-      matchUpdateTypes: ["patch", "minor", "digest", "pin", "pinDigest"],
-      automerge: true,
-    },
-    {
-      description: "Major updates wait for the owner",
-      matchUpdateTypes: ["major"],
-      automerge: false,
-    },
-    {
-      // The rest of the backend build: Error Prone, NullAway, Spotless, JaCoCo, the Maven wrapper.
+      // The rest of the backend build: Error Prone, NullAway, Spotless, google-java-format, JaCoCo
+      // and the Maven wrapper. By file, so that the google-java-format manager lands here too.
       description: "Backend build tools in one pull request",
-      // By file, so that the google-java-format manager above lands here too.
       matchFileNames: ["backend/pom.xml", "backend/.mvn/wrapper/maven-wrapper.properties"],
       groupName: "backend build tools",
     },
@@ -102,15 +88,9 @@
         "org.springdoc:**",
       ],
       groupName: "Spring family",
-      // A Spring Boot minor waits for the owner, so patches get a pull request of their own and
-      // are not held back with it.
+      // A Spring minor can need code changes, so patches get a pull request of their own and are
+      // not held back while it waits.
       separateMinorPatch: true,
-    },
-    {
-      description: "A new Spring Boot minor waits for the owner",
-      matchPackageNames: ["org.springframework.boot:**"],
-      matchUpdateTypes: ["minor"],
-      automerge: false,
     },
     {
       description: "The frontend in one pull request",
