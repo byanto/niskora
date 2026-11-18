@@ -4,5 +4,35 @@ info:
   version: "1"
 servers:
 - url: /
-paths: {}
-components: {}
+paths:
+  /api/health:
+    get:
+      operationId: health
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+          description: Up
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+          description: Not up
+      summary: Whether the backend is up
+components:
+  schemas:
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - UP
+          - DOWN
+          - OUT_OF_SERVICE
+          - UNKNOWN
+      required:
+      - status

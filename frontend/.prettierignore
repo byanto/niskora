@@ -1,0 +1,4 @@
+# Generated, and checked for drift by CI instead.
+src/lib/api/schema.d.ts
+src/routeTree.gen.ts
+pnpm-lock.yaml

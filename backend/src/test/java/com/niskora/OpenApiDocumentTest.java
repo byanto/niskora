@@ -39,7 +39,9 @@ class OpenApiDocumentTest {
         .startsWith("openapi: 3.1.")
         .contains("title: niskora API")
         .contains("- url: /")
-        .doesNotContain("localhost");
+        .doesNotContain("localhost")
+        // The operational health path, which no controller serves (ENG-68).
+        .contains("/api/health:");
 
     Files.createDirectories(DOCUMENT.getParent());
     Files.writeString(DOCUMENT, document, StandardCharsets.UTF_8);
