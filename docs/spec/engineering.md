@@ -236,7 +236,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
   | 428 | a change sent without `If-Match` |
   | 429 | too many failed logins with one login name, with a `Retry-After` header in seconds |
 
-- **ENG-82** A validation error carries an `errors` array with every field error at once. Each entry is `{ "pointer": "/lines/2/quantity", "code": "MUST_BE_POSITIVE", "detail": "..." }`: a JSON Pointer to the field and its own stable code, which the frontend translates like the top-level code.
+- **ENG-82** A validation error carries an `errors` array with every field error of its kind at once: every shape error in a 400, or, once the shape is right, every broken business rule in a 422 (ENG-81). Each entry is `{ "pointer": "/lines/2/quantity", "code": "MUST_BE_POSITIVE", "detail": "..." }`: a JSON Pointer to the field and its own stable code, which the frontend translates like the top-level code.
 
 ### Edits
 
