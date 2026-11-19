@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as ShellRouteImport } from "./routes/_shell";
 import { Route as ShellIndexRouteImport } from "./routes/_shell/index";
+import { Route as ShellImportsRouteImport } from "./routes/_shell/imports";
+import { Route as ShellUsersRouteImport } from "./routes/_shell/users";
 
 const ShellRoute = ShellRouteImport.update({
   id: "/_shell",
@@ -21,24 +23,40 @@ const ShellIndexRoute = ShellIndexRouteImport.update({
   path: "/",
   getParentRoute: () => ShellRoute,
 } as any);
+const ShellImportsRoute = ShellImportsRouteImport.update({
+  id: "/imports",
+  path: "/imports",
+  getParentRoute: () => ShellRoute,
+} as any);
+const ShellUsersRoute = ShellUsersRouteImport.update({
+  id: "/users",
+  path: "/users",
+  getParentRoute: () => ShellRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof ShellIndexRoute;
+  "/imports": typeof ShellImportsRoute;
+  "/users": typeof ShellUsersRoute;
 }
 export interface FileRoutesByTo {
+  "/imports": typeof ShellImportsRoute;
+  "/users": typeof ShellUsersRoute;
   "/": typeof ShellIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/_shell": typeof ShellRouteWithChildren;
+  "/_shell/imports": typeof ShellImportsRoute;
+  "/_shell/users": typeof ShellUsersRoute;
   "/_shell/": typeof ShellIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/";
+  fullPaths: "/" | "/imports" | "/users";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/";
-  id: "__root__" | "/_shell" | "/_shell/";
+  to: "/imports" | "/users" | "/";
+  id: "__root__" | "/_shell" | "/_shell/imports" | "/_shell/users" | "/_shell/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -61,14 +79,32 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ShellIndexRouteImport;
       parentRoute: typeof ShellRoute;
     };
+    "/_shell/imports": {
+      id: "/_shell/imports";
+      path: "/imports";
+      fullPath: "/imports";
+      preLoaderRoute: typeof ShellImportsRouteImport;
+      parentRoute: typeof ShellRoute;
+    };
+    "/_shell/users": {
+      id: "/_shell/users";
+      path: "/users";
+      fullPath: "/users";
+      preLoaderRoute: typeof ShellUsersRouteImport;
+      parentRoute: typeof ShellRoute;
+    };
   }
 }
 
 interface ShellRouteChildren {
+  ShellImportsRoute: typeof ShellImportsRoute;
+  ShellUsersRoute: typeof ShellUsersRoute;
   ShellIndexRoute: typeof ShellIndexRoute;
 }
 
 const ShellRouteChildren: ShellRouteChildren = {
+  ShellImportsRoute: ShellImportsRoute,
+  ShellUsersRoute: ShellUsersRoute,
   ShellIndexRoute: ShellIndexRoute,
 };
 

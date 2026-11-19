@@ -19,6 +19,44 @@ export class ProblemError extends Error {
   }
 }
 
+/**
+ * The data of an answered request, or a `ProblemError` for an error answer. A query function
+ * passes its client call through this, so its screen gets the error to show (FE-53).
+ */
+export async function dataOf<Data>(
+  request: Promise<{ data?: Data; error?: unknown; response: Response }>,
+): Promise<Data> {
+  const { data, error, response } = await request;
+  if (!response.ok || data === undefined) {
+    throw new ProblemError(problemOf(error, response.status));
+  }
+  return data;
+}
+
+/**
+ * The problem in an error answer. The backend's own answers are Problem Details with a code. An
+ * answer from elsewhere, such as the proxy while the backend is down or Actuator's health check,
+ * gets the name of its status as its code, as the backend names an error that has none (ENG-65).
+ */
+function problemOf(body: unknown, status: number): Problem {
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "code" in body &&
+    typeof body.code === "string"
+  ) {
+    return { ...(body as Problem), status };
+  }
+  return { status, code: statusCodes[status] ?? `HTTP_${String(status)}` };
+}
+
+/** The statuses an answer that is not the backend's own may carry. */
+const statusCodes: Partial<Record<number, string>> = {
+  502: "BAD_GATEWAY",
+  503: "SERVICE_UNAVAILABLE",
+  504: "GATEWAY_TIMEOUT",
+};
+
 /** A key under `errors` in the `common` translations. */
 export type ErrorKey = keyof typeof common.errors;
 

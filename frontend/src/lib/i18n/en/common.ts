@@ -15,6 +15,8 @@ export const common = {
     },
     screens: {
       home: "Home",
+      imports: "Imports",
+      users: "Users",
     },
   },
   loading: "Loading…",
@@ -25,13 +27,19 @@ export const common = {
   errors: {
     NOT_FOUND: "This was not found. It may have been removed.",
     INTERNAL_SERVER_ERROR: "Something went wrong on the server.",
+    BAD_GATEWAY: "The server is not answering. Wait a moment.",
     SERVICE_UNAVAILABLE: "The server is not ready. Wait a moment.",
+    GATEWAY_TIMEOUT: "The server is not answering. Wait a moment.",
     NETWORK: "The server could not be reached. Check the connection.",
     UNEXPECTED: "Something went wrong.",
   },
   loadFailed: {
     title: "This could not be loaded",
     retry: "Try again",
+  },
+  placeholder: {
+    title: "Not built yet",
+    description: "This screen arrives in a later version of niskora.",
   },
   newVersion: {
     message: "A new version is available,",
@@ -43,6 +51,7 @@ export const common = {
       title: "Nothing imported yet",
       description:
         "Home shows data freshness, what needs attention, restock advice, purchase orders and yesterday's demand once the first BigSeller exports are imported.",
+      action: "Import BigSeller exports",
     },
   },
 };

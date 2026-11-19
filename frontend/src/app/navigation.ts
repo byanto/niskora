@@ -2,6 +2,7 @@ import type { LinkProps } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 // One module per icon: the package index pulls in all of Lucide, which slows tests and dev.
 import House from "lucide-react/icons/house";
+import Users from "lucide-react/icons/users";
 import type { common } from "@/lib/i18n/en/common";
 
 type Group = keyof typeof common.nav.groups;
@@ -14,13 +15,13 @@ interface NavItem {
 }
 
 /**
- * The sidebar: the screens grouped by job, in the order of FE-2. A screen is listed once its route
- * exists, and a group shows once it has a screen.
+ * The sidebar: the screens grouped by job, in the order of FE-2. A screen is listed once its build
+ * step starts, and a group shows once it has a screen. Users is a placeholder until #49.
  */
 export const navigation: readonly { group: Group; items: readonly NavItem[] }[] = [
   { group: "daily", items: [{ screen: "home", to: "/", icon: House }] },
   { group: "catalogue", items: [] },
   { group: "buying", items: [] },
   { group: "analysis", items: [] },
-  { group: "setup", items: [] },
+  { group: "setup", items: [{ screen: "users", to: "/users", icon: Users }] },
 ];
