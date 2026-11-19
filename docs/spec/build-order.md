@@ -67,7 +67,7 @@ _Area files: [platform.md](platform.md), [engineering.md](engineering.md), [fron
 - The `imports` module: the upload with its drop zone, file type detection, the stored original file, the [import](../../GLOSSARY.md#imports) record and its report, background processing, the repeated-file check and staleness.
 - The Merchant SKU list import with its Combination SKU sheet, into the `catalogue` module: SPUs derived from the code, companies from the prefix table, retiring, and the "Merchant SKUs added" event.
 - Photos copied from BigSeller's Image URL.
-- Screens: Imports, Import report, Catalogue with its three tabs, SPU page and Merchant SKU page (catalogue fields only), and Settings with the read-only prefix table.
+- Screens: Imports, Import report, Catalogue with its three tabs, SPU page and Merchant SKU page (catalogue fields only), and Settings with the read-only prefix table. Home's empty state gains its next action, a link to Imports (FE-52), which step 1 left out because Imports did not exist yet.
 - The synthetic export files for this data set.
 
 **Done when.**
