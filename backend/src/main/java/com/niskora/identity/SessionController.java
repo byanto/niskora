@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * The session of the user in this browser: who is logged in (FE-71), logging in and logging out. It
- * is one resource, so its path is singular.
+ * is one resource per browser, so its path is singular (ENG-68).
  */
 @RestController
 @RequestMapping(path = SessionController.PATH, produces = MediaType.APPLICATION_JSON_VALUE)

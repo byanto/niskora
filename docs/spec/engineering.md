@@ -176,7 +176,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
 
 ### Paths and identifiers
 
-- **ENG-68** Every endpoint lives under `/api/<module>/...`, with plural, lowercase, hyphenated nouns: `/api/purchasing/purchase-orders/{id}`. Paths carry no version. The one exception is `/api/health`, an operational path and not a module endpoint: Actuator answers only on an internal management port that is never published, and the proxy forwards this single path to its health endpoint, so no other Actuator endpoint is reachable from outside.
+- **ENG-68** Every endpoint lives under `/api/<module>/...`, with plural, lowercase, hyphenated nouns: `/api/purchasing/purchase-orders/{id}`. A resource of which each caller has exactly one takes a singular noun, as the session does: `/api/identity/session`, where `GET` says who is logged in, `POST` logs in and `DELETE` logs out. Paths carry no version. The one exception is `/api/health`, an operational path and not a module endpoint: Actuator answers only on an internal management port that is never published, and the proxy forwards this single path to its health endpoint, so no other Actuator endpoint is reachable from outside.
 - **ENG-69** Create, read, edit and delete use the plain resource path with `POST`, `GET`, `PATCH` and `DELETE`. A path never carries a verb for one of these four.
 - **ENG-70** A state change that is a named domain operation is a verb sub-path, such as `POST /api/purchasing/purchase-orders/{id}/place`, within three limits:
   1. The verb is the last path segment, directly after a resource id.
@@ -228,11 +228,13 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
   | 204 | a delete, also when the thing is already gone |
   | 400 | the request cannot be read or fails shape validation |
   | 401 | not logged in |
+  | 403 | a change sent without a valid CSRF token |
   | 404 | not found |
   | 409 | a conflict with the current state, or a repeat of a request that is still running |
   | 412 | `If-Match` does not match the current version |
   | 422 | a business rule refused, or an `Idempotency-Key` reused with a different body |
   | 428 | a change sent without `If-Match` |
+  | 429 | too many failed logins with one login name, with a `Retry-After` header in seconds |
 
 - **ENG-82** A validation error carries an `errors` array with every field error at once. Each entry is `{ "pointer": "/lines/2/quantity", "code": "MUST_BE_POSITIVE", "detail": "..." }`: a JSON Pointer to the field and its own stable code, which the frontend translates like the top-level code.
 
@@ -243,7 +245,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
 
 ### Repeated requests
 
-- **ENG-85** Every `POST` that creates something or triggers an action requires an `Idempotency-Key` header: a UUID the frontend makes once per user intent and reuses on a retry. Keys are kept for 24 hours.
+- **ENG-85** Every `POST` that creates something or triggers an action requires an `Idempotency-Key` header: a UUID the frontend makes once per user intent and reuses on a retry. Keys are kept for 24 hours. Logging in is the one exception: a repeat only starts a fresh session, which is harmless, and replaying a stored login response (ENG-86) would hand out a session cookie again.
 - **ENG-86** The backend claims the key with a unique constraint in a single insert, never by looking first and inserting after. It stores the key with a hash of the request and the response, and replays the stored response on a repeat. A repeat that arrives while the first request is still running gets a 409. A key reused with a different body gets a 422.
 
   A repeated upload is caught by the file's SHA-256, as described in [foundation.md](foundation.md).
