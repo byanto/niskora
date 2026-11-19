@@ -246,7 +246,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
 ### Repeated requests
 
 - **ENG-85** Every `POST` that creates something or triggers an action requires an `Idempotency-Key` header: a UUID the frontend makes once per user intent and reuses on a retry. Keys are kept for 24 hours. Logging in is the one exception: a repeat only starts a fresh session, which is harmless, and replaying a stored login response (ENG-86) would hand out a session cookie again.
-- **ENG-86** The backend claims the key with a unique constraint in a single insert, never by looking first and inserting after. It stores the key with a hash of the request and the response, and replays the stored response on a repeat. A repeat that arrives while the first request is still running gets a 409. A key reused with a different body gets a 422.
+- **ENG-86** The backend takes the key's lock and claims the key with a unique constraint in a single insert, never by looking first and inserting after, in the same transaction as the request's own work. It stores the key with a hash of the request and, when the request succeeds, its response, so the work and its stored response commit together or not at all. A repeat replays a stored response. A repeat that arrives while the first request is still running gets a 409. A key reused with a different body gets a 422. A request that fails, refused or broken, stores nothing, so a repeat runs it again, which is safe because the failed request changed nothing. Work outside the database, such as a file copied to Object Storage, is not rolled back.
 
   A repeated upload is caught by the file's SHA-256, as described in [foundation.md](foundation.md).
 

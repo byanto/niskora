@@ -16,9 +16,9 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * The stored {@code Idempotency-Key}s (ENG-86), kept for {@link #KEPT} after their claim. Each
- * statement commits on its own, so a claim is seen by a repeat at once, while the first request
- * still runs.
+ * The stored {@code Idempotency-Key}s (ENG-86), kept for {@link #KEPT} after their claim. Every
+ * statement but the hourly clean-up runs in the transaction of the request that sent the key, so a
+ * key, the request's work and its answer commit together or not at all.
  */
 class IdempotencyKeys {
 
@@ -78,11 +78,24 @@ class IdempotencyKeys {
   }
 
   /**
-   * Claims a key with a single insert, which the primary key lets only one request win (ENG-86). An
-   * expired key is claimed afresh by the same statement. A request that loses is told what the
-   * winner answered, that it is still running, or that the key was used for another request.
+   * Claims a key in the caller's transaction (ENG-86). It first takes the key's advisory lock
+   * without waiting: a request that cannot take it meets another request with the same key that is
+   * still running. Holding it, the claim is a single insert, which the primary key lets only one
+   * request win. An expired key is claimed afresh by the same statement. A request that loses is
+   * told what the winner answered, that it is still running, or that the key was used for another
+   * request.
    */
   Claim claim(String owner, UUID key, byte[] requestHash) {
+    boolean locked =
+        Boolean.TRUE.equals(
+            jdbc.sql("SELECT pg_try_advisory_xact_lock(hashtext(:owner), hashtext(:key))")
+                .param("owner", owner)
+                .param("key", key.toString())
+                .query(Boolean.class)
+                .single());
+    if (!locked) {
+      return new Running();
+    }
     Instant now = clock.instant();
     int claimed =
         jdbc.sql(
@@ -123,17 +136,19 @@ class IdempotencyKeys {
               int status = row.getInt("response_status");
               String headers = row.getString("headers");
               byte[] body = row.getBytes("response_body");
+              // A row commits only with its answer, so a row without one is never seen.
               if (headers == null || body == null) {
-                return new Running();
+                throw new IllegalStateException("A stored Idempotency-Key has no answer.");
               }
               return new Answered(new StoredAnswer(status, json.readValue(headers, HEADERS), body));
             })
             .optional();
-    // A key released since the insert above is about to be claimed again by its own retry.
-    return found.orElseGet(Running::new);
+    // Holding the lock, the key is either claimed above or stored with its answer.
+    return found.orElseThrow(
+        () -> new IllegalStateException("A locked Idempotency-Key was neither new nor stored."));
   }
 
-  /** Stores what the request that claimed the key answered, for its repeats. */
+  /** Stores the answer of the request that claimed the key, to commit with its work. */
   void answer(String owner, UUID key, StoredAnswer answer) {
     jdbc.sql(
             """
@@ -148,14 +163,6 @@ class IdempotencyKeys {
         .param("status", answer.status())
         .param("headers", json.writeValueAsString(answer.headers()))
         .param("body", answer.body())
-        .update();
-  }
-
-  /** Gives up a claim, so a retry with the same key runs again. */
-  void release(String owner, UUID key) {
-    jdbc.sql("DELETE FROM common.idempotency_keys WHERE owner = :owner AND key = :key")
-        .param("owner", owner)
-        .param("key", key)
         .update();
   }
 

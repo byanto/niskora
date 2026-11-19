@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.niskora.DatabaseTest;
+import com.niskora.common.Problems;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -42,8 +44,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Repeated requests (ENG-85, ENG-86): every {@code POST} under {@code /api} requires an {@code
- * Idempotency-Key}, and a repeat of it is answered from what the first one answered, against the
- * real database. A test controller counts how often its action really runs.
+ * Idempotency-Key}, a repeat of a success is answered from what it answered, and the work of a
+ * request and its stored answer commit together or not at all, against the real database. A test
+ * controller stores numbered orders in a table of its own, so a test sees what really committed.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -189,28 +192,73 @@ class IdempotencyTest {
   }
 
   @Test
-  void aRefusalIsAnsweredAgainToo() throws Exception {
+  void aRefusalIsNotStoredSoARepeatIsCheckedAgain() throws Exception {
     String key = UUID.randomUUID().toString();
-    send("rina", key, ORDERS, order(0)).andExpect(status().isUnprocessableContent());
-
     send("rina", key, ORDERS, order(0))
         .andExpect(status().isUnprocessableContent())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
         .andExpect(jsonPath("$.code").value("NOTHING_TO_ORDER"));
 
-    assertThat(orders.attempts()).isEqualTo(1);
+    send("rina", key, ORDERS, order(0)).andExpect(jsonPath("$.code").value("NOTHING_TO_ORDER"));
+    // The refused request changed nothing, so the same key may carry the corrected one.
+    send("rina", key, ORDERS, order(3))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.number").value(1));
+
+    assertThat(orders.attempts()).isEqualTo(3);
+    assertThat(orders.placed()).isEqualTo(1);
   }
 
   @Test
-  void aServerErrorLetsTheSameKeyTryAgain() throws Exception {
+  void aServerErrorAfterTheWorkUndoesItAndTheSameKeyTriesAgain() throws Exception {
     String key = UUID.randomUUID().toString();
-    orders.failNext();
-    send("rina", key, ORDERS, order(3)).andExpect(status().isInternalServerError());
+    orders.failAfterTheWork();
+    send("rina", key, ORDERS, order(3))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"));
+    assertThat(orders.placed()).isZero();
 
     send("rina", key, ORDERS, order(3))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.number").value(1));
 
+    assertThat(orders.placed()).isEqualTo(1);
+  }
+
+  @Test
+  void whenTheWorkCannotCommitTheAnswerIsAServerErrorAndNothingIsStored() throws Exception {
+    String key = UUID.randomUUID().toString();
+    // The controller answers 201, but its rows break a constraint checked only at commit.
+    send("rina", key, ORDERS, order(Orders.BREAKS_AT_COMMIT))
+        .andExpect(status().isInternalServerError())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
+        .andExpect(header().doesNotExist("Location"));
+    assertThat(orders.placed()).isZero();
+
+    // Nothing was stored for the key, so the same press is tried again rather than replayed.
+    send("rina", key, ORDERS, order(Orders.BREAKS_AT_COMMIT))
+        .andExpect(status().isInternalServerError());
+    assertThat(orders.attempts()).isEqualTo(2);
+  }
+
+  @Test
+  void aRepeatAfterTheFirstFailedIsNotKeptWaiting() throws Exception {
+    String key = UUID.randomUUID().toString();
+    orders.holdNext();
+    orders.failAfterTheWork();
+    CompletableFuture<ResultActions> first =
+        CompletableFuture.supplyAsync(() -> sendUnchecked("rina", key, ORDERS, order(3)));
+    orders.awaitHeld();
+    send("rina", key, ORDERS, order(3)).andExpect(status().isConflict());
+
+    orders.release();
+    first.get(10, TimeUnit.SECONDS).andExpect(status().isInternalServerError());
+
+    // The failed request let go of the key with everything else it did.
+    send("rina", key, ORDERS, order(3))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.number").value(1));
     assertThat(orders.placed()).isEqualTo(1);
   }
 
@@ -236,15 +284,25 @@ class IdempotencyTest {
     return "{\"quantity\": " + quantity + "}";
   }
 
-  /** Places numbered orders, and can hold one back or fail one, to test what a repeat meets. */
+  /**
+   * Places numbered orders in a table of its own, in the request's transaction. It can hold one
+   * back, fail one after its work, or store one that breaks a constraint checked only at commit.
+   */
   @RestController
   static class Orders {
 
-    private final AtomicInteger placed = new AtomicInteger();
+    /** The quantity of an order whose rows break the table's deferred constraint at commit. */
+    static final int BREAKS_AT_COMMIT = 99;
+
+    private final JdbcClient jdbc;
     private final AtomicInteger attempts = new AtomicInteger();
-    private volatile boolean failNext;
+    private volatile boolean failAfterTheWork;
     private volatile CountDownLatch held = new CountDownLatch(0);
     private volatile CountDownLatch release = new CountDownLatch(0);
+
+    Orders(JdbcClient jdbc) {
+      this.jdbc = jdbc;
+    }
 
     record OrderRequest(int quantity) {}
 
@@ -257,26 +315,46 @@ class IdempotencyTest {
       if (!release.await(10, TimeUnit.SECONDS)) {
         throw new IllegalStateException("The held order was never released.");
       }
-      if (failNext) {
-        failNext = false;
-        throw new IllegalStateException("The order failed.");
-      }
       if (order.quantity() == 0) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
             .contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .body(
-                com.niskora.common.Problems.of(
+                Problems.of(
                     HttpStatus.UNPROCESSABLE_CONTENT, "NOTHING_TO_ORDER", "Nothing to order."));
       }
-      int number = placed.incrementAndGet();
+      int number = jdbc.sql("SELECT count(*) + 1 FROM test_orders").query(Integer.class).single();
+      insert(number, order.quantity());
+      if (order.quantity() == BREAKS_AT_COMMIT) {
+        insert(number, order.quantity());
+      }
+      if (failAfterTheWork) {
+        failAfterTheWork = false;
+        throw new IllegalStateException("The order failed after its work.");
+      }
       return ResponseEntity.created(URI.create(ORDERS + "/" + number))
           .body(new OrderResponse(number, order.quantity()));
     }
 
+    private void insert(int number, int quantity) {
+      jdbc.sql("INSERT INTO test_orders (number, quantity) VALUES (:number, :quantity)")
+          .param("number", number)
+          .param("quantity", quantity)
+          .update();
+    }
+
+    /** A fresh table, after the empty database every test starts from. */
     void reset() {
-      placed.set(0);
+      jdbc.sql(
+              """
+              CREATE TABLE IF NOT EXISTS test_orders (
+                  number integer NOT NULL,
+                  quantity integer NOT NULL,
+                  CONSTRAINT one_row_per_number UNIQUE (number) DEFERRABLE INITIALLY DEFERRED)
+              """)
+          .update();
+      jdbc.sql("DELETE FROM test_orders").update();
       attempts.set(0);
-      failNext = false;
+      failAfterTheWork = false;
       held = new CountDownLatch(0);
       release = new CountDownLatch(0);
     }
@@ -294,12 +372,13 @@ class IdempotencyTest {
       release.countDown();
     }
 
-    void failNext() {
-      failNext = true;
+    void failAfterTheWork() {
+      failAfterTheWork = true;
     }
 
+    /** The orders that committed. */
     int placed() {
-      return placed.get();
+      return jdbc.sql("SELECT count(*) FROM test_orders").query(Integer.class).single();
     }
 
     int attempts() {

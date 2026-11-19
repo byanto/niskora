@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import tools.jackson.databind.json.JsonMapper;
@@ -24,9 +25,14 @@ class IdempotencyConfiguration implements WebMvcConfigurer {
   private static final String API = "/api/";
 
   private final IdempotencyKeys keys;
+  private final PlatformTransactionManager transactions;
+  private final JsonMapper json;
 
-  IdempotencyConfiguration(JdbcClient jdbc, JsonMapper json, Clock clock) {
+  IdempotencyConfiguration(
+      JdbcClient jdbc, JsonMapper json, Clock clock, PlatformTransactionManager transactions) {
     this.keys = new IdempotencyKeys(jdbc, json, clock);
+    this.transactions = transactions;
+    this.json = json;
   }
 
   /** The store, as a bean so its hourly clean-up is scheduled. */
@@ -47,6 +53,8 @@ class IdempotencyConfiguration implements WebMvcConfigurer {
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
-    registry.addInterceptor(new IdempotencyInterceptor(keys)).addPathPatterns(API + "**");
+    registry
+        .addInterceptor(new IdempotencyInterceptor(keys, transactions, json))
+        .addPathPatterns(API + "**");
   }
 }
