@@ -44,7 +44,7 @@ _Sources: [Spring Boot 4 stack versions and compatibility](https://github.com/by
   | `agent` | the agent, its tools and conversations | the public queries of any module, never buyer personal data |
   | `identity` | users and login | none |
 
-- **ENG-11** A tenth, technical module `common` holds only things with no business rule: the business day type and the Jakarta clock, the Problem Details error shape, paging, the build id header (ENG-92) and the fixed parts of the OpenAPI document (ENG-89). A business type stays with its owner, so the Merchant SKU code type is part of the public interface of `catalogue`.
+- **ENG-11** A tenth, technical module `common` holds only things with no business rule: the business day type and the Jakarta clock, the Problem Details error shape, paging, the handling of repeated requests with its store of `Idempotency-Key`s in a `common` schema (ENG-85, ENG-86), the build id header (ENG-92) and the fixed parts of the OpenAPI document (ENG-89). A business type stays with its owner, so the Merchant SKU code type is part of the public interface of `catalogue`.
 - **ENG-12** Each module owns its REST endpoints. There is no `api` or `web` module that reaches into the others.
 - **ENG-13** Dependencies point one way, as in the table, with no cycles. Each module declares the modules it may depend on.
 - **ENG-14** A direct call to a module's public interface is the default, for every query and for every command that must succeed or fail with its caller.

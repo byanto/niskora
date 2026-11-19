@@ -6,6 +6,7 @@ import * as Dialog from "radix-ui/dialog";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/ui/button";
+import { Toaster } from "@/ui/toaster";
 import { NewVersionNotice } from "./NewVersionNotice";
 import { Sidebar } from "./Sidebar";
 
@@ -79,6 +80,7 @@ export function Shell() {
         <main className="p-4 lg:p-6">
           <Outlet />
         </main>
+        <Toaster />
       </div>
     </div>
   );

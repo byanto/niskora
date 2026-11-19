@@ -1,5 +1,6 @@
 package com.niskora.common.web;
 
+import com.niskora.common.WithoutIdempotencyKey;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -11,6 +12,8 @@ import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.media.UUIDSchema;
+import io.swagger.v3.oas.models.parameters.HeaderParameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.servers.Server;
@@ -18,9 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Configuration(proxyBeanMethods = false)
 class OpenApiConfiguration {
@@ -59,6 +64,26 @@ class OpenApiConfiguration {
           schema.setRequired(new ArrayList<>(schema.getProperties().keySet()));
         }
       }
+    };
+  }
+
+  /**
+   * Every {@code POST} names the {@code Idempotency-Key} header it requires (ENG-85), so the client
+   * types make the caller send one. {@link IdempotencyInterceptor} enforces it.
+   */
+  @Bean
+  OperationCustomizer idempotencyKeyHeader() {
+    return (operation, handler) -> {
+      if (handler.hasMethodAnnotation(PostMapping.class)
+          && !handler.hasMethodAnnotation(WithoutIdempotencyKey.class)) {
+        operation.addParametersItem(
+            new HeaderParameter()
+                .name(IdempotencyInterceptor.HEADER)
+                .description("Made once per user intent and sent again on a retry of it (ENG-85).")
+                .required(true)
+                .schema(new UUIDSchema()));
+      }
+      return operation;
     };
   }
 

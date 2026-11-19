@@ -12,6 +12,16 @@ export function loggedIn(user = rina) {
   return http.get("*/api/identity/session", () => HttpResponse.json({ user }));
 }
 
+/** The backend's list of accounts, with only the given user in it (ENG-76). */
+export function usersListed(user = rina) {
+  return http.get("*/api/identity/users", () =>
+    HttpResponse.json({
+      data: [{ ...user, createdAt: "2026-11-16T03:15:00Z" }],
+      pagination: { page: 1, pageSize: 50, totalItems: 1, totalPages: 1 },
+    }),
+  );
+}
+
 /** The backend's answer to "who is logged in" while nobody is. */
 export function notLoggedIn() {
   return http.get("*/api/identity/session", () => unauthorized());

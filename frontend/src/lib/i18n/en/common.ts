@@ -25,6 +25,11 @@ export const common = {
    * none: no answer at all (`NETWORK`) and anything else (`UNEXPECTED`).
    */
   errors: {
+    BAD_REQUEST: "The request was not understood. Reload the page, then try again.",
+    VALIDATION_FAILED: "Some fields need a change.",
+    IDEMPOTENCY_KEY_MISSING: "The request was not understood. Reload the page, then try again.",
+    IDEMPOTENCY_KEY_REUSED: "This was already sent with other values. Try again.",
+    REQUEST_IN_PROGRESS: "This is still being saved. Wait a moment, then check.",
     UNAUTHORIZED: "You are not logged in.",
     BAD_CREDENTIALS: "The login name or password is wrong.",
     TOO_MANY_LOGIN_ATTEMPTS: "Too many failed logins. Wait a moment, then try again.",
@@ -36,6 +41,14 @@ export const common = {
     GATEWAY_TIMEOUT: "The server is not answering. Wait a moment.",
     NETWORK: "The server could not be reached. Check the connection.",
     UNEXPECTED: "Something went wrong.",
+  },
+  /** The message of each field error code the backend sends (FE-56), and `INVALID` for the rest. */
+  fieldErrors: {
+    REQUIRED: "Fill this in.",
+    MUST_BE_ONE_WORD: "Use one word, with no spaces.",
+    TOO_SHORT: "This is too short.",
+    LOGIN_NAME_TAKEN: "Another user has this login name.",
+    INVALID: "This is not valid.",
   },
   loadFailed: {
     title: "This could not be loaded",

@@ -3,6 +3,7 @@ package com.niskora.identity;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpSession;
 import java.util.Objects;
+import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
@@ -42,6 +43,16 @@ final class Browser {
   ResultActions post(String path, String json) throws Exception {
     return perform(
         MockMvcRequestBuilders.post(path).contentType(MediaType.APPLICATION_JSON).content(json),
+        true);
+  }
+
+  /** A change that requires an {@code Idempotency-Key} (ENG-85), sent with the given one. */
+  ResultActions post(String path, String json, UUID idempotencyKey) throws Exception {
+    return perform(
+        MockMvcRequestBuilders.post(path)
+            .header("Idempotency-Key", idempotencyKey.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json),
         true);
   }
 

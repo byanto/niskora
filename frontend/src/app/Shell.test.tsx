@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
-import { loggedIn } from "@/test/session";
+import { loggedIn, usersListed } from "@/test/session";
 
 /** The backend's health answer, from the given build. Home asks for it until step 3. */
 function healthFrom(build: string) {
@@ -15,7 +15,7 @@ function healthFrom(build: string) {
 
 describe("Shell", () => {
   beforeEach(() => {
-    server.use(loggedIn(), healthFrom("dev"));
+    server.use(loggedIn(), healthFrom("dev"), usersListed());
   });
 
   it("groups the screens in the sidebar by job and marks the current one", async () => {
@@ -93,13 +93,10 @@ describe("Shell", () => {
     expect(screen.queryByText(/A new version is available/)).not.toBeInTheDocument();
   });
 
-  it.each([
-    ["/users", "Users"],
-    ["/imports", "Imports"],
-  ])("stands in for %s until its screen is built", async (url, title) => {
-    const { container } = renderRoute(url);
+  it("stands in for /imports until its screen is built", async () => {
+    const { container } = renderRoute("/imports");
 
-    expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Imports" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Not built yet" })).toBeInTheDocument();
     await expectNoAxeViolations(container);
   });

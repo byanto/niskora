@@ -110,12 +110,14 @@ class SessionTest {
   }
 
   @Test
-  void aBlankLoginNameIsABadRequest() throws Exception {
+  void aBlankLoginNameIsABadRequestWithItsFieldError() throws Exception {
     new Browser(mvc)
         .visit()
         .post(SESSION, login("", PASSWORD))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+        .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+        .andExpect(jsonPath("$.errors[0].pointer").value("/loginName"))
+        .andExpect(jsonPath("$.errors[0].code").value("REQUIRED"));
   }
 
   @Test
