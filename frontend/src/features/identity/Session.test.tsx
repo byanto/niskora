@@ -5,7 +5,6 @@ import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 import { rina, loggedIn, notLoggedIn, problem, unauthorized } from "@/test/session";
-import { findToast } from "@/test/toast";
 
 describe("The session", () => {
   beforeEach(() => {
@@ -71,9 +70,9 @@ describe("The session", () => {
     }
     fireEvent.click(within(sidebar).getByRole("button", { name: "Log out" }));
 
-    expect(
-      await findToast("This page is out of date. Reload it, then try again."),
-    ).toBeInTheDocument();
+    expect(await within(sidebar).findByRole("alert")).toHaveTextContent(
+      "This page is out of date. Reload it, then try again.",
+    );
     expect(router.state.location.href).toBe("/users");
     expect(within(sidebar).getByRole("button", { name: "Log out" })).toBeEnabled();
   });

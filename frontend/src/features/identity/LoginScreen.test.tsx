@@ -5,7 +5,6 @@ import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 import { rina, loggedIn, notLoggedIn, problem } from "@/test/session";
-import { findToast } from "@/test/toast";
 
 const up = () => HttpResponse.json({ status: "UP" });
 
@@ -118,7 +117,9 @@ describe("Login", () => {
     await screen.findByRole("heading", { level: 1, name: "Log in" });
     logIn("rina", "wrong password");
 
-    expect(await findToast("The login name or password is wrong.")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The login name or password is wrong.",
+    );
     expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
     await expectNoAxeViolations(container);
   });
@@ -135,9 +136,9 @@ describe("Login", () => {
     await screen.findByRole("heading", { level: 1, name: "Log in" });
     logIn();
 
-    expect(
-      await findToast("Too many failed logins. Wait a moment, then try again."),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Too many failed logins. Wait a moment, then try again.",
+    );
   });
 
   it("asks for both fields before it sends anything", async () => {

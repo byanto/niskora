@@ -2,15 +2,14 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { useRouter } from "@tanstack/react-router";
 import LogOut from "lucide-react/icons/log-out";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { api } from "@/lib/api/client";
 import { errorKey, noContentOf } from "@/lib/api/problem";
 import { Button } from "@/ui/button";
 import { leaveForLogin, sessionQuery } from "./session";
 
 /**
- * The logged-in user's full name with "Log out", at the foot of the sidebar (FE-8). The shell loads the
- * session before it shows, so it is always there.
+ * The logged-in user's full name with "Log out", at the foot of the sidebar (FE-8). The shell
+ * loads the session before it shows, so it is always there.
  */
 export function SidebarUser() {
   const { t } = useTranslation("identity");
@@ -22,10 +21,6 @@ export function SidebarUser() {
   const logOut = useMutation({
     mutationFn: () => noContentOf(api.DELETE("/api/identity/session")),
     onSuccess: () => leaveForLogin(router, queryClient),
-    // A 401 goes to Login by itself (FE-72); any other error says why it failed (FE-55, FE-56).
-    onError: (error) => {
-      toast.error(tCommon(`errors.${errorKey(error)}`), { id: "logOut" });
-    },
   });
 
   return (
@@ -43,6 +38,13 @@ export function SidebarUser() {
         <LogOut aria-hidden="true" />
         {logOut.isPending ? t("loggingOut") : t("logOut")}
       </Button>
+      {/* A 401 goes to Login by itself (FE-72); any other error says why, until the next try
+          (FE-55, FE-56). */}
+      {logOut.isError ? (
+        <p role="alert" className="text-xs text-late">
+          {tCommon(`errors.${errorKey(logOut.error)}`)}
+        </p>
+      ) : null}
     </div>
   );
 }
