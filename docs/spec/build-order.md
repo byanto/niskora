@@ -67,7 +67,7 @@ _Area files: [platform.md](platform.md), [engineering.md](engineering.md), [fron
 - The `imports` module: the upload with its drop zone, file type detection, the stored original file, the [import](../../GLOSSARY.md#imports) record and its report, background processing, the repeated-file check and staleness.
 - The Merchant SKU list import with its Combination SKU sheet, into the `catalogue` module: SPUs derived from the code, companies from the prefix table, retiring, and the "Merchant SKUs added" event.
 - Photos copied from BigSeller's Image URL.
-- Screens: Imports, Import report, Catalogue with its three tabs, SPU page and Merchant SKU page (catalogue fields only), and Settings with the read-only prefix table. Home's empty state gains its next action, a link to Imports (FE-52), which step 1 left out because Imports did not exist yet.
+- Screens: Imports, Import report, Catalogue with its three tabs, SPU page and Merchant SKU page (catalogue fields only), and Settings with the read-only prefix table. Imports replaces the placeholder route that Home's empty state already links to, and joins the sidebar.
 - The synthetic export files for this data set.
 
 **Done when.**
@@ -90,7 +90,7 @@ _Area files: [foundation.md](foundation.md), [frontend.md](frontend.md)._
 - The inventory list import into the `stock` module as an [inventory snapshot](../../GLOSSARY.md#stock).
 - A comparison of BigSeller's three per-line order layouts on a sample, to learn whether a file in the wrong layout can be rejected (FND-95).
 - The order import into the `orders` module: packages replaced as a set, [component lines](../../GLOSSARY.md#orders), [held packages](../../GLOSSARY.md#imports) and their release on "Merchant SKUs added", [hub packages](../../GLOSSARY.md#orders), [unmapped lines](../../GLOSSARY.md#orders), [abandoned packages](../../GLOSSARY.md#orders), [demand](../../GLOSSARY.md#orders), and the buyer personal data in its own schema.
-- Screens: Packages, Package page, and Home with data freshness, "needs attention" and yesterday's counts. The SPU page and the Merchant SKU page gain the stock figures and the demand chart.
+- Screens: Packages, Package page, and Home with data freshness, "needs attention" and yesterday's counts. Home's own endpoint replaces the placeholder query on `/api/health` that it used since step 1. The SPU page and the Merchant SKU page gain the stock figures and the demand chart.
 - The search box in the shell.
 - The monitoring check for an orders import within 3 days.
 
