@@ -18,6 +18,7 @@ export const identity = {
     },
     count_one: "{{formattedCount}} user",
     count_other: "{{formattedCount}} users",
+    pages: "Pages",
     page: "Page {{page}} of {{totalPages}}",
     previousPage: "Previous page",
     nextPage: "Next page",

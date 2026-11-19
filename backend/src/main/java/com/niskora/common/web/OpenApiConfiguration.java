@@ -1,6 +1,5 @@
 package com.niskora.common.web;
 
-import com.niskora.common.WithoutIdempotencyKey;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -25,7 +24,6 @@ import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.PostMapping;
 
 @Configuration(proxyBeanMethods = false)
 class OpenApiConfiguration {
@@ -74,8 +72,7 @@ class OpenApiConfiguration {
   @Bean
   OperationCustomizer idempotencyKeyHeader() {
     return (operation, handler) -> {
-      if (handler.hasMethodAnnotation(PostMapping.class)
-          && !handler.hasMethodAnnotation(WithoutIdempotencyKey.class)) {
+      if (IdempotencyInterceptor.requiresKey(handler)) {
         operation.addParametersItem(
             new HeaderParameter()
                 .name(IdempotencyInterceptor.HEADER)

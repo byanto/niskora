@@ -112,10 +112,7 @@ class UsersController {
               HttpStatus.UNPROCESSABLE_CONTENT,
               refused.refusals().stream()
                   .map(refusal ->
-                      new FieldProblem(
-                          "/" + Objects.requireNonNull(refusal.field()),
-                          refusal.code(),
-                          refusal.message()))
+                      FieldProblem.at(refusal.field(), refusal.code(), refusal.message()))
                   .toList()),
           refused);
     }

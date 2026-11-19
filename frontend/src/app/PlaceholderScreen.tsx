@@ -2,7 +2,7 @@ import Construction from "lucide-react/icons/construction";
 import { useTranslation } from "react-i18next";
 import type { common } from "@/lib/i18n/en/common";
 import { EmptyState } from "@/ui/empty-state";
-import { PageHeader } from "./PageHeader";
+import { PageHeader } from "@/ui/page-header";
 
 /**
  * PLACEHOLDER for a screen whose build step has not landed, so the shell can already link to it.

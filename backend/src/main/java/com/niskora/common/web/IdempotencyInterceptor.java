@@ -15,16 +15,19 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.ErrorResponseException;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -63,9 +66,7 @@ class IdempotencyInterceptor implements HandlerInterceptor {
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
       throws IOException {
-    if (!HttpMethod.POST.matches(request.getMethod())
-        || !(handler instanceof HandlerMethod method)
-        || method.hasMethodAnnotation(WithoutIdempotencyKey.class)) {
+    if (!(handler instanceof HandlerMethod method) || !requiresKey(method)) {
       return true;
     }
     OwnKey own =
@@ -119,6 +120,18 @@ class IdempotencyInterceptor implements HandlerInterceptor {
         own.owner(),
         own.key(),
         new StoredAnswer(answer.getStatus(), headers, answer.getContentAsByteArray()));
+  }
+
+  /**
+   * Whether a controller method requires an {@code Idempotency-Key}: every {@code POST} but one
+   * marked {@link WithoutIdempotencyKey}. The OpenAPI document names the header by the same rule.
+   */
+  static boolean requiresKey(HandlerMethod method) {
+    RequestMapping mapping =
+        AnnotatedElementUtils.findMergedAnnotation(method.getMethod(), RequestMapping.class);
+    return mapping != null
+        && Arrays.asList(mapping.method()).contains(RequestMethod.POST)
+        && !method.hasMethodAnnotation(WithoutIdempotencyKey.class);
   }
 
   private static UUID keyOf(HttpServletRequest request) {

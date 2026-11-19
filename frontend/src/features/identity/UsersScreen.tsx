@@ -17,7 +17,7 @@ import { EmptyState } from "@/ui/empty-state";
 import { LoadFailed } from "@/ui/load-failed";
 import { Loading, Skeleton } from "@/ui/skeleton";
 import { SortableTableHead, Table, TableBody, TableCell, TableHeader, TableRow } from "@/ui/table";
-import { PageHeader } from "@/app/PageHeader";
+import { PageHeader } from "@/ui/page-header";
 import { AddUserDialog } from "./AddUserDialog";
 import {
   defaultUserSort,
@@ -215,7 +215,7 @@ function Pages({
     <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-muted">
       <p>{t("users.count", { count: totalItems, formattedCount: formatNumber(totalItems) })}</p>
       {totalPages > 1 ? (
-        <nav aria-label={t("users.title")} className="flex items-center gap-2">
+        <nav aria-label={t("users.pages")} className="flex items-center gap-2">
           <p className="tabular-nums">{t("users.page", { page, totalPages })}</p>
           <Button
             variant="outline"

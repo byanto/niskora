@@ -65,8 +65,7 @@ class ProblemDetailsHandler extends ResponseEntityExceptionHandler {
       HttpStatusCode status,
       WebRequest request) {
     Stream<FieldProblem> fields =
-        exception.getFieldErrors().stream()
-            .map(error -> fieldProblem(pointer(error.getField()), error));
+        exception.getFieldErrors().stream().map(error -> fieldProblem(error.getField(), error));
     Stream<FieldProblem> whole =
         exception.getGlobalErrors().stream().map(error -> fieldProblem("", error));
     List<FieldProblem> errors =
@@ -75,27 +74,18 @@ class ProblemDetailsHandler extends ResponseEntityExceptionHandler {
         exception, Problems.ofFields(status, errors), headers, status, request);
   }
 
-  private static FieldProblem fieldProblem(String pointer, ObjectError error) {
+  private static FieldProblem fieldProblem(String path, ObjectError error) {
     String constraint = error.getCode();
     String code =
         constraint != null && REQUIRED_CONSTRAINTS.contains(constraint)
             ? FieldProblem.REQUIRED
             : "INVALID";
     String detail = error.getDefaultMessage();
-    return new FieldProblem(pointer, code, detail == null ? code : detail);
+    return FieldProblem.at(path, code, detail == null ? code : detail);
   }
 
   /** The Bean Validation constraints that mean a field must be given. */
   private static final Set<String> REQUIRED_CONSTRAINTS = Set.of("NotNull", "NotBlank", "NotEmpty");
-
-  /** A field's path as Spring names it, {@code lines[2].quantity}, as a JSON Pointer. */
-  static String pointer(String path) {
-    StringBuilder pointer = new StringBuilder();
-    for (String token : path.replace("[", ".").replace("]", "").split("\\.", -1)) {
-      pointer.append('/').append(token.replace("~", "~0").replace("/", "~1"));
-    }
-    return pointer.toString();
-  }
 
   @Override
   protected ResponseEntity<Object> createResponseEntity(

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.hibernate.exception.ConstraintViolationException;
-import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -98,13 +97,13 @@ class Users {
         LOGIN_NAME, "LOGIN_NAME_TAKEN", "The login name " + loginName + " is taken.");
   }
 
-  /**
-   * A rule a new user breaks: the field it is about, when it is about one, its stable code (ENG-82)
-   * and why, in English.
-   */
-  record Refusal(@Nullable String field, String code, String message) {}
+  /** A rule a new user's field breaks: the field, its stable code (ENG-82) and why, in English. */
+  record Refusal(String field, String code, String message) {}
 
-  /** A user that cannot be created, with every reason why. */
+  /**
+   * A user that cannot be created, with why. A refusal about the new user's fields names each field
+   * it breaks; any other, such as a first user when one exists, names none.
+   */
   static final class UserRefusedException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
@@ -113,7 +112,8 @@ class Users {
     private final List<Refusal> refusals;
 
     UserRefusedException(String message) {
-      this(List.of(new Refusal(null, "REFUSED", message)));
+      super(message);
+      this.refusals = List.of();
     }
 
     UserRefusedException(List<Refusal> refusals) {
