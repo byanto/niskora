@@ -18,9 +18,12 @@ top to bottom direction
 System_Boundary("NiskoraApplication_boundary", "NiskoraApplication", $tags="") {
   Container_Boundary("NiskoraApplication.NiskoraApplication_boundary", "NiskoraApplication", $tags="") {
     Component(NiskoraApplication.NiskoraApplication.Common, "Common", $techn="Module", $descr="", $tags="", $link="")
+    Component(NiskoraApplication.NiskoraApplication.Identity, "Identity", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
+
+Rel(NiskoraApplication.NiskoraApplication.Identity, NiskoraApplication.NiskoraApplication.Common, "depends on", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
 hide stereotypes

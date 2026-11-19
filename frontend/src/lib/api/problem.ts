@@ -34,6 +34,19 @@ export async function dataOf<Data>(
 }
 
 /**
+ * Waits for a request that answers with no content, such as a delete, and throws a `ProblemError`
+ * for an error answer, as `dataOf` does.
+ */
+export async function noContentOf(
+  request: Promise<{ error?: unknown; response: Response }>,
+): Promise<void> {
+  const { error, response } = await request;
+  if (!response.ok) {
+    throw new ProblemError(problemOf(error, response.status));
+  }
+}
+
+/**
  * The problem in an error answer. The backend's own answers are Problem Details with a code. An
  * answer from elsewhere, such as the proxy while the backend is down or Actuator's health check,
  * gets the name of its status as its code, as the backend names an error that has none (ENG-65).

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
+import { loggedIn } from "@/test/session";
 
 /** The backend's health answer, from the given build. Home asks for it until step 3. */
 function healthFrom(build: string) {
@@ -14,7 +15,7 @@ function healthFrom(build: string) {
 
 describe("Shell", () => {
   beforeEach(() => {
-    server.use(healthFrom("dev"));
+    server.use(loggedIn(), healthFrom("dev"));
   });
 
   it("groups the screens in the sidebar by job and marks the current one", async () => {

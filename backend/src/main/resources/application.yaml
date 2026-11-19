@@ -25,6 +25,17 @@ springdoc:
   # A stable order, so the committed document changes only when the API does.
   writer-with-order-by-keys: true
 
+server:
+  servlet:
+    session:
+      # The server-side session lives in a cookie only, never in a URL (PLT-17, FE-74). TLS ends at
+      # the Cloudflare Tunnel, and browsers accept a Secure cookie from http://localhost too.
+      tracking-modes: cookie
+      cookie:
+        secure: true
+        http-only: true
+        same-site: lax
+
 niskora:
   # Sent on every response (ENG-92). The image sets NISKORA_BUILD_ID to the commit hash.
   build-id: dev

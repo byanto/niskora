@@ -149,7 +149,7 @@ _Sources: [Frontend architecture and libraries](https://github.com/byanto/niskor
 - **FE-52** **Empty:** the screen says what is missing and offers the next action.
 - **FE-53** **Failed load:** the translated Problem Details message with a retry button, inside the shell.
 - **FE-54** **Saving:** the button shows that it is saving, and the screen changes only after the server answers. There are no optimistic updates.
-- **FE-55** After a save, field errors show on their fields, any other error shows as a toast, and success shows as a short toast.
+- **FE-55** When an action fails, field errors show on their fields and any other error shows as an alert next to the action, just above its buttons. The alert stays until the user tries again. A toast is only for a short success message, never for an error: it shows away from the action, disappears, and a screen reader cannot reach it again.
 - **FE-56** Every error code from the backend maps to a translation key, both the top-level code of a Problem Details response and the code of each field error. A field error is placed on its field by its JSON Pointer.
 - **FE-57** Enum values from the API, such as `ORDER_NOW`, are mapped to translation keys and never shown raw.
 - **FE-58** **Accessibility:** WCAG 2.1 AA. State is never shown by colour alone.

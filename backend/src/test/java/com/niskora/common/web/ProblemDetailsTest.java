@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import jakarta.servlet.RequestDispatcher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Every error the HTTP layer answers is Problem Details with a stable code (ENG-65). */
 @WebMvcTest(ProblemErrorController.class)
+// Spring MVC's error handling alone: the security in front of it is tested in identity.
+@AutoConfigureMockMvc(addFilters = false)
 // Spring Boot leaves a test's nested classes out of scanning, so the controller is imported.
 @Import(ProblemDetailsTest.FailingController.class)
 class ProblemDetailsTest {

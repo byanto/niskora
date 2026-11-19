@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
@@ -21,6 +22,8 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 @SpringBootTest(properties = "springdoc.api-docs.enabled=true")
 @AutoConfigureMockMvc
 @DatabaseTest
+// Every path but logging in needs a session, the document's included.
+@WithMockUser
 class OpenApiDocumentTest {
 
   /** The test runs in backend/, so the folder is one level up. */
@@ -41,7 +44,25 @@ class OpenApiDocumentTest {
         .contains("- url: /")
         .doesNotContain("localhost")
         // The operational health path, which no controller serves (ENG-68).
-        .contains("/api/health:");
+        .contains("/api/health:")
+        // A response always includes every field (ENG-74), so each one is required.
+        .contains(
+            """
+                SessionUser:
+                  type: object
+                  properties:
+                    fullName:
+                      type: string
+                    id:
+                      type: string
+                      format: uuid
+                    loginName:
+                      type: string
+                  required:
+                  - fullName
+                  - id
+                  - loginName
+            """);
 
     Files.createDirectories(DOCUMENT.getParent());
     Files.writeString(DOCUMENT, document, StandardCharsets.UTF_8);

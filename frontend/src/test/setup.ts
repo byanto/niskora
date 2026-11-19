@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { resetBuildWatch } from "@/lib/api/build";
 import "@/lib/i18n";
@@ -20,6 +20,10 @@ if (typeof window !== "undefined") {
       removeEventListener: () => undefined,
     }) as Partial<MediaQueryList> as MediaQueryList;
 }
+
+// A screen's first render in a test file also loads its modules, which takes more than Testing
+// Library's default second when every file runs at once. A screen that never appears still fails.
+configure({ asyncUtilTimeout: 5000 });
 
 beforeAll(() => {
   server.listen({ onUnhandledFrame: "error" });

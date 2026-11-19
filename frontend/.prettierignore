@@ -2,3 +2,6 @@
 src/lib/api/schema.d.ts
 src/routeTree.gen.ts
 pnpm-lock.yaml
+# Playwright's results and report.
+test-results/
+playwright-report/

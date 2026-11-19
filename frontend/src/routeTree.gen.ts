@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as ShellRouteImport } from "./routes/_shell";
+import { Route as LoginRouteImport } from "./routes/login";
 import { Route as ShellIndexRouteImport } from "./routes/_shell/index";
 import { Route as ShellImportsRouteImport } from "./routes/_shell/imports";
 import { Route as ShellUsersRouteImport } from "./routes/_shell/users";
 
 const ShellRoute = ShellRouteImport.update({
   id: "/_shell",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const LoginRoute = LoginRouteImport.update({
+  id: "/login",
+  path: "/login",
   getParentRoute: () => rootRouteImport,
 } as any);
 const ShellIndexRoute = ShellIndexRouteImport.update({
@@ -36,10 +42,12 @@ const ShellUsersRoute = ShellUsersRouteImport.update({
 
 export interface FileRoutesByFullPath {
   "/": typeof ShellIndexRoute;
+  "/login": typeof LoginRoute;
   "/imports": typeof ShellImportsRoute;
   "/users": typeof ShellUsersRoute;
 }
 export interface FileRoutesByTo {
+  "/login": typeof LoginRoute;
   "/imports": typeof ShellImportsRoute;
   "/users": typeof ShellUsersRoute;
   "/": typeof ShellIndexRoute;
@@ -47,20 +55,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/_shell": typeof ShellRouteWithChildren;
+  "/login": typeof LoginRoute;
   "/_shell/imports": typeof ShellImportsRoute;
   "/_shell/users": typeof ShellUsersRoute;
   "/_shell/": typeof ShellIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/imports" | "/users";
+  fullPaths: "/" | "/login" | "/imports" | "/users";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/imports" | "/users" | "/";
-  id: "__root__" | "/_shell" | "/_shell/imports" | "/_shell/users" | "/_shell/";
+  to: "/login" | "/imports" | "/users" | "/";
+  id:
+    | "__root__"
+    | "/_shell"
+    | "/login"
+    | "/_shell/imports"
+    | "/_shell/users"
+    | "/_shell/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren;
+  LoginRoute: typeof LoginRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -70,6 +86,13 @@ declare module "@tanstack/react-router" {
       path: "";
       fullPath: "/";
       preLoaderRoute: typeof ShellRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/login": {
+      id: "/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof LoginRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/_shell/": {
@@ -112,6 +135,7 @@ const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
+  LoginRoute: LoginRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

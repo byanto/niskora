@@ -47,8 +47,8 @@ export default defineConfig([
     },
   },
   {
-    // The tool config at the root runs in Node.
-    files: ["*.{js,ts}"],
+    // The tool config at the root and the Playwright journeys run in Node.
+    files: ["*.{js,ts}", "e2e/**/*.ts"],
     languageOptions: { globals: globals.node },
   },
   {

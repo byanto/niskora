@@ -1,13 +1,18 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
+import { loggedIn } from "@/test/session";
 
 const up = () => HttpResponse.json({ status: "UP" });
 
 describe("Home", () => {
+  beforeEach(() => {
+    server.use(loggedIn());
+  });
+
   it("says what is missing while nothing has been imported, and offers the next action", async () => {
     server.use(http.get("*/api/health", up));
 
