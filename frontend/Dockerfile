@@ -6,6 +6,10 @@ WORKDIR /build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
+# The build the shell compares with the backend's build id header (FE-82, ENG-92). CI passes the
+# commit hash to both images; a local build is `dev` on both sides.
+ARG BUILD_ID=dev
+ENV VITE_BUILD_ID=${BUILD_ID}
 RUN pnpm build
 
 FROM caddy:2@sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b

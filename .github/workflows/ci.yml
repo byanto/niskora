@@ -117,7 +117,7 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ghcr.io/${{ github.repository }}-${{ matrix.image }}:${{ github.sha }}
-          # The backend sends it on every response (ENG-92).
+          # The backend sends it on every response (ENG-92) and the frontend compares it (FE-82).
           build-args: BUILD_ID=${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max
