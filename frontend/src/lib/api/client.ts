@@ -1,4 +1,5 @@
 import createClient from "openapi-fetch";
+import { BUILD_ID_HEADER, noteBackendBuild } from "./build";
 import type { paths } from "./schema";
 
 /**
@@ -11,4 +12,11 @@ import type { paths } from "./schema";
 export const api = createClient<paths>({
   baseUrl: globalThis.location.origin,
   fetch: (request) => globalThis.fetch(request),
+});
+
+// Every response names the backend's build, so the shell can offer a reload (FE-82).
+api.use({
+  onResponse({ response }) {
+    noteBackendBuild(response.headers.get(BUILD_ID_HEADER));
+  },
 });
