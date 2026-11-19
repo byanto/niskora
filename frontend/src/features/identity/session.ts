@@ -1,4 +1,5 @@
-import { queryOptions } from "@tanstack/react-query";
+import { type QueryClient, queryOptions } from "@tanstack/react-query";
+import type { AnyRouter } from "@tanstack/react-router";
 import { api } from "@/lib/api/client";
 import { dataOf, ProblemError } from "@/lib/api/problem";
 
@@ -11,6 +12,42 @@ export const sessionQuery = queryOptions({
   queryKey: ["identity", "session"],
   queryFn: ({ signal }) => dataOf(api.GET("/api/identity/session", { signal })),
 });
+
+/**
+ * Who is logged in, or null while nobody is. The shell takes the session the cache holds, while
+ * Login asks afresh, since the session may just have ended. Any other error is thrown, for the
+ * route's error screen.
+ */
+export async function whoIsLoggedIn(queryClient: QueryClient, { askAfresh = false } = {}) {
+  try {
+    return askAfresh
+      ? await queryClient.query(sessionQuery)
+      : await queryClient.query({ ...sessionQuery, staleTime: "static" });
+  } catch (error) {
+    if (isUnauthorized(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Goes to Login, with the URL to come back to when there is one (FE-72), and then forgets
+ * everything from the backend. In that order, so no screen still showing asks again for what is
+ * about to be forgotten.
+ */
+export async function leaveForLogin(
+  router: AnyRouter,
+  queryClient: QueryClient,
+  redirect?: string,
+): Promise<void> {
+  await router.navigate({
+    to: "/login",
+    search: redirect === undefined ? {} : { redirect },
+    replace: true,
+  });
+  queryClient.clear();
+}
 
 /** Whether a call failed because there is no session (ENG-81). */
 export function isUnauthorized(error: unknown): boolean {

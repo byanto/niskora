@@ -12,6 +12,10 @@ export default defineConfig({
   forbidOnly: process.env.CI !== undefined,
   // The journeys share one account and its session, so they run one at a time.
   workers: 1,
+  // A journey runs against a backend that has just started, as in CI every time. Its first login
+  // hashes a password with Argon2 before the JIT has warmed up, which took over 5 seconds, the
+  // default, beside a busy browser. A step that never finishes still fails.
+  expect: { timeout: 15_000 },
   reporter: process.env.CI === undefined ? "list" : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:8000",

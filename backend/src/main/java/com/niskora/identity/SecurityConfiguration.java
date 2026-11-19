@@ -37,8 +37,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @Configuration(proxyBeanMethods = false)
 class SecurityConfiguration {
 
-  static final String SESSION_PATH = "/api/identity/session";
-
   /** Only when the backend serves: a command such as create-first-user runs without a server. */
   @Bean
   @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -57,7 +55,7 @@ class SecurityConfiguration {
                 // too. The application's port has no Actuator path, so this opens nothing there.
                 .requestMatchers("/actuator/**")
                 .permitAll()
-                .requestMatchers(HttpMethod.POST, SESSION_PATH)
+                .requestMatchers(HttpMethod.POST, SessionController.PATH)
                 .permitAll()
                 .anyRequest()
                 .authenticated())

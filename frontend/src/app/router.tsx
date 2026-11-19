@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, type RouterHistory } from "@tanstack/react-router";
-import { isUnauthorized, sessionQuery } from "@/features/identity";
+import { isUnauthorized, leaveForLogin, sessionQuery } from "@/features/identity";
 import { routeTree } from "../routeTree.gen";
 
 /** What every route can reach through its context. */
@@ -38,12 +38,7 @@ export function createAppRouter({ queryClient = new QueryClient(), history }: Op
     if (!isUnauthorized(error) || location.pathname === "/login") {
       return;
     }
-    // Forgotten once the screens that use it are gone, so none of them asks again meanwhile.
-    void router
-      .navigate({ to: "/login", search: { redirect: location.href }, replace: true })
-      .then(() => {
-        queryClient.clear();
-      });
+    void leaveForLogin(router, queryClient, location.href);
   };
   queryClient.getQueryCache().subscribe((event) => {
     if (

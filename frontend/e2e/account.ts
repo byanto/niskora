@@ -5,6 +5,6 @@
  */
 export const account = {
   loginName: process.env.E2E_LOGIN_NAME ?? "journey",
-  name: process.env.E2E_NAME ?? "Journey Tester",
+  fullName: process.env.E2E_FULL_NAME ?? "Journey Tester",
   password: process.env.E2E_PASSWORD ?? "journey password",
 };

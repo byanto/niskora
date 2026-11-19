@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
-import { rina, loggedIn, notLoggedIn, unauthorized } from "@/test/session";
+import { rina, loggedIn, notLoggedIn, problem, unauthorized } from "@/test/session";
+import { findToast } from "@/test/toast";
 
 describe("The session", () => {
   beforeEach(() => {
@@ -26,7 +27,7 @@ describe("The session", () => {
     if (sidebar === null) {
       throw new Error("The sidebar is not in an aside.");
     }
-    expect(within(sidebar).getByText(rina.name)).toBeInTheDocument();
+    expect(within(sidebar).getByText(rina.fullName)).toBeInTheDocument();
     expect(within(sidebar).getByRole("button", { name: "Log out" })).toBeInTheDocument();
     await expectNoAxeViolations(container);
   });
@@ -54,6 +55,27 @@ describe("The session", () => {
     expect(sent?.headers.get("X-XSRF-TOKEN")).toBe("token-from-the-backend");
     // Logging out on purpose does not ask to come back to where the user was.
     expect(router.state.location.href).toBe("/login");
+  });
+
+  it("says why logging out failed, and stays logged in", async () => {
+    server.use(
+      loggedIn(),
+      http.get("*/api/health", () => HttpResponse.json({ status: "UP" })),
+      http.delete("*/api/identity/session", () => problem(403, "CSRF_TOKEN_INVALID")),
+    );
+    const { router } = renderRoute("/users");
+
+    const sidebar = (await screen.findByRole("navigation", { name: "Main" })).closest("aside");
+    if (sidebar === null) {
+      throw new Error("The sidebar is not in an aside.");
+    }
+    fireEvent.click(within(sidebar).getByRole("button", { name: "Log out" }));
+
+    expect(
+      await findToast("This page is out of date. Reload it, then try again."),
+    ).toBeInTheDocument();
+    expect(router.state.location.href).toBe("/users");
+    expect(within(sidebar).getByRole("button", { name: "Log out" })).toBeEnabled();
   });
 
   it("sends the user to Login when any call answers 401, to come back to the same URL", async () => {

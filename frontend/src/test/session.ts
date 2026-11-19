@@ -4,7 +4,7 @@ import { http, HttpResponse } from "msw";
 export const rina = {
   id: "5b1e8c3a-2f4d-4a6b-9c8e-1d2f3a4b5c6d",
   loginName: "rina",
-  name: "Rina Wulandari",
+  fullName: "Rina Wulandari",
 };
 
 /** The backend's answer to "who is logged in" while the given user is (FE-71). */

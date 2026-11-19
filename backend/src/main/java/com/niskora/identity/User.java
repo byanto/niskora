@@ -9,7 +9,7 @@ import java.util.UUID;
 
 /**
  * A user: one person with one account, never shared (PLT-19). They log in with their login name,
- * which is unique whatever its case, and the app shows their name.
+ * which is unique whatever its case, and the app shows their full name.
  */
 @Entity
 @Table(schema = "identity", name = "users")
@@ -20,7 +20,8 @@ class User {
   @Column(name = "login_name")
   private String loginName;
 
-  private String name;
+  @Column(name = "full_name")
+  private String fullName;
 
   /** The Argon2 hash of the password, prefixed with the encoder's id (PLT-17). */
   @Column(name = "password_hash")
@@ -29,10 +30,10 @@ class User {
   @Column(name = "created_at")
   private Instant createdAt;
 
-  User(UUID id, String loginName, String name, String passwordHash, Instant createdAt) {
+  User(UUID id, String loginName, String fullName, String passwordHash, Instant createdAt) {
     this.id = id;
     this.loginName = loginName;
-    this.name = name;
+    this.fullName = fullName;
     this.passwordHash = passwordHash;
     this.createdAt = createdAt;
   }
@@ -49,15 +50,11 @@ class User {
     return loginName;
   }
 
-  String name() {
-    return name;
+  String fullName() {
+    return fullName;
   }
 
   String passwordHash() {
     return passwordHash;
-  }
-
-  Instant createdAt() {
-    return createdAt;
   }
 }

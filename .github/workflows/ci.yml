@@ -91,7 +91,7 @@ jobs:
       - name: Create the account
         run: |
           echo "journey password" | docker compose exec -T backend \
-            java -jar app.jar create-first-user --login-name=journey --name="Journey Tester"
+            java -jar app.jar create-first-user --login-name=journey --full-name="Journey Tester"
       - name: Wait for the backend
         run: |
           for attempt in $(seq 60); do

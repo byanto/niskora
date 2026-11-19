@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Shell } from "@/app/Shell";
 import { StartFailed } from "@/app/StartFailed";
-import { isUnauthorized, sessionQuery } from "@/features/identity";
+import { whoIsLoggedIn } from "@/features/identity";
 
 /**
  * Every screen except Login sits in the shell (FE-1), and only for a logged-in user: the app asks
@@ -10,15 +10,9 @@ import { isUnauthorized, sessionQuery } from "@/features/identity";
  */
 export const Route = createFileRoute("/_shell")({
   beforeLoad: async ({ context, location }) => {
-    try {
-      // The session the cache already holds, or the backend's answer when it holds none.
-      await context.queryClient.query({ ...sessionQuery, staleTime: "static" });
-    } catch (error) {
-      if (isUnauthorized(error)) {
-        // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-        throw redirect({ to: "/login", search: { redirect: location.href }, replace: true });
-      }
-      throw error;
+    if ((await whoIsLoggedIn(context.queryClient)) === null) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+      throw redirect({ to: "/login", search: { redirect: location.href }, replace: true });
     }
   },
   component: Shell,

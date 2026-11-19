@@ -1,5 +1,6 @@
 package com.niskora;
 
+import com.niskora.identity.FirstUserCommand;
 import java.util.Map;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
@@ -30,12 +31,10 @@ import org.springframework.modulith.Modulithic;
 @Modulithic(sharedModules = "common")
 public class NiskoraApplication {
 
-  /** The one command the backend runs instead of serving, which identity carries out (PLT-23). */
-  private static final String CREATE_FIRST_USER = "create-first-user";
-
   public static void main(String[] args) {
     SpringApplication application = new SpringApplication(NiskoraApplication.class);
-    boolean command = args.length > 0 && args[0].equals(CREATE_FIRST_USER);
+    // The one command the backend runs instead of serving, which identity carries out (PLT-23).
+    boolean command = args.length > 0 && args[0].equals(FirstUserCommand.NAME);
     if (!command) {
       application.run(args);
       return;

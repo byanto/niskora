@@ -1,4 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
+import { CenteredPage } from "@/ui/centered-page";
 import { LoadFailed } from "@/ui/load-failed";
 
 /**
@@ -8,7 +9,7 @@ import { LoadFailed } from "@/ui/load-failed";
 export function StartFailed({ error }: { error: unknown }) {
   const router = useRouter();
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <CenteredPage>
       <LoadFailed
         className="w-full max-w-md"
         error={error}
@@ -16,6 +17,6 @@ export function StartFailed({ error }: { error: unknown }) {
           void router.invalidate();
         }}
       />
-    </main>
+    </CenteredPage>
   );
 }

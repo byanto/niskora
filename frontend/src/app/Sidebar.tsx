@@ -6,7 +6,8 @@ import { navigation } from "./navigation";
 
 /**
  * The sidebar's content: the app's name, the screens grouped by job (FE-2) with the current
- * screen marked, and the logged-in user with "Log out" (FE-8). The shell shows it fixed on the left, or in a drawer below 1024 px (FE-107).
+ * screen marked, and the logged-in user with "Log out" (FE-8). The shell shows it fixed on the
+ * left, or in a drawer below 1024 px (FE-107).
  */
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation();

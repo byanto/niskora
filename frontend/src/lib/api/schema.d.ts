@@ -53,10 +53,10 @@ export interface components {
             user: components["schemas"]["SessionUser"];
         };
         SessionUser: {
+            fullName: string;
             /** Format: uuid */
             id: string;
             loginName: string;
-            name: string;
         };
     };
     responses: never;

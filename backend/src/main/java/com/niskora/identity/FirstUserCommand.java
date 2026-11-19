@@ -20,19 +20,21 @@ import org.springframework.stereotype.Component;
  * Creates the first user from the command line on the server (PLT-23). Every later user is added on
  * the Users screen, so it refuses once any user exists. There is no self-signup (PLT-18).
  *
- * <p>{@code java -jar app.jar create-first-user --login-name=rina --name="Rina Wulandari"} asks for
- * the password twice on a terminal, or reads it from the first line of standard input when piped,
- * so it never shows in the shell's history or the process list. The backend then starts without its
- * web server and exits with {@link #getExitCode()}.
+ * <p>{@code java -jar app.jar create-first-user --login-name=rina --full-name="Rina Wulandari"}
+ * asks for the password twice on a terminal, or reads it from the first line of standard input when
+ * piped, so it never shows in the shell's history or the process list. The backend then starts
+ * without its web server and exits with {@link #getExitCode()}.
  */
 @Component
-class FirstUserCommand implements ApplicationRunner, ExitCodeGenerator {
+public final class FirstUserCommand implements ApplicationRunner, ExitCodeGenerator {
 
-  /** The command's name, the first argument. */
-  static final String NAME = "create-first-user";
+  /**
+   * The command's name, the first argument, which also tells the backend to start without serving.
+   */
+  public static final String NAME = "create-first-user";
 
   private static final String USAGE =
-      "Usage: " + NAME + " --login-name=<login name> --name=<name shown in the app>";
+      "Usage: " + NAME + " --login-name=<login name> --full-name=<full name>";
 
   /** Reads the new user's password. */
   @FunctionalInterface
@@ -60,14 +62,14 @@ class FirstUserCommand implements ApplicationRunner, ExitCodeGenerator {
       return;
     }
     String loginName = single(args, "login-name");
-    String name = single(args, "name");
-    if (loginName == null || name == null) {
+    String fullName = single(args, "full-name");
+    if (loginName == null || fullName == null) {
       System.err.println(USAGE);
       exitCode = 2;
       return;
     }
     try {
-      users.createFirstUser(loginName, name, passwordReader.read());
+      users.createFirstUser(loginName, fullName, passwordReader.read());
       System.out.println("Created the first user, " + loginName.strip() + ".");
       exitCode = 0;
     } catch (UserRefusedException refused) {

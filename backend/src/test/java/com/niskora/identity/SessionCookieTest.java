@@ -33,16 +33,14 @@ class SessionCookieTest {
         RestTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
 
     String csrfCookie =
-        cookie(
-            client.get().uri(SecurityConfiguration.SESSION_PATH).exchange().returnResult(),
-            "XSRF-TOKEN");
+        cookie(client.get().uri(SessionController.PATH).exchange().returnResult(), "XSRF-TOKEN");
     assertThat(csrfCookie).contains("Secure").contains("SameSite=Lax").doesNotContain("HttpOnly");
     String token = csrfCookie.substring("XSRF-TOKEN=".length(), csrfCookie.indexOf(';'));
 
     var login =
         client
             .post()
-            .uri(SecurityConfiguration.SESSION_PATH)
+            .uri(SessionController.PATH)
             .contentType(MediaType.APPLICATION_JSON)
             .cookie("XSRF-TOKEN", token)
             .header("X-XSRF-TOKEN", token)

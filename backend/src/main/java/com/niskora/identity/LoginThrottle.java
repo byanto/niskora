@@ -41,22 +41,27 @@ final class LoginThrottle {
     this.clock = clock;
   }
 
-  /** How long a login with this name must wait before it is tried, or empty when it may be now. */
-  synchronized Optional<Duration> waitBefore(String loginName) {
-    Failures known = current(key(loginName));
-    if (known == null || known.count() < FREE_FAILURES) {
-      return Optional.empty();
-    }
-    Duration remaining = Duration.between(clock.instant(), known.last().plus(waitAfter(known)));
-    return remaining.isPositive() ? Optional.of(remaining) : Optional.empty();
-  }
-
-  synchronized void failed(String loginName) {
+  /**
+   * Starts a login with this name: how long it must wait first, or empty when it may go ahead.
+   *
+   * <p>One that goes ahead counts as a failure at once, until {@link #succeeded} says otherwise.
+   * The check and the count are one step, so logins sent at the same moment cannot all slip past
+   * the check before any of them has failed. One that must wait is not counted.
+   */
+  synchronized Optional<Duration> attempt(String loginName) {
     String key = key(loginName);
     Failures known = current(key);
+    if (known != null && known.count() >= FREE_FAILURES) {
+      Duration remaining = Duration.between(clock.instant(), known.last().plus(waitAfter(known)));
+      if (remaining.isPositive()) {
+        return Optional.of(remaining);
+      }
+    }
     failures.put(key, new Failures(known == null ? 1 : known.count() + 1, clock.instant()));
+    return Optional.empty();
   }
 
+  /** The login went through, so the failures of its name are forgotten. */
   synchronized void succeeded(String loginName) {
     failures.remove(key(loginName));
   }

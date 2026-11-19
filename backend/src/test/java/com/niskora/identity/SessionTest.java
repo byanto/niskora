@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @DatabaseTest
 class SessionTest {
 
-  private static final String SESSION = "/api/identity/session";
+  private static final String SESSION = SessionController.PATH;
   private static final String PASSWORD = "correct horse battery";
 
   @Autowired MockMvc mvc;
@@ -69,13 +69,13 @@ class SessionTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.user.id").value(rina.toString()))
         .andExpect(jsonPath("$.user.loginName").value("rina"))
-        .andExpect(jsonPath("$.user.name").value("Rina Wulandari"));
+        .andExpect(jsonPath("$.user.fullName").value("Rina Wulandari"));
 
     browser
         .get(SESSION)
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.user.id").value(rina.toString()))
-        .andExpect(jsonPath("$.user.name").value("Rina Wulandari"));
+        .andExpect(jsonPath("$.user.fullName").value("Rina Wulandari"));
   }
 
   @Test

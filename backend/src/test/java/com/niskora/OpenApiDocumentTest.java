@@ -51,17 +51,17 @@ class OpenApiDocumentTest {
                 SessionUser:
                   type: object
                   properties:
+                    fullName:
+                      type: string
                     id:
                       type: string
                       format: uuid
                     loginName:
                       type: string
-                    name:
-                      type: string
                   required:
+                  - fullName
                   - id
                   - loginName
-                  - name
             """);
 
     Files.createDirectories(DOCUMENT.getParent());

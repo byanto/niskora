@@ -38,14 +38,14 @@ class FirstUserCommandTest {
   void createsTheFirstUserWithAnArgon2HashedPassword(CapturedOutput output) throws Exception {
     FirstUserCommand command = command();
 
-    command.run(args("create-first-user", "--login-name=rina", "--name=Rina Wulandari"));
+    command.run(args("create-first-user", "--login-name=rina", "--full-name=Rina Wulandari"));
 
     assertThat(command.getExitCode()).isZero();
     assertThat(output.getOut()).contains("Created the first user, rina.");
     UserDetails user = userDetailsService.loadUserByUsername("rina");
     assertThat(user.getPassword()).startsWith("{argon2}$argon2id$");
     assertThat(passwordEncoder.matches(PASSWORD, user.getPassword())).isTrue();
-    assertThat(((LoggedInUser) user).name()).isEqualTo("Rina Wulandari");
+    assertThat(((LoggedInUser) user).fullName()).isEqualTo("Rina Wulandari");
   }
 
   @Test
@@ -53,7 +53,7 @@ class FirstUserCommandTest {
     users.create("sari", "Sari Dewi", PASSWORD);
     FirstUserCommand command = command();
 
-    command.run(args("create-first-user", "--login-name=rina", "--name=Rina Wulandari"));
+    command.run(args("create-first-user", "--login-name=rina", "--full-name=Rina Wulandari"));
 
     assertThat(command.getExitCode()).isEqualTo(1);
     assertThat(output.getErr()).contains("A user already exists");
@@ -65,14 +65,14 @@ class FirstUserCommandTest {
   void refusesAPasswordThatIsTooShort(CapturedOutput output) throws Exception {
     FirstUserCommand command = new FirstUserCommand(users, () -> "short");
 
-    command.run(args("create-first-user", "--login-name=rina", "--name=Rina Wulandari"));
+    command.run(args("create-first-user", "--login-name=rina", "--full-name=Rina Wulandari"));
 
     assertThat(command.getExitCode()).isEqualTo(1);
     assertThat(output.getErr()).contains("at least 8 characters");
   }
 
   @Test
-  void explainsItselfWhenTheLoginNameOrNameIsMissing(CapturedOutput output) throws Exception {
+  void explainsItselfWhenTheLoginNameOrFullNameIsMissing(CapturedOutput output) throws Exception {
     FirstUserCommand command = command();
 
     command.run(args("create-first-user", "--login-name=rina"));

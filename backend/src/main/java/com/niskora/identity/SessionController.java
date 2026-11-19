@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
  * is one resource, so its path is singular.
  */
 @RestController
-@RequestMapping(path = "/api/identity/session", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(path = SessionController.PATH, produces = MediaType.APPLICATION_JSON_VALUE)
 class SessionController {
+
+  static final String PATH = "/api/identity/session";
 
   private final Logins logins;
 
@@ -61,10 +63,12 @@ class SessionController {
   record Session(SessionUser user) {
 
     static Session of(LoggedInUser user) {
-      return new Session(new SessionUser(user.id(), user.loginName(), user.name()));
+      return new Session(new SessionUser(user.id(), user.loginName(), user.fullName()));
     }
   }
 
-  /** The logged-in user: the login name they log in with and the name the app shows. */
-  record SessionUser(UUID id, String loginName, String name) {}
+  /**
+   * The logged-in user: the login name they log in with and their full name, which the app shows.
+   */
+  record SessionUser(UUID id, String loginName, String fullName) {}
 }

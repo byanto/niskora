@@ -19,18 +19,18 @@ final class LoggedInUser implements UserDetails, CredentialsContainer {
 
   private final UUID id;
   private final String loginName;
-  private final String name;
+  private final String fullName;
   private @Nullable String passwordHash;
 
-  LoggedInUser(UUID id, String loginName, String name, @Nullable String passwordHash) {
+  LoggedInUser(UUID id, String loginName, String fullName, @Nullable String passwordHash) {
     this.id = id;
     this.loginName = loginName;
-    this.name = name;
+    this.fullName = fullName;
     this.passwordHash = passwordHash;
   }
 
   static LoggedInUser of(User user) {
-    return new LoggedInUser(user.id(), user.loginName(), user.name(), user.passwordHash());
+    return new LoggedInUser(user.id(), user.loginName(), user.fullName(), user.passwordHash());
   }
 
   UUID id() {
@@ -41,8 +41,8 @@ final class LoggedInUser implements UserDetails, CredentialsContainer {
     return loginName;
   }
 
-  String name() {
-    return name;
+  String fullName() {
+    return fullName;
   }
 
   @Override

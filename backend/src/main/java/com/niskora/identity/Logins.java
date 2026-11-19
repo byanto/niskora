@@ -27,7 +27,6 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.ErrorResponseException;
 
@@ -70,7 +69,7 @@ class Logins {
   /** Logs in, or refuses with a 401 for a wrong password and a 429 while slowed down. */
   LoggedInUser logIn(
       String loginName, String password, HttpServletRequest request, HttpServletResponse response) {
-    Optional<Duration> wait = throttle.waitBefore(loginName);
+    Optional<Duration> wait = throttle.attempt(loginName);
     if (wait.isPresent()) {
       throw tooManyAttempts(wait.get());
     }
@@ -80,7 +79,7 @@ class Logins {
           authenticationManager.authenticate(
               UsernamePasswordAuthenticationToken.unauthenticated(loginName, password));
     } catch (AuthenticationException failed) {
-      throttle.failed(loginName);
+      // The throttle counted the attempt as a failure when it started.
       throw new ErrorResponseException(
           HttpStatus.UNAUTHORIZED,
           Problems.of(
@@ -94,7 +93,8 @@ class Logins {
     context.setAuthentication(authentication);
     contextHolder.setContext(context);
     contextRepository.saveContext(context, request, response);
-    handOutCsrfToken(request);
+    // The CSRF strategy replaced the token, which Spring Security writes only once it is read.
+    CsrfCookieFilter.handOutToken(request);
     // The provider's principal is the LoggedInUser that userDetailsService loaded.
     return (LoggedInUser) Objects.requireNonNull(authentication.getPrincipal());
   }
@@ -105,13 +105,6 @@ class Logins {
     logout.setSecurityContextRepository(contextRepository);
     logout.logout(request, response, contextHolder.getContext().getAuthentication());
     csrfTokenRepository.saveToken(csrfTokenRepository.generateToken(request), request, response);
-  }
-
-  /** The CSRF strategy replaced the token, which Spring Security writes only once it is read. */
-  private static void handOutCsrfToken(HttpServletRequest request) {
-    if (request.getAttribute(CsrfToken.class.getName()) instanceof CsrfToken token) {
-      token.getToken();
-    }
   }
 
   private static ErrorResponseException tooManyAttempts(Duration wait) {

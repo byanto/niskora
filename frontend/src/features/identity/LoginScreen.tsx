@@ -4,14 +4,15 @@ import { useRouter } from "@tanstack/react-router";
 import { useId, useMemo } from "react";
 import { type FieldError, useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { z } from "zod";
 import { api } from "@/lib/api/client";
 import { dataOf, errorKey } from "@/lib/api/problem";
 import { Button } from "@/ui/button";
 import { Card } from "@/ui/card";
+import { CenteredPage } from "@/ui/centered-page";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
-import { StatusIcon } from "@/ui/status-badge";
 import { afterLogin, sessionQuery } from "./session";
 
 /**
@@ -45,24 +46,20 @@ export function LoginScreen({ redirect }: { redirect: string | undefined }) {
       queryClient.setQueryData(sessionQuery.queryKey, session);
       await router.navigate({ href: afterLogin(redirect), replace: true });
     },
+    // A wrong password, a wait or no answer: it says why, and Login stays (FE-55, FE-56). One
+    // toast at a time, so trying again replaces it rather than stacking another.
+    onError: (error) => {
+      toast.error(tCommon(`errors.${errorKey(error)}`), { id: "logIn" });
+    },
   });
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <CenteredPage>
       <Card className="w-full max-w-sm gap-6 p-6">
         <div className="flex flex-col gap-1">
           <p className="text-h2 font-semibold text-muted">{tCommon("appName")}</p>
           <h1 className="text-h1 font-semibold">{t("login.title")}</h1>
         </div>
-        {logIn.isError ? (
-          <p
-            role="alert"
-            className="flex items-start gap-2 rounded-control border border-late-line bg-late-bg p-3 text-late"
-          >
-            <StatusIcon status="late" className="mt-px size-4 shrink-0" />
-            {tCommon(`errors.${errorKey(logIn.error)}`)}
-          </p>
-        ) : null}
         <form
           noValidate
           className="flex flex-col gap-4"
@@ -91,7 +88,7 @@ export function LoginScreen({ redirect }: { redirect: string | undefined }) {
           </Button>
         </form>
       </Card>
-    </main>
+    </CenteredPage>
   );
 }
 

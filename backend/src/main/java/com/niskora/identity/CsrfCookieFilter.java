@@ -19,9 +19,14 @@ final class CsrfCookieFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
+    handOutToken(request);
+    chain.doFilter(request, response);
+  }
+
+  /** Reads the request's CSRF token, so Spring Security writes it to the cookie. */
+  static void handOutToken(HttpServletRequest request) {
     if (request.getAttribute(CsrfToken.class.getName()) instanceof CsrfToken token) {
       token.getToken();
     }
-    chain.doFilter(request, response);
   }
 }

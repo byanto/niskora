@@ -5,10 +5,11 @@ import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
 import { rina, loggedIn, notLoggedIn, problem } from "@/test/session";
+import { findToast } from "@/test/toast";
 
 const up = () => HttpResponse.json({ status: "UP" });
 
-/** The backend logs rina in with the right password, and from then on knows him. */
+/** The backend logs rina in with the right password, and from then on knows who is logged in. */
 function loginAccepted(onRequest: (request: Request) => void = () => undefined) {
   return http.post("*/api/identity/session", async ({ request }) => {
     onRequest(request.clone());
@@ -117,9 +118,7 @@ describe("Login", () => {
     await screen.findByRole("heading", { level: 1, name: "Log in" });
     logIn("rina", "wrong password");
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "The login name or password is wrong.",
-    );
+    expect(await findToast("The login name or password is wrong.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
     await expectNoAxeViolations(container);
   });
@@ -136,9 +135,9 @@ describe("Login", () => {
     await screen.findByRole("heading", { level: 1, name: "Log in" });
     logIn();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Too many failed logins. Wait a moment, then try again.",
-    );
+    expect(
+      await findToast("Too many failed logins. Wait a moment, then try again."),
+    ).toBeInTheDocument();
   });
 
   it("asks for both fields before it sends anything", async () => {
