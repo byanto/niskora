@@ -63,21 +63,22 @@ class BackendStartsTest {
     clientOn(applicationPort).get().uri("/actuator/health").exchange().expectStatus().isNotFound();
   }
 
+  /** Without a session even an unknown path is a 401, so a stranger learns no path that exists. */
   @Test
-  void answersAnUnknownPathWithProblemDetails() {
+  void answersAPathWithoutASessionWithProblemDetails() {
     clientOn(applicationPort)
         .get()
         .uri("/api/health")
         .exchange()
         .expectStatus()
-        .isNotFound()
+        .isUnauthorized()
         .expectHeader()
         .contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
         .expectBody()
         .jsonPath("$.status")
-        .isEqualTo(404)
+        .isEqualTo(401)
         .jsonPath("$.code")
-        .isEqualTo("NOT_FOUND");
+        .isEqualTo("UNAUTHORIZED");
   }
 
   @Test

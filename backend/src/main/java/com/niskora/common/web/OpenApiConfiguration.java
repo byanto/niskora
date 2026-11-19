@@ -14,8 +14,10 @@ import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.servers.Server;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +40,26 @@ class OpenApiConfiguration {
         .servers(List.of(new Server().url("/")))
         .paths(new Paths().addPathItem(HEALTH_PATH, health()))
         .components(new Components().addSchemas(HEALTH_SCHEMA, healthSchema()));
+  }
+
+  /**
+   * Every field of every schema is required: a response always includes every field, and an empty
+   * value is an explicit {@code null} (ENG-74), which springdoc marks from JSpecify's
+   * {@code @Nullable}. The client types then hold no optional field that is never left out.
+   */
+  @Bean
+  OpenApiCustomizer everyFieldIsRequired() {
+    return openApi -> {
+      Components components = openApi.getComponents();
+      if (components == null || components.getSchemas() == null) {
+        return;
+      }
+      for (Schema<?> schema : components.getSchemas().values()) {
+        if (schema.getProperties() != null) {
+          schema.setRequired(new ArrayList<>(schema.getProperties().keySet()));
+        }
+      }
+    };
   }
 
   /**

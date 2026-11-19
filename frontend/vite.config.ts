@@ -27,5 +27,8 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}", "*.test.ts"],
     restoreMocks: true,
+    // Longer than Testing Library's wait for a screen (src/test/setup.ts), so a screen that never
+    // appears fails with its own message rather than a timeout.
+    testTimeout: 15_000,
   },
 });

@@ -22,6 +22,42 @@ paths:
                 $ref: "#/components/schemas/Health"
           description: Not up
       summary: Whether the backend is up
+  /api/identity/session:
+    delete:
+      operationId: logOut
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - session-controller
+    get:
+      operationId: currentSession
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+          description: OK
+      tags:
+      - session-controller
+    post:
+      operationId: logIn
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+          description: OK
+      tags:
+      - session-controller
 components:
   schemas:
     Health:
@@ -36,3 +72,36 @@ components:
           - UNKNOWN
       required:
       - status
+    LoginRequest:
+      type: object
+      properties:
+        loginName:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+      required:
+      - loginName
+      - password
+    Session:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/SessionUser"
+      required:
+      - user
+    SessionUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        loginName:
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - loginName
+      - name

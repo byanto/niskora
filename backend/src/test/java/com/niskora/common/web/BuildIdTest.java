@@ -11,6 +11,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
@@ -36,12 +37,14 @@ class BuildIdTest {
 
   @Test
   void aResponseFromSpringMvcCarriesTheBuildId() {
+    // Without a session the call is refused, and the refusal is answered by Spring MVC's error
+    // handling like any other error.
     client()
         .get()
         .uri("/api/nothing-here")
         .exchange()
         .expectStatus()
-        .isNotFound()
+        .isUnauthorized()
         .expectHeader()
         .valueEquals(BuildIdFilter.HEADER, BUILD_ID);
   }
@@ -90,6 +93,8 @@ class BuildIdTest {
             throw new IllegalStateException("a filter failed");
           });
       registration.addUrlPatterns(FAILING_PATH);
+      // Before Spring Security, which would otherwise refuse the call first.
+      registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
       return registration;
     }
   }

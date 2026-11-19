@@ -25,6 +25,10 @@ export const common = {
    * none: no answer at all (`NETWORK`) and anything else (`UNEXPECTED`).
    */
   errors: {
+    UNAUTHORIZED: "You are not logged in.",
+    BAD_CREDENTIALS: "The login name or password is wrong.",
+    TOO_MANY_LOGIN_ATTEMPTS: "Too many failed logins. Wait a moment, then try again.",
+    CSRF_TOKEN_INVALID: "This page is out of date. Reload it, then try again.",
     NOT_FOUND: "This was not found. It may have been removed.",
     INTERNAL_SERVER_ERROR: "Something went wrong on the server.",
     BAD_GATEWAY: "The server is not answering. Wait a moment.",

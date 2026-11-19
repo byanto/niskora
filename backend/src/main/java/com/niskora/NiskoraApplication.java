@@ -1,7 +1,10 @@
 package com.niskora;
 
+import java.util.Map;
+import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.actuate.autoconfigure.web.ManagementContextConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurationExcludeFilter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -27,7 +30,21 @@ import org.springframework.modulith.Modulithic;
 @Modulithic(sharedModules = "common")
 public class NiskoraApplication {
 
+  /** The one command the backend runs instead of serving, which identity carries out (PLT-23). */
+  private static final String CREATE_FIRST_USER = "create-first-user";
+
   public static void main(String[] args) {
-    SpringApplication.run(NiskoraApplication.class, args);
+    SpringApplication application = new SpringApplication(NiskoraApplication.class);
+    boolean command = args.length > 0 && args[0].equals(CREATE_FIRST_USER);
+    if (!command) {
+      application.run(args);
+      return;
+    }
+    // A command runs without the web server, keeps the logs to warnings so its own lines stand
+    // out, and exits with its result once it is done.
+    application.setWebApplicationType(WebApplicationType.NONE);
+    application.setBannerMode(Banner.Mode.OFF);
+    application.setDefaultProperties(Map.of("logging.level.root", "warn"));
+    System.exit(SpringApplication.exit(application.run(args)));
   }
 }

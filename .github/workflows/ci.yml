@@ -71,6 +71,52 @@ jobs:
           git --no-pager diff
           test -z "$(git status --porcelain)"
 
+  # The Playwright journeys (ENG-39) in a real browser against the whole Compose stack, built from
+  # this commit, with an account made by the first-user command (PLT-23).
+  journeys:
+    name: Journeys
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
+        with:
+          working-directory: frontend
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      - name: Start the stack
+        run: docker compose up --detach --build --wait
+      # The account named in frontend/e2e/account.ts. The password goes in on standard input, as
+      # it does on the server.
+      - name: Create the account
+        run: |
+          echo "journey password" | docker compose exec -T backend \
+            java -jar app.jar create-first-user --login-name=journey --name="Journey Tester"
+      - name: Wait for the backend
+        run: |
+          for attempt in $(seq 60); do
+            curl --fail --silent http://localhost:8000/api/health && exit 0
+            sleep 2
+          done
+          exit 1
+      - name: Install the browser
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run the journeys
+        working-directory: frontend
+        run: pnpm e2e
+      - name: Stack logs
+        if: failure()
+        run: docker compose logs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 7
+
   # Pull requests: both images must build. They run beside the tests, not after them.
   images:
     name: Image
@@ -95,7 +141,7 @@ jobs:
   publish:
     name: Publish
     if: github.event_name == 'push'
-    needs: [backend, frontend]
+    needs: [backend, frontend, journeys]
     runs-on: ubuntu-24.04-arm
     strategy:
       matrix:

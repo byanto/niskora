@@ -21,6 +21,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/identity/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["currentSession"];
+        put?: never;
+        post: operations["logIn"];
+        delete: operations["logOut"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -28,6 +44,19 @@ export interface components {
         Health: {
             /** @enum {string} */
             status: "UP" | "DOWN" | "OUT_OF_SERVICE" | "UNKNOWN";
+        };
+        LoginRequest: {
+            loginName: string;
+            password: string;
+        };
+        Session: {
+            user: components["schemas"]["SessionUser"];
+        };
+        SessionUser: {
+            /** Format: uuid */
+            id: string;
+            loginName: string;
+            name: string;
         };
     };
     responses: never;
@@ -64,6 +93,68 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Health"];
                 };
+            };
+        };
+    };
+    currentSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+        };
+    };
+    logIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+        };
+    };
+    logOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
