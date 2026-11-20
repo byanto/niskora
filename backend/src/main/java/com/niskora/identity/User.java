@@ -57,4 +57,8 @@ class User {
   String passwordHash() {
     return passwordHash;
   }
+
+  Instant createdAt() {
+    return createdAt;
+  }
 }

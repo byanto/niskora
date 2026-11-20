@@ -1,4 +1,4 @@
-/** English text for the `identity` module: Login and the session. */
+/** English text for the `identity` module: Login, the session and Users. */
 export const identity = {
   login: {
     title: "Log in",
@@ -8,6 +8,44 @@ export const identity = {
     submitting: "Logging in…",
     loginNameRequired: "Enter your login name.",
     passwordRequired: "Enter your password.",
+  },
+  users: {
+    title: "Users",
+    columns: {
+      fullName: "Full name",
+      loginName: "Login name",
+      createdAt: "Added",
+    },
+    count_one: "{{formattedCount}} user",
+    count_other: "{{formattedCount}} users",
+    pages: "Pages",
+    page: "Page {{page}} of {{totalPages}}",
+    previousPage: "Previous page",
+    nextPage: "Next page",
+    emptyPage: {
+      title: "No users on this page",
+      description: "The list is shorter than this page number.",
+      action: "Go to the first page",
+    },
+    add: {
+      open: "Add user",
+      title: "Add user",
+      description:
+        "They log in with this login name and password. niskora sends no mail, so tell them the password yourself.",
+      fullName: "Full name",
+      fullNameRequired: "Enter their full name.",
+      loginName: "Login name",
+      loginNameHint: "One word, used to log in.",
+      loginNameRequired: "Enter a login name.",
+      password: "Password",
+      passwordHint: "At least 8 characters.",
+      passwordRequired: "Enter a password.",
+      cancel: "Cancel",
+      close: "Close",
+      submit: "Add user",
+      submitting: "Adding…",
+      added: "Added {{fullName}}.",
+    },
   },
   logOut: "Log out",
   loggingOut: "Logging out…",

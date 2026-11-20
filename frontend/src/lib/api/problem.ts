@@ -6,6 +6,15 @@ export interface Problem {
   code?: string;
   title?: string;
   detail?: string;
+  /** Every field error of a validation error at once (ENG-82). */
+  errors?: FieldProblem[];
+}
+
+/** One field error: a JSON Pointer to the field in the request body and its own stable code. */
+export interface FieldProblem {
+  pointer: string;
+  code: string;
+  detail: string;
 }
 
 /** A request the backend answered with an error. A query throws it, so its screen can show it. */
@@ -88,4 +97,34 @@ export function errorKey(error: unknown): ErrorKey {
 
 function isErrorKey(code: string): code is ErrorKey {
   return Object.hasOwn(common.errors, code);
+}
+
+/** A key under `fieldErrors` in the `common` translations. */
+export type FieldErrorKey = keyof typeof common.fieldErrors;
+
+/**
+ * The field errors of a failed request (FE-56): the form field each one belongs to, named the
+ * way React Hook Form names it, and the translation key of its code, `INVALID` when there is no
+ * text for it. A request that failed for any other reason has none.
+ */
+export function fieldErrorsOf(error: unknown): { field: string; key: FieldErrorKey }[] {
+  if (!(error instanceof ProblemError)) {
+    return [];
+  }
+  return (error.problem.errors ?? []).map(({ pointer, code }) => ({
+    field: fieldOf(pointer),
+    key: Object.hasOwn(common.fieldErrors, code) ? (code as FieldErrorKey) : "INVALID",
+  }));
+}
+
+/**
+ * The form field a JSON Pointer (RFC 6901) points at: `/lines/2/quantity` is `lines.2.quantity`.
+ * The empty pointer, the whole body, is the empty name.
+ */
+export function fieldOf(pointer: string): string {
+  return pointer
+    .split("/")
+    .slice(1)
+    .map((token) => token.replaceAll("~1", "/").replaceAll("~0", "~"))
+    .join(".");
 }

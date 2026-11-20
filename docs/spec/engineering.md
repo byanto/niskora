@@ -44,7 +44,7 @@ _Sources: [Spring Boot 4 stack versions and compatibility](https://github.com/by
   | `agent` | the agent, its tools and conversations | the public queries of any module, never buyer personal data |
   | `identity` | users and login | none |
 
-- **ENG-11** A tenth, technical module `common` holds only things with no business rule: the business day type and the Jakarta clock, the Problem Details error shape, paging, the build id header (ENG-92) and the fixed parts of the OpenAPI document (ENG-89). A business type stays with its owner, so the Merchant SKU code type is part of the public interface of `catalogue`.
+- **ENG-11** A tenth, technical module `common` holds only things with no business rule: the business day type and the Jakarta clock, the Problem Details error shape, paging, the handling of repeated requests with its store of `Idempotency-Key`s in a `common` schema (ENG-85, ENG-86), the build id header (ENG-92) and the fixed parts of the OpenAPI document (ENG-89). A business type stays with its owner, so the Merchant SKU code type is part of the public interface of `catalogue`.
 - **ENG-12** Each module owns its REST endpoints. There is no `api` or `web` module that reaches into the others.
 - **ENG-13** Dependencies point one way, as in the table, with no cycles. Each module declares the modules it may depend on.
 - **ENG-14** A direct call to a module's public interface is the default, for every query and for every command that must succeed or fail with its caller.
@@ -236,7 +236,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
   | 428 | a change sent without `If-Match` |
   | 429 | too many failed logins with one login name, with a `Retry-After` header in seconds |
 
-- **ENG-82** A validation error carries an `errors` array with every field error at once. Each entry is `{ "pointer": "/lines/2/quantity", "code": "MUST_BE_POSITIVE", "detail": "..." }`: a JSON Pointer to the field and its own stable code, which the frontend translates like the top-level code.
+- **ENG-82** A validation error carries an `errors` array with every field error of its kind at once: every shape error in a 400, or, once the shape is right, every broken business rule in a 422 (ENG-81). Each entry is `{ "pointer": "/lines/2/quantity", "code": "MUST_BE_POSITIVE", "detail": "..." }`: a JSON Pointer to the field and its own stable code, which the frontend translates like the top-level code.
 
 ### Edits
 
@@ -246,7 +246,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
 ### Repeated requests
 
 - **ENG-85** Every `POST` that creates something or triggers an action requires an `Idempotency-Key` header: a UUID the frontend makes once per user intent and reuses on a retry. Keys are kept for 24 hours. Logging in is the one exception: a repeat only starts a fresh session, which is harmless, and replaying a stored login response (ENG-86) would hand out a session cookie again.
-- **ENG-86** The backend claims the key with a unique constraint in a single insert, never by looking first and inserting after. It stores the key with a hash of the request and the response, and replays the stored response on a repeat. A repeat that arrives while the first request is still running gets a 409. A key reused with a different body gets a 422.
+- **ENG-86** The backend takes the key's lock and claims the key with a unique constraint in a single insert, never by looking first and inserting after, in the same transaction as the request's own work. It stores the key with a hash of the request and, when the request succeeds, its response, so the work and its stored response commit together or not at all. A repeat replays a stored response. A repeat that arrives while the first request is still running gets a 409. A key reused with a different body gets a 422. A request that fails, refused or broken, stores nothing, so a repeat runs it again, which is safe because the failed request changed nothing. Work outside the database, such as a file copied to Object Storage, is not rolled back.
 
   A repeated upload is caught by the file's SHA-256, as described in [foundation.md](foundation.md).
 

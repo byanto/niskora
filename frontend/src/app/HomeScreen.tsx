@@ -7,7 +7,7 @@ import { EmptyState } from "@/ui/empty-state";
 import { LoadFailed } from "@/ui/load-failed";
 import { Loading, Skeleton } from "@/ui/skeleton";
 import { homeQuery } from "./home";
-import { PageHeader } from "./PageHeader";
+import { PageHeader } from "@/ui/page-header";
 
 /**
  * Home, the overview of FE-9. Until the first import it shows only its empty state, with the

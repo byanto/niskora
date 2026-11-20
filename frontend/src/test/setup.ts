@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, configure } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { resetBuildWatch } from "@/lib/api/build";
+import { toast } from "@/ui/toaster";
 import "@/lib/i18n";
 import { server } from "./server";
 
@@ -32,6 +33,8 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   resetBuildWatch();
+  // The toaster keeps its toasts in one store for the whole page, so each test starts with none.
+  toast.dismiss();
 });
 afterAll(() => {
   server.close();

@@ -1,5 +1,6 @@
 package com.niskora.identity;
 
+import com.niskora.common.WithoutIdempotencyKey;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -43,6 +44,8 @@ class SessionController {
    * password is a 401, and an attempt while failed logins are slowed down is a 429 (PLT-24).
    */
   @PostMapping
+  @WithoutIdempotencyKey(
+      "A repeat only starts a fresh session, and a replayed answer would hand out its cookie again.")
   Session logIn(
       @Valid @RequestBody LoginRequest login,
       HttpServletRequest request,

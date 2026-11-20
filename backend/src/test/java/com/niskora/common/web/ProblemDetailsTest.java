@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan.Filter;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,7 +24,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Every error the HTTP layer answers is Problem Details with a stable code (ENG-65). */
-@WebMvcTest(ProblemErrorController.class)
+@WebMvcTest(
+    controllers = ProblemErrorController.class,
+    // Repeated requests need the database, and are tested against it in IdempotencyTest.
+    excludeFilters =
+        @Filter(type = FilterType.ASSIGNABLE_TYPE, classes = IdempotencyConfiguration.class))
 // Spring MVC's error handling alone: the security in front of it is tested in identity.
 @AutoConfigureMockMvc(addFilters = false)
 // Spring Boot leaves a test's nested classes out of scanning, so the controller is imported.

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
-import { rina, loggedIn, notLoggedIn, problem } from "@/test/session";
+import { rina, loggedIn, notLoggedIn, problem, usersListed } from "@/test/session";
 
 const up = () => HttpResponse.json({ status: "UP" });
 
@@ -49,7 +49,7 @@ describe("Login", () => {
   });
 
   it("sends a user who is not logged in to Login, and back to the same URL after logging in", async () => {
-    server.use(notLoggedIn(), loginAccepted());
+    server.use(notLoggedIn(), loginAccepted(), usersListed());
     const { router } = renderRoute("/users");
 
     await screen.findByRole("heading", { level: 1, name: "Log in" });
@@ -79,7 +79,7 @@ describe("Login", () => {
   });
 
   it("goes Home after logging in when it was opened on its own", async () => {
-    server.use(notLoggedIn(), loginAccepted());
+    server.use(notLoggedIn(), loginAccepted(), usersListed());
     const { router } = renderRoute("/login");
 
     await screen.findByRole("heading", { level: 1, name: "Log in" });
@@ -92,7 +92,7 @@ describe("Login", () => {
   });
 
   it("never sends the user to another site after logging in", async () => {
-    server.use(notLoggedIn(), loginAccepted());
+    server.use(notLoggedIn(), loginAccepted(), usersListed());
     const { router } = renderRoute("/login?redirect=%2F%2Fevil.example%2Fsteal");
 
     await screen.findByRole("heading", { level: 1, name: "Log in" });
@@ -103,7 +103,7 @@ describe("Login", () => {
   });
 
   it("sends a user who is already logged in on from Login", async () => {
-    server.use(loggedIn());
+    server.use(loggedIn(), usersListed());
     const { router } = renderRoute("/login?redirect=%2Fusers");
 
     expect(await screen.findByRole("heading", { level: 1, name: "Users" })).toBeInTheDocument();
@@ -111,7 +111,7 @@ describe("Login", () => {
   });
 
   it("says when the login name or password is wrong, and stays on Login", async () => {
-    server.use(notLoggedIn(), loginAccepted());
+    server.use(notLoggedIn(), loginAccepted(), usersListed());
     const { container } = renderRoute("/login");
 
     await screen.findByRole("heading", { level: 1, name: "Log in" });

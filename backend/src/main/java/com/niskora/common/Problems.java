@@ -1,5 +1,6 @@
 package com.niskora.common;
 
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -17,6 +18,12 @@ public final class Problems {
   /** The property that carries the stable error code. */
   public static final String CODE = "code";
 
+  /** The property that carries the field errors of a validation error (ENG-82). */
+  public static final String ERRORS = "errors";
+
+  /** The code of a request whose fields are wrong, each named in {@value #ERRORS}. */
+  public static final String VALIDATION_FAILED = "VALIDATION_FAILED";
+
   private Problems() {}
 
   /** A problem with the given status, stable error code and human-readable detail. */
@@ -30,6 +37,17 @@ public final class Problems {
   public static ProblemDetail of(HttpStatusCode status) {
     ProblemDetail problem = ProblemDetail.forStatus(status);
     problem.setProperty(CODE, codeOf(status));
+    return problem;
+  }
+
+  /**
+   * A validation error with every field error at once (ENG-82): a 400 for fields that fail shape
+   * validation, and a 422 for fields that break a business rule (ENG-81).
+   */
+  public static ProblemDetail ofFields(HttpStatusCode status, List<FieldProblem> errors) {
+    ProblemDetail problem =
+        of(status, VALIDATION_FAILED, "One or more fields are wrong; see errors.");
+    problem.setProperty(ERRORS, List.copyOf(errors));
     return problem;
   }
 

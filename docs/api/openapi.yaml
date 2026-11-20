@@ -58,6 +58,78 @@ paths:
           description: OK
       tags:
       - session-controller
+  /api/identity/users:
+    get:
+      operationId: listUsers
+      parameters:
+      - in: query
+        name: page
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 1
+          minimum: 1
+      - in: query
+        name: sort
+        required: false
+        schema:
+          type:
+          - string
+          - "null"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedListUserResponse"
+          description: OK
+      tags:
+      - users-controller
+    post:
+      operationId: createUser
+      parameters:
+      - description: Made once per user intent and sent again on a retry of it (ENG-85).
+        in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewUserRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: Created
+      tags:
+      - users-controller
+  /api/identity/users/{id}:
+    get:
+      operationId: getUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: OK
+      tags:
+      - users-controller
 components:
   schemas:
     Health:
@@ -84,6 +156,54 @@ components:
       required:
       - loginName
       - password
+    NewUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        loginName:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+      required:
+      - fullName
+      - loginName
+      - password
+    PagedListUserResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+      - data
+      - pagination
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+      required:
+      - page
+      - pageSize
+      - totalItems
+      - totalPages
     Session:
       type: object
       properties:
@@ -102,6 +222,24 @@ components:
         loginName:
           type: string
       required:
+      - fullName
+      - id
+      - loginName
+    UserResponse:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+        fullName:
+          type: string
+        id:
+          type: string
+          format: uuid
+        loginName:
+          type: string
+      required:
+      - createdAt
       - fullName
       - id
       - loginName

@@ -16,7 +16,7 @@ interface NavItem {
 
 /**
  * The sidebar: the screens grouped by job, in the order of FE-2. A screen is listed once its build
- * step starts, and a group shows once it has a screen. Users is a placeholder until #49.
+ * step starts, and a group shows once it has a screen.
  */
 export const navigation: readonly { group: Group; items: readonly NavItem[] }[] = [
   { group: "daily", items: [{ screen: "home", to: "/", icon: House }] },

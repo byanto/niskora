@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { expectNoAxeViolations } from "@/test/axe";
 import { renderRoute } from "@/test/render";
 import { server } from "@/test/server";
-import { rina, loggedIn, notLoggedIn, problem, unauthorized } from "@/test/session";
+import { rina, loggedIn, notLoggedIn, problem, unauthorized, usersListed } from "@/test/session";
 
 describe("The session", () => {
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe("The session", () => {
     let sent: Request | undefined;
     server.use(
       loggedIn(),
-      http.get("*/api/health", () => HttpResponse.json({ status: "UP" })),
+      usersListed(),
       http.delete("*/api/identity/session", ({ request }) => {
         sent = request;
         server.use(notLoggedIn());
@@ -59,7 +59,7 @@ describe("The session", () => {
   it("says why logging out failed, and stays logged in", async () => {
     server.use(
       loggedIn(),
-      http.get("*/api/health", () => HttpResponse.json({ status: "UP" })),
+      usersListed(),
       http.delete("*/api/identity/session", () => problem(403, "CSRF_TOKEN_INVALID")),
     );
     const { router } = renderRoute("/users");
