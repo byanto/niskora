@@ -42,6 +42,14 @@ function listing(users: () => User[], requests: URL[] = []) {
   });
 }
 
+/**
+ * Waits for the account's row in the list. Its name alone is not enough: the sidebar shows the
+ * logged-in user's name as well (FE-8), often before the list has loaded.
+ */
+function listed(fullName: string) {
+  return screen.findByRole("cell", { name: fullName });
+}
+
 const never = () =>
   new Promise<never>(() => {
     // Never answers.
@@ -109,7 +117,7 @@ describe("Users", () => {
     );
     server.use(listing(() => [rinaAccount]));
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("Rina Wulandari")).toBeInTheDocument();
+    expect(await listed("Rina Wulandari")).toBeInTheDocument();
   });
 
   it("sorts by full name, and by another column when its header is pressed", async () => {
@@ -143,7 +151,7 @@ describe("Users", () => {
     server.use(listing(() => [rinaAccount], requests));
     renderRoute("/users?page=2&sort=-createdAt");
 
-    await screen.findByText("Rina Wulandari");
+    await listed("Rina Wulandari");
     expect(requests[0]?.searchParams.toString()).toBe("page=2&sort=-createdAt");
   });
 
@@ -185,7 +193,7 @@ describe("Users", () => {
 
     expect(await screen.findByRole("heading", { name: "No users on this page" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Go to the first page" }));
-    expect(await screen.findByText("Rina Wulandari")).toBeInTheDocument();
+    expect(await listed("Rina Wulandari")).toBeInTheDocument();
   });
 
   describe("Add user", () => {
@@ -208,7 +216,7 @@ describe("Users", () => {
         }),
       );
       const { container } = renderRoute("/users");
-      await screen.findByText("Rina Wulandari");
+      await listed("Rina Wulandari");
 
       const dialog = openAddUser();
       expect(within(dialog).getByLabelText("Password")).toHaveAttribute(
@@ -251,7 +259,7 @@ describe("Users", () => {
         }),
       );
       const { container } = renderRoute("/users");
-      await screen.findByText("Rina Wulandari");
+      await listed("Rina Wulandari");
 
       const dialog = openAddUser();
       save(dialog);
@@ -284,7 +292,7 @@ describe("Users", () => {
         ),
       );
       const { container } = renderRoute("/users");
-      await screen.findByText("Rina Wulandari");
+      await listed("Rina Wulandari");
 
       const dialog = openAddUser();
       fillIn(dialog, { fullName: "Rina Kusuma", loginName: "rina" });
@@ -312,7 +320,7 @@ describe("Users", () => {
         http.post(USERS, () => problem(500, "INTERNAL_SERVER_ERROR")),
       );
       renderRoute("/users");
-      await screen.findByText("Rina Wulandari");
+      await listed("Rina Wulandari");
 
       const dialog = openAddUser();
       fillIn(dialog);
@@ -347,7 +355,7 @@ describe("Users", () => {
         }),
       );
       renderRoute("/users");
-      await screen.findByText("Rina Wulandari");
+      await listed("Rina Wulandari");
 
       const first = openAddUser();
       fillIn(first);
@@ -368,7 +376,7 @@ describe("Users", () => {
     it("leaves the list as it was when cancelled", async () => {
       server.use(listing(() => [rinaAccount]));
       renderRoute("/users");
-      await screen.findByText("Rina Wulandari");
+      await listed("Rina Wulandari");
 
       const dialog = openAddUser();
       fillIn(dialog);
