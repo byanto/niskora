@@ -88,7 +88,7 @@ _Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues
 
 - **PLT-38** Check 7 is how the owner learns of an unexpected exception. There is no error tracker in v1, so no third party receives data from a system that holds buyer details.
 - **PLT-39** These are not watched: a failed deploy (GitHub reports it to the owner, who started it, and a broken stack trips check 1), a failed copy of an upload to Object Storage (the import fails and shows in the app), the agent's quota (shown in the app), and CPU, memory, certificates and response times.
-- **PLT-40** The repository holds a runbook with one section per check: what it means, the first command to run, and how to restore from a dump. Each check's description in Healthchecks.io links to its section.
+- **PLT-40** A runbook has one section per check: what it means, the first command to run, and how to restore from a dump. It lives in the owner's private operations repository, not in this one, because it describes the owner's installation rather than niskora itself. Each check's description in Healthchecks.io links to its section.
 
 _Sources: [Monitoring and alerting](https://github.com/byanto/niskora/issues/27)._
 
