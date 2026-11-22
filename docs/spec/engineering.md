@@ -252,7 +252,7 @@ The `api-and-interface-design` skill from `addyosmani/agent-skills` applies as w
 
 ### Two users editing the same thing
 
-- **ENG-87** Every editable resource has a version, sent as an `ETag` on read and required back as `If-Match` on every change. A mismatch is refused with 412 and nothing is merged. A change without `If-Match` is refused with 428.
+- **ENG-87** Every editable resource has a version, sent as an `ETag` on read and required back as `If-Match` on every change. A paged list cannot send an `ETag` per item, so each item also carries its version in a `version` field, and the frontend builds `If-Match` from that field. A mismatch is refused with 412 and nothing is merged. A change without `If-Match` is refused with 428.
 - **ENG-88** A purchase order has one version for the whole order, lines included. A line change needs the order's `If-Match` and raises the order's version, so two people editing different lines at the same moment also conflict.
 
   What the user sees on a conflict is in [frontend.md](frontend.md).

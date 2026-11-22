@@ -10,14 +10,20 @@ export interface Problem {
   errors?: FieldProblem[];
   /** When a change refused with 412 was overtaken, and by whom (ENG-87). */
   changedAt?: string;
-  changedBy?: { id: string; fullName: string } | null;
+  changedBy?: ChangedBy | null;
+}
+
+/** The user who made a change, as a refused change names them (FE-81). */
+export interface ChangedBy {
+  id: string;
+  fullName: string;
 }
 
 /** Who made the change that overtook a refused one, and when (FE-81). */
 export interface VersionConflict {
   changedAt: string;
   /** Null for a change that no user made. */
-  changedBy: { id: string; fullName: string } | null;
+  changedBy: ChangedBy | null;
 }
 
 /**

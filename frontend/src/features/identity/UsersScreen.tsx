@@ -11,6 +11,7 @@ import ChevronRight from "lucide-react/icons/chevron-right";
 import SearchX from "lucide-react/icons/search-x";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { toId } from "@/lib/api/ids";
 import { formatMoment, formatNumber } from "@/lib/format";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
@@ -34,6 +35,7 @@ import { sessionQuery } from "./session";
 import {
   defaultUserSort,
   type User,
+  type UserId,
   type UserSortField,
   type UsersSearch,
   usersQuery,
@@ -93,7 +95,7 @@ export function UsersScreen({
         <div className="flex flex-col gap-4">
           <UsersTable
             users={users.data.data}
-            ownId={session.user.id}
+            ownId={toId<"User">(session.user.id)}
             sort={search.sort}
             onSortChange={(sort) => {
               // A new order starts again from its first page.
@@ -120,7 +122,7 @@ function UsersTable({
 }: {
   users: User[];
   /** The logged-in user's id, whose row offers no change. */
-  ownId: string;
+  ownId: UserId;
   sort: UsersSearch["sort"];
   onSortChange: (sort: UsersSearch["sort"]) => void;
 }) {

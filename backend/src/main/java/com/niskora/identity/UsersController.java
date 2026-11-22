@@ -116,7 +116,7 @@ class UsersController {
       ExpectedVersion version,
       @Valid @RequestBody PasswordResetRequest reset,
       @AuthenticationPrincipal LoggedInUser me) {
-    return changed(() -> users.resetPassword(id, version, reset.password(), me.id()));
+    return answerChange(() -> users.resetPassword(id, version, reset.password(), me.id()));
   }
 
   /**
@@ -126,14 +126,14 @@ class UsersController {
   @PostMapping("/{id}/disable")
   ResponseEntity<UserResponse> disableUser(
       @PathVariable UUID id, ExpectedVersion version, @AuthenticationPrincipal LoggedInUser me) {
-    return changed(() -> users.disable(id, version, me.id()));
+    return answerChange(() -> users.disable(id, version, me.id()));
   }
 
   /** Enables a disabled account again, so it can log in (PLT-21). */
   @PostMapping("/{id}/enable")
   ResponseEntity<UserResponse> enableUser(
       @PathVariable UUID id, ExpectedVersion version, @AuthenticationPrincipal LoggedInUser me) {
-    return changed(() -> users.enable(id, version, me.id()));
+    return answerChange(() -> users.enable(id, version, me.id()));
   }
 
   /**
@@ -146,7 +146,7 @@ class UsersController {
       ExpectedVersion version,
       @Valid @RequestBody PasswordChangeRequest change,
       @AuthenticationPrincipal LoggedInUser me) {
-    return changed(() ->
+    return answerChange(() ->
         users.changeOwnPassword(
             id, version, change.currentPassword(), change.newPassword(), me.id()));
   }
@@ -156,7 +156,7 @@ class UsersController {
    * account is a 404, an older version a 412 that says who changed it and when (ENG-87), and a
    * broken rule a 422 (ENG-82), and a password check while they are slowed down a 429 (PLT-24).
    */
-  private static ResponseEntity<UserResponse> changed(Supplier<User> change) {
+  private static ResponseEntity<UserResponse> answerChange(Supplier<User> change) {
     User user;
     try {
       user = change.get();

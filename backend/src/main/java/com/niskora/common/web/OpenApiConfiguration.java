@@ -34,6 +34,11 @@ class OpenApiConfiguration {
   private static final String HEALTH_PATH = "/api/health";
   private static final String HEALTH_SCHEMA = "Health";
 
+  // An ExpectedVersion is the If-Match header, which ifMatchHeader() names, never a query.
+  static {
+    SpringDocUtils.getConfig().addRequestWrapperToIgnore(ExpectedVersion.class);
+  }
+
   /**
    * The fixed parts of the OpenAPI document (ENG-89). A fixed server keeps springdoc from writing
    * in the address the document happened to be generated on, so the committed file is the same on
@@ -108,10 +113,6 @@ class OpenApiConfiguration {
       }
       return operation;
     };
-  }
-
-  static {
-    SpringDocUtils.getConfig().addRequestWrapperToIgnore(ExpectedVersion.class);
   }
 
   /**

@@ -11,8 +11,7 @@ import { leaveForLogin, sessionQuery } from "./session";
 
 /**
  * The logged-in user's full name with "Change password" and "Log out", at the foot of the sidebar
- * (FE-8). The shell
- * loads the session before it shows, so it is always there.
+ * (FE-8). The shell loads the session before it shows, so it is always there.
  */
 export function SidebarUser() {
   const { t } = useTranslation("identity");

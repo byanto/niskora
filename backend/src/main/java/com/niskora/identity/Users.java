@@ -3,6 +3,7 @@ package com.niskora.identity;
 import com.niskora.common.ChangedBy;
 import com.niskora.common.ExpectedVersion;
 import com.niskora.common.FieldProblem;
+import com.niskora.common.Problems;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -86,9 +87,7 @@ class Users {
           new Refusal("fullName", FieldProblem.REQUIRED, "The full name must not be blank."));
     }
     checkLength("password", password, refusals);
-    if (!refusals.isEmpty()) {
-      throw new UserRefusedException(refusals);
-    }
+    refuseIfAny(refusals);
     User user =
         new User(UUID.randomUUID(), login, name, passwordEncoder.encode(password), clock.instant());
     try {
@@ -118,9 +117,7 @@ class Users {
     checkVersion(user, version);
     List<Refusal> refusals = new ArrayList<>();
     checkLength("password", password, refusals);
-    if (!refusals.isEmpty()) {
-      throw new UserRefusedException(refusals);
-    }
+    refuseIfAny(refusals);
     user.setPasswordHash(passwordEncoder.encode(password), by, now());
     return repository.saveAndFlush(user);
   }
@@ -152,9 +149,7 @@ class Users {
           new Refusal("currentPassword", "WRONG_PASSWORD", "The current password is wrong."));
     }
     checkLength("newPassword", newPassword, refusals);
-    if (!refusals.isEmpty()) {
-      throw new UserRefusedException(refusals);
-    }
+    refuseIfAny(refusals);
     user.setPasswordHash(passwordEncoder.encode(newPassword), by, now());
     return repository.saveAndFlush(user);
   }
@@ -210,6 +205,13 @@ class Users {
     throw new VersionMismatchException(user.changedAt(), changedBy);
   }
 
+  /** Refuses with every rule the request's fields break at once, when they break any (ENG-82). */
+  private static void refuseIfAny(List<Refusal> refusals) {
+    if (!refusals.isEmpty()) {
+      throw new UserRefusedException(refusals);
+    }
+  }
+
   private static void checkLength(String field, String password, List<Refusal> refusals) {
     if (password.length() < SHORTEST_PASSWORD) {
       refusals.add(
@@ -235,12 +237,10 @@ class Users {
 
   /**
    * A user that cannot be created or changed, with why. A refusal about the request's fields names
-   * each field it breaks, under the code {@value #FIELDS}; any other, such as a first user when one
-   * exists, has a code of its own (ENG-82).
+   * each field it breaks, under the code of a validation error; any other, such as a first user
+   * when one exists, has a code of its own (ENG-82).
    */
   static final class UserRefusedException extends RuntimeException {
-
-    static final String FIELDS = "VALIDATION_FAILED";
 
     private static final long serialVersionUID = 1L;
 
@@ -257,7 +257,7 @@ class Users {
 
     UserRefusedException(List<Refusal> refusals) {
       super(refusals.stream().map(Refusal::message).collect(Collectors.joining(" ")));
-      this.code = FIELDS;
+      this.code = Problems.VALIDATION_FAILED;
       this.refusals = List.copyOf(refusals);
     }
 
