@@ -1,5 +1,6 @@
 package com.niskora.common.web;
 
+import com.niskora.common.ExpectedVersion;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -17,10 +18,12 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -82,6 +85,33 @@ class OpenApiConfiguration {
       }
       return operation;
     };
+  }
+
+  /**
+   * Every change that takes an {@link ExpectedVersion} names the {@code If-Match} header it
+   * requires (ENG-87), in place of the parameter itself, which springdoc would take for a query.
+   * {@link ExpectedVersionResolver} enforces it.
+   */
+  @Bean
+  OperationCustomizer ifMatchHeader() {
+    return (operation, handler) -> {
+      boolean takesVersion =
+          Arrays.stream(handler.getMethodParameters())
+              .anyMatch(parameter -> parameter.getParameterType() == ExpectedVersion.class);
+      if (takesVersion) {
+        operation.addParametersItem(
+            new HeaderParameter()
+                .name(ExpectedVersionResolver.HEADER)
+                .description("The ETag of the version this change is based on (ENG-87).")
+                .required(true)
+                .schema(new StringSchema()));
+      }
+      return operation;
+    };
+  }
+
+  static {
+    SpringDocUtils.getConfig().addRequestWrapperToIgnore(ExpectedVersion.class);
   }
 
   /**

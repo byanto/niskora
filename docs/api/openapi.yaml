@@ -130,6 +130,146 @@ paths:
           description: OK
       tags:
       - users-controller
+  /api/identity/users/{id}/change-password:
+    post:
+      operationId: changePassword
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: Made once per user intent and sent again on a retry of it (ENG-85).
+        in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: The ETag of the version this change is based on (ENG-87).
+        in: header
+        name: If-Match
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChangeRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: OK
+      tags:
+      - users-controller
+  /api/identity/users/{id}/disable:
+    post:
+      operationId: disableUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: Made once per user intent and sent again on a retry of it (ENG-85).
+        in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: The ETag of the version this change is based on (ENG-87).
+        in: header
+        name: If-Match
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: OK
+      tags:
+      - users-controller
+  /api/identity/users/{id}/enable:
+    post:
+      operationId: enableUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: Made once per user intent and sent again on a retry of it (ENG-85).
+        in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: The ETag of the version this change is based on (ENG-87).
+        in: header
+        name: If-Match
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: OK
+      tags:
+      - users-controller
+  /api/identity/users/{id}/reset-password:
+    post:
+      operationId: resetPassword
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: Made once per user intent and sent again on a retry of it (ENG-85).
+        in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - description: The ETag of the version this change is based on (ENG-87).
+        in: header
+        name: If-Match
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: OK
+      tags:
+      - users-controller
 components:
   schemas:
     Health:
@@ -204,6 +344,26 @@ components:
       - pageSize
       - totalItems
       - totalPages
+    PasswordChangeRequest:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+          minLength: 1
+        newPassword:
+          type: string
+          minLength: 1
+      required:
+      - currentPassword
+      - newPassword
+    PasswordResetRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          minLength: 1
+      required:
+      - password
     Session:
       type: object
       properties:
@@ -236,10 +396,17 @@ components:
         id:
           type: string
           format: uuid
+        isDisabled:
+          type: boolean
         loginName:
           type: string
+        version:
+          type: integer
+          format: int64
       required:
       - createdAt
       - fullName
       - id
+      - isDisabled
       - loginName
+      - version

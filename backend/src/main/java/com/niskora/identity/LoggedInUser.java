@@ -20,17 +20,21 @@ final class LoggedInUser implements UserDetails, CredentialsContainer {
   private final UUID id;
   private final String loginName;
   private final String fullName;
+  private final boolean enabled;
   private @Nullable String passwordHash;
 
-  LoggedInUser(UUID id, String loginName, String fullName, @Nullable String passwordHash) {
+  LoggedInUser(
+      UUID id, String loginName, String fullName, boolean enabled, @Nullable String passwordHash) {
     this.id = id;
     this.loginName = loginName;
     this.fullName = fullName;
+    this.enabled = enabled;
     this.passwordHash = passwordHash;
   }
 
   static LoggedInUser of(User user) {
-    return new LoggedInUser(user.id(), user.loginName(), user.fullName(), user.passwordHash());
+    return new LoggedInUser(
+        user.id(), user.loginName(), user.fullName(), !user.isDisabled(), user.passwordHash());
   }
 
   UUID id() {
@@ -59,6 +63,15 @@ final class LoggedInUser implements UserDetails, CredentialsContainer {
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of();
+  }
+
+  /**
+   * Whether the account was enabled when it logged in (PLT-45). A session that outlives it being
+   * disabled is ended by {@link DisabledAccountFilter}.
+   */
+  @Override
+  public boolean isEnabled() {
+    return enabled;
   }
 
   @Override

@@ -8,6 +8,31 @@ export interface Problem {
   detail?: string;
   /** Every field error of a validation error at once (ENG-82). */
   errors?: FieldProblem[];
+  /** When a change refused with 412 was overtaken, and by whom (ENG-87). */
+  changedAt?: string;
+  changedBy?: { id: string; fullName: string } | null;
+}
+
+/** Who made the change that overtook a refused one, and when (FE-81). */
+export interface VersionConflict {
+  changedAt: string;
+  /** Null for a change that no user made. */
+  changedBy: { id: string; fullName: string } | null;
+}
+
+/**
+ * The conflict of a change the backend refused with 412 because the thing moved past the version
+ * the change was based on (ENG-87), or null for any other outcome.
+ */
+export function versionConflictOf(error: unknown): VersionConflict | null {
+  if (
+    !(error instanceof ProblemError) ||
+    error.problem.code !== "VERSION_MISMATCH" ||
+    error.problem.changedAt === undefined
+  ) {
+    return null;
+  }
+  return { changedAt: error.problem.changedAt, changedBy: error.problem.changedBy ?? null };
 }
 
 /** One field error: a JSON Pointer to the field in the request body and its own stable code. */

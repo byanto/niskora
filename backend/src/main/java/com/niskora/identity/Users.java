@@ -1,18 +1,28 @@
 package com.niskora.identity;
 
+import com.niskora.common.ChangedBy;
+import com.niskora.common.ExpectedVersion;
 import com.niskora.common.FieldProblem;
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.hibernate.exception.ConstraintViolationException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Creates users, with their password hashed by Argon2 (PLT-17). */
+/**
+ * Creates and changes users, with their password hashed by Argon2 (PLT-17). A change names the
+ * version it is based on, and is refused when the account has moved past it (ENG-87).
+ */
 @Service
 class Users {
 
@@ -26,11 +36,17 @@ class Users {
 
   private final UserRepository repository;
   private final PasswordEncoder passwordEncoder;
+  private final LoginThrottle throttle;
   private final Clock clock;
 
-  Users(UserRepository repository, PasswordEncoder passwordEncoder, Clock clock) {
+  Users(
+      UserRepository repository,
+      PasswordEncoder passwordEncoder,
+      LoginThrottle throttle,
+      Clock clock) {
     this.repository = repository;
     this.passwordEncoder = passwordEncoder;
+    this.throttle = throttle;
     this.clock = clock;
   }
 
@@ -42,7 +58,8 @@ class Users {
   UUID createFirstUser(String loginName, String fullName, String password) {
     repository.lockAgainstNewUsers();
     if (repository.count() > 0) {
-      throw new UserRefusedException("A user already exists, so this is not the first one.");
+      throw new UserRefusedException(
+          "FIRST_USER_EXISTS", "A user already exists, so this is not the first one.");
     }
     return create(loginName, fullName, password);
   }
@@ -68,13 +85,7 @@ class Users {
       refusals.add(
           new Refusal("fullName", FieldProblem.REQUIRED, "The full name must not be blank."));
     }
-    if (password.length() < SHORTEST_PASSWORD) {
-      refusals.add(
-          new Refusal(
-              "password",
-              "TOO_SHORT",
-              "The password must be at least " + SHORTEST_PASSWORD + " characters long."));
-    }
+    checkLength("password", password, refusals);
     if (!refusals.isEmpty()) {
       throw new UserRefusedException(refusals);
     }
@@ -92,6 +103,128 @@ class Users {
     }
   }
 
+  /**
+   * Gives another user's account a new password (PLT-21). A user cannot reset their own: changing
+   * it asks for the current one (PLT-22).
+   */
+  @Transactional
+  User resetPassword(UUID id, ExpectedVersion version, String password, UUID by) {
+    User user = forChange(id);
+    if (id.equals(by)) {
+      throw new UserRefusedException(
+          "CANNOT_RESET_OWN_PASSWORD",
+          "A user changes their own password, giving the current one.");
+    }
+    checkVersion(user, version);
+    List<Refusal> refusals = new ArrayList<>();
+    checkLength("password", password, refusals);
+    if (!refusals.isEmpty()) {
+      throw new UserRefusedException(refusals);
+    }
+    user.setPasswordHash(passwordEncoder.encode(password), by, now());
+    return repository.saveAndFlush(user);
+  }
+
+  /**
+   * Changes the logged-in user's own password (PLT-22), once they give their current one. A wrong
+   * current password counts as a failed login of their login name, so guessing it is slowed down as
+   * guessing at Login is (PLT-24).
+   */
+  @Transactional
+  User changeOwnPassword(
+      UUID id, ExpectedVersion version, String currentPassword, String newPassword, UUID by) {
+    User user = forChange(id);
+    if (!id.equals(by)) {
+      throw new UserRefusedException(
+          "CAN_ONLY_CHANGE_OWN_PASSWORD",
+          "A user changes only their own password; another user's is reset.");
+    }
+    checkVersion(user, version);
+    Optional<Duration> wait = throttle.attempt(user.loginName());
+    if (wait.isPresent()) {
+      throw new SlowedDownException(wait.get());
+    }
+    List<Refusal> refusals = new ArrayList<>();
+    if (passwordEncoder.matches(currentPassword, user.passwordHash())) {
+      throttle.succeeded(user.loginName());
+    } else {
+      refusals.add(
+          new Refusal("currentPassword", "WRONG_PASSWORD", "The current password is wrong."));
+    }
+    checkLength("newPassword", newPassword, refusals);
+    if (!refusals.isEmpty()) {
+      throw new UserRefusedException(refusals);
+    }
+    user.setPasswordHash(passwordEncoder.encode(newPassword), by, now());
+    return repository.saveAndFlush(user);
+  }
+
+  /**
+   * Disables another user's account (PLT-45): it cannot log in, and its open sessions end at once,
+   * on their next request. Nobody can disable their own, so at least one account can always log in.
+   * An account already disabled is left as it is.
+   */
+  @Transactional
+  User disable(UUID id, ExpectedVersion version, UUID by) {
+    User user = forChange(id);
+    if (id.equals(by)) {
+      throw new UserRefusedException(
+          "CANNOT_DISABLE_OWN_ACCOUNT", "Nobody can disable their own account.");
+    }
+    return setDisabled(user, version, true, by);
+  }
+
+  /** Enables a disabled account, so it can log in again (PLT-21). */
+  @Transactional
+  User enable(UUID id, ExpectedVersion version, UUID by) {
+    return setDisabled(forChange(id), version, false, by);
+  }
+
+  private User setDisabled(User user, ExpectedVersion version, boolean disabled, UUID by) {
+    checkVersion(user, version);
+    if (user.isDisabled() == disabled) {
+      return user;
+    }
+    user.setDisabled(disabled, by, now());
+    return repository.saveAndFlush(user);
+  }
+
+  /** The user to change, with their row locked until the change is saved. */
+  private User forChange(UUID id) {
+    return repository.findForChange(id).orElseThrow(() -> new NoSuchUserException(id));
+  }
+
+  /** Refuses a change based on a version older than the account's, naming the latest change. */
+  private void checkVersion(User user, ExpectedVersion version) {
+    if (version.matches(user.version())) {
+      return;
+    }
+    UUID changer = user.changedBy();
+    ChangedBy changedBy =
+        changer == null
+            ? null
+            : repository
+                .findById(changer)
+                .map(found -> new ChangedBy(found.id(), found.fullName()))
+                .orElse(null);
+    throw new VersionMismatchException(user.changedAt(), changedBy);
+  }
+
+  private static void checkLength(String field, String password, List<Refusal> refusals) {
+    if (password.length() < SHORTEST_PASSWORD) {
+      refusals.add(
+          new Refusal(
+              field,
+              "TOO_SHORT",
+              "The password must be at least " + SHORTEST_PASSWORD + " characters long."));
+    }
+  }
+
+  /** Now, to the microsecond PostgreSQL keeps, so a change answers what a later read does. */
+  private Instant now() {
+    return clock.instant().truncatedTo(ChronoUnit.MICROS);
+  }
+
   private static Refusal loginNameTaken(String loginName) {
     return new Refusal(
         LOGIN_NAME, "LOGIN_NAME_TAKEN", "The login name " + loginName + " is taken.");
@@ -101,28 +234,96 @@ class Users {
   record Refusal(String field, String code, String message) {}
 
   /**
-   * A user that cannot be created, with why. A refusal about the new user's fields names each field
-   * it breaks; any other, such as a first user when one exists, names none.
+   * A user that cannot be created or changed, with why. A refusal about the request's fields names
+   * each field it breaks, under the code {@value #FIELDS}; any other, such as a first user when one
+   * exists, has a code of its own (ENG-82).
    */
   static final class UserRefusedException extends RuntimeException {
 
+    static final String FIELDS = "VALIDATION_FAILED";
+
     private static final long serialVersionUID = 1L;
+
+    private final String code;
 
     @SuppressWarnings("serial") // An immutable list of records, never serialized in practice.
     private final List<Refusal> refusals;
 
-    UserRefusedException(String message) {
+    UserRefusedException(String code, String message) {
       super(message);
+      this.code = code;
       this.refusals = List.of();
     }
 
     UserRefusedException(List<Refusal> refusals) {
       super(refusals.stream().map(Refusal::message).collect(Collectors.joining(" ")));
+      this.code = FIELDS;
       this.refusals = List.copyOf(refusals);
+    }
+
+    String code() {
+      return code;
     }
 
     List<Refusal> refusals() {
       return refusals;
+    }
+  }
+
+  /**
+   * A password check refused for now, after too many wrong ones (PLT-24), with how long to wait.
+   */
+  static final class SlowedDownException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    private final Duration wait;
+
+    SlowedDownException(Duration wait) {
+      super("Too many wrong passwords; wait " + wait + ".");
+      this.wait = wait;
+    }
+
+    Duration waitFor() {
+      return wait;
+    }
+  }
+
+  /** A change to a user that does not exist. */
+  static final class NoSuchUserException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    NoSuchUserException(UUID id) {
+      super("No user has the id " + id + ".");
+    }
+  }
+
+  /**
+   * A change based on a version the account has moved past (ENG-87), with when the latest change
+   * was made and by whom, null for one no user made.
+   */
+  static final class VersionMismatchException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    private final Instant changedAt;
+
+    @SuppressWarnings("serial") // A record of an id and a name, never serialized in practice.
+    private final @Nullable ChangedBy changedBy;
+
+    VersionMismatchException(Instant changedAt, @Nullable ChangedBy changedBy) {
+      super("The account was changed since the version this change is based on.");
+      this.changedAt = changedAt;
+      this.changedBy = changedBy;
+    }
+
+    Instant changedAt() {
+      return changedAt;
+    }
+
+    @Nullable ChangedBy changedBy() {
+      return changedBy;
     }
   }
 }
