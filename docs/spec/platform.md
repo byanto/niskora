@@ -47,7 +47,7 @@ _Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues
 - **PLT-19** Each person has one account, and accounts are never shared, so that imports, purchase orders and corrections record who made them.
 - **PLT-20** There are no roles in v1. Every [user](../../GLOSSARY.md#people) can see and do everything, the buyer fields on a package's page included.
 - **PLT-21** A Users screen lets any user create an account, reset another user's password, and disable or enable another user's account.
-- **PLT-22** Any user can change their own password.
+- **PLT-22** Any user can change their own password, giving their current one. A wrong current password counts as a failed login (PLT-24).
 - **PLT-23** The first account is created with a command on the server.
 - **PLT-24** Repeated failed logins are slowed down.
 - **PLT-45** A disabled account cannot log in, and its open sessions end at once. An account is never deleted, so everything it did keeps its name. Nobody can disable their own account, so at least one account can always log in.

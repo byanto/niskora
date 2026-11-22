@@ -21,6 +21,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -44,6 +45,7 @@ class SecurityConfiguration {
       HttpSecurity http,
       CookieCsrfTokenRepository csrfTokenRepository,
       SecurityContextRepository securityContextRepository,
+      UserRepository users,
       @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) {
     http.authorizeHttpRequests(requests ->
             requests
@@ -63,6 +65,8 @@ class SecurityConfiguration {
         .csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokenRepository))
         .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
         .securityContext(context -> context.securityContextRepository(securityContextRepository))
+        // Before the anonymous user stands in, so an ended session is a 401 like no session.
+        .addFilterBefore(new DisabledAccountFilter(users), AnonymousAuthenticationFilter.class)
         .exceptionHandling(exceptions ->
             exceptions
                 .authenticationEntryPoint((request, response, exception) ->

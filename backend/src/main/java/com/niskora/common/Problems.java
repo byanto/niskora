@@ -1,6 +1,8 @@
 package com.niskora.common;
 
+import java.time.Instant;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -48,6 +50,25 @@ public final class Problems {
     ProblemDetail problem =
         of(status, VALIDATION_FAILED, "One or more fields are wrong; see errors.");
     problem.setProperty(ERRORS, List.copyOf(errors));
+    return problem;
+  }
+
+  /** The code of a change refused because the resource moved past the version it was based on. */
+  public static final String VERSION_MISMATCH = "VERSION_MISMATCH";
+
+  /**
+   * A change refused with a 412 because its {@code If-Match} names an older version (ENG-87): it
+   * says who made the latest change and when, so the screen can (FE-81). Who is {@code null} for a
+   * change that no user made, such as the command that creates the first user.
+   */
+  public static ProblemDetail versionMismatch(Instant changedAt, @Nullable ChangedBy changedBy) {
+    ProblemDetail problem =
+        of(
+            HttpStatus.PRECONDITION_FAILED,
+            VERSION_MISMATCH,
+            "This was changed since the version in If-Match; load it again.");
+    problem.setProperty("changedAt", changedAt);
+    problem.setProperty("changedBy", changedBy);
     return problem;
   }
 

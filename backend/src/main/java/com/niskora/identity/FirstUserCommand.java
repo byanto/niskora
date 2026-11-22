@@ -97,7 +97,7 @@ public final class FirstUserCommand implements ApplicationRunner, ExitCodeGenera
       char[] password = console.readPassword("Password for the new user: ");
       char[] again = console.readPassword("The same password again: ");
       if (password == null || again == null || !Arrays.equals(password, again)) {
-        throw new UserRefusedException("The two passwords differ.");
+        throw new UserRefusedException("PASSWORDS_DIFFER", "The two passwords differ.");
       }
       return new String(password);
     }
@@ -106,7 +106,7 @@ public final class FirstUserCommand implements ApplicationRunner, ExitCodeGenera
       String line =
           new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)).readLine();
       if (line == null) {
-        throw new UserRefusedException("No password was given on standard input.");
+        throw new UserRefusedException("NO_PASSWORD", "No password was given on standard input.");
       }
       return line;
     } catch (IOException failed) {

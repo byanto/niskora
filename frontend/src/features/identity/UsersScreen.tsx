@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
   rowSortingFeature,
@@ -11,17 +11,31 @@ import ChevronRight from "lucide-react/icons/chevron-right";
 import SearchX from "lucide-react/icons/search-x";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { toId } from "@/lib/api/ids";
 import { formatMoment, formatNumber } from "@/lib/format";
+import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { EmptyState } from "@/ui/empty-state";
 import { LoadFailed } from "@/ui/load-failed";
 import { Loading, Skeleton } from "@/ui/skeleton";
-import { SortableTableHead, Table, TableBody, TableCell, TableHeader, TableRow } from "@/ui/table";
+import {
+  SortableTableHead,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/ui/table";
 import { PageHeader } from "@/ui/page-header";
+import { AccountAccessDialog } from "./AccountAccessDialog";
 import { AddUserDialog } from "./AddUserDialog";
+import { ResetPasswordDialog } from "./ResetPasswordDialog";
+import { sessionQuery } from "./session";
 import {
   defaultUserSort,
   type User,
+  type UserId,
   type UserSortField,
   type UsersSearch,
   usersQuery,
@@ -31,8 +45,11 @@ const features = tableFeatures({ rowSortingFeature });
 const column = createColumnHelper<typeof features, User>();
 
 /**
- * Users (FE-37): every account as a paged list the server sorts (FE-59), with "Add user". The
- * page and the sort live in the URL (FE-41), which the route owns.
+ * Users (FE-37): every account as a paged list the server sorts (FE-59), with "Add user", and on
+ * another user's row "Reset password" and "Disable" or "Enable". The logged-in user's own row
+ * offers neither: they change their own password from the sidebar (FE-8), and nobody disables
+ * their own account (PLT-45). The page and the sort live in the URL (FE-41), which the route
+ * owns.
  */
 export function UsersScreen({
   search,
@@ -43,6 +60,8 @@ export function UsersScreen({
 }) {
   const { t } = useTranslation("identity");
   const users = useQuery(usersQuery(search));
+  // The shell loads the session before it shows, so it is always there.
+  const { data: session } = useSuspenseQuery(sessionQuery);
 
   return (
     <>
@@ -76,6 +95,7 @@ export function UsersScreen({
         <div className="flex flex-col gap-4">
           <UsersTable
             users={users.data.data}
+            ownId={toId<"User">(session.user.id)}
             sort={search.sort}
             onSortChange={(sort) => {
               // A new order starts again from its first page.
@@ -96,10 +116,13 @@ export function UsersScreen({
 
 function UsersTable({
   users,
+  ownId,
   sort,
   onSortChange,
 }: {
   users: User[];
+  /** The logged-in user's id, whose row offers no change. */
+  ownId: UserId;
   sort: UsersSearch["sort"];
   onSortChange: (sort: UsersSearch["sort"]) => void;
 }) {
@@ -109,15 +132,54 @@ function UsersTable({
       column.columns([
         column.accessor("fullName", {
           header: t("users.columns.fullName"),
-          cell: (info) => <span className="font-medium">{info.getValue()}</span>,
+          // A long name is cut short in its fixed column, and shown whole on hover.
+          cell: (info) => (
+            <span className="block truncate font-medium" title={info.getValue()}>
+              {info.getValue()}
+            </span>
+          ),
         }),
-        column.accessor("loginName", { header: t("users.columns.loginName") }),
+        column.accessor("loginName", {
+          header: t("users.columns.loginName"),
+          cell: (info) => (
+            <span className="block truncate" title={info.getValue()}>
+              {info.getValue()}
+            </span>
+          ),
+        }),
         column.accessor("createdAt", {
           header: t("users.columns.createdAt"),
           cell: (info) => <span className="tabular-nums">{formatMoment(info.getValue())}</span>,
         }),
+        column.accessor("isDisabled", {
+          header: t("users.columns.status"),
+          enableSorting: false,
+          // In words as well as colour (FE-58).
+          cell: (info) =>
+            info.getValue() ? (
+              <Badge>{t("users.disabled")}</Badge>
+            ) : (
+              <span className="text-muted">{t("users.active")}</span>
+            ),
+        }),
+        column.display({
+          id: "actions",
+          header: () => <span className="sr-only">{t("users.columns.actions")}</span>,
+          cell: ({ row }) =>
+            row.original.id === ownId ? (
+              <Badge>{t("users.you")}</Badge>
+            ) : (
+              <div className="flex justify-end gap-2">
+                <ResetPasswordDialog user={row.original} />
+                <AccountAccessDialog
+                  user={row.original}
+                  access={row.original.isDisabled ? "enable" : "disable"}
+                />
+              </div>
+            ),
+        }),
       ]),
-    [t],
+    [t, ownId],
   );
   const sorting = useMemo(() => sortingOf(sort), [sort]);
   const table = useTable({
@@ -144,10 +206,19 @@ function UsersTable({
         {table.getHeaderGroups().map((group) => (
           <TableRow key={group.id} className="h-row-header hover:bg-transparent">
             {group.headers.map((header) => {
+              const width = columnWidths[header.column.id];
+              if (!header.column.getCanSort()) {
+                return (
+                  <TableHead key={header.id} className={width}>
+                    <table.FlexRender header={header} />
+                  </TableHead>
+                );
+              }
               const sorted = header.column.getIsSorted();
               return (
                 <SortableTableHead
                   key={header.id}
+                  className={width}
                   sorted={
                     sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined
                   }
@@ -166,7 +237,10 @@ function UsersTable({
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.id}>
             {row.getAllCells().map((cell) => (
-              <TableCell key={cell.id}>
+              <TableCell
+                key={cell.id}
+                className={cell.column.id === "actions" ? "text-right" : undefined}
+              >
                 <table.FlexRender cell={cell} />
               </TableCell>
             ))}
@@ -176,6 +250,12 @@ function UsersTable({
     </Table>
   );
 }
+
+/** The columns that need a set width in the fixed layout: the rest share what is left. */
+const columnWidths: Partial<Record<string, string>> = {
+  isDisabled: "w-28",
+  actions: "w-64",
+};
 
 /** The URL's sort as the table's state: the default column when the URL names none. */
 function sortingOf(sort: UsersSearch["sort"]): SortingState {

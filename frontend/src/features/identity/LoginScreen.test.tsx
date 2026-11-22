@@ -124,6 +124,22 @@ describe("Login", () => {
     await expectNoAxeViolations(container);
   });
 
+  it("says when the account is disabled, and who can enable it", async () => {
+    server.use(
+      notLoggedIn(),
+      http.post("*/api/identity/session", () => problem(401, "ACCOUNT_DISABLED")),
+    );
+    renderRoute("/login");
+
+    await screen.findByRole("heading", { level: 1, name: "Log in" });
+    logIn();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This account is disabled. Ask another user to enable it.",
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
+  });
+
   it("says to wait when failed logins are being slowed down", async () => {
     server.use(
       notLoggedIn(),

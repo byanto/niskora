@@ -56,6 +56,30 @@ final class Browser {
         true);
   }
 
+  /**
+   * A change to an editable resource (ENG-70, ENG-87): a {@code POST} with the given {@code
+   * Idempotency-Key}, the {@code If-Match} unless it is null, and the body unless it is null.
+   */
+  ResultActions change(
+      String path, @Nullable String json, @Nullable String ifMatch, UUID idempotencyKey)
+      throws Exception {
+    MockHttpServletRequestBuilder request =
+        MockMvcRequestBuilders.post(path).header("Idempotency-Key", idempotencyKey.toString());
+    if (ifMatch != null) {
+      request.header("If-Match", ifMatch);
+    }
+    if (json != null) {
+      request.contentType(MediaType.APPLICATION_JSON).content(json);
+    }
+    return perform(request, true);
+  }
+
+  /** A change as above, with a key of its own. */
+  ResultActions change(String path, @Nullable String json, @Nullable String ifMatch)
+      throws Exception {
+    return change(path, json, ifMatch, UUID.randomUUID());
+  }
+
   ResultActions postWithoutCsrfToken(String path, String json) throws Exception {
     return perform(
         MockMvcRequestBuilders.post(path).contentType(MediaType.APPLICATION_JSON).content(json),

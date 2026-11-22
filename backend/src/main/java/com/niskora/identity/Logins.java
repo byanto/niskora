@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -55,6 +56,14 @@ class Logins {
       CookieCsrfTokenRepository csrfTokenRepository) {
     DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
     provider.setPasswordEncoder(passwordEncoder);
+    // A disabled account is refused only once its password is right, so a wrong guess never
+    // learns which accounts are disabled (PLT-45). Accounts never lock or expire.
+    provider.setPreAuthenticationChecks(user -> {});
+    provider.setPostAuthenticationChecks(user -> {
+      if (!user.isEnabled()) {
+        throw new DisabledException("The account is disabled.");
+      }
+    });
     this.authenticationManager = new ProviderManager(provider);
     this.throttle = throttle;
     this.sessionStrategy =
@@ -66,7 +75,10 @@ class Logins {
     this.csrfTokenRepository = csrfTokenRepository;
   }
 
-  /** Logs in, or refuses with a 401 for a wrong password and a 429 while slowed down. */
+  /**
+   * Logs in, or refuses with a 401 for a wrong password or a disabled account, and a 429 while
+   * slowed down.
+   */
   LoggedInUser logIn(
       String loginName, String password, HttpServletRequest request, HttpServletResponse response) {
     Optional<Duration> wait = throttle.attempt(loginName);
@@ -78,6 +90,14 @@ class Logins {
       authentication =
           authenticationManager.authenticate(
               UsernamePasswordAuthenticationToken.unauthenticated(loginName, password));
+    } catch (DisabledException disabled) {
+      throw new ErrorResponseException(
+          HttpStatus.UNAUTHORIZED,
+          Problems.of(
+              HttpStatus.UNAUTHORIZED,
+              "ACCOUNT_DISABLED",
+              "This account is disabled; another user can enable it."),
+          disabled);
     } catch (AuthenticationException failed) {
       // The throttle counted the attempt as a failure when it started.
       throw new ErrorResponseException(
@@ -107,7 +127,8 @@ class Logins {
     csrfTokenRepository.saveToken(csrfTokenRepository.generateToken(request), request, response);
   }
 
-  private static ErrorResponseException tooManyAttempts(Duration wait) {
+  /** A 429 for a password check while failures are slowed down, with when to try again. */
+  static ErrorResponseException tooManyAttempts(Duration wait) {
     ErrorResponseException refused =
         new ErrorResponseException(
             HttpStatus.TOO_MANY_REQUESTS,

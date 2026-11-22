@@ -13,6 +13,8 @@ interface User {
   loginName: string;
   fullName: string;
   createdAt: string;
+  version: number;
+  isDisabled: boolean;
 }
 
 const bayu: User = {
@@ -20,13 +22,22 @@ const bayu: User = {
   loginName: "bayu",
   fullName: "Bayu Santoso",
   createdAt: "2026-11-17T02:00:00Z",
+  version: 0,
+  isDisabled: false,
 };
-const rinaAccount: User = { ...rina, createdAt: "2026-11-16T03:15:00Z" };
+const rinaAccount: User = {
+  ...rina,
+  createdAt: "2026-11-16T03:15:00Z",
+  version: 0,
+  isDisabled: false,
+};
 const sari: User = {
   id: "2f4a6c8e-0b1d-4f3a-9c5e-7d9f1b3d5f7a",
   loginName: "sari",
   fullName: "Sari Dewi",
   createdAt: "2026-11-19T07:05:00Z",
+  version: 0,
+  isDisabled: false,
 };
 
 /** A page of the list in the shape of ENG-76. */
@@ -81,7 +92,7 @@ describe("Users", () => {
     document.cookie = "XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
   });
 
-  it("lists every account with its login name and when it was added", async () => {
+  it("lists every account with its login name, when it was added and its status", async () => {
     const requests: URL[] = [];
     server.use(listing(() => [bayu, rinaAccount], requests));
     const { container } = renderRoute("/users");
@@ -89,9 +100,9 @@ describe("Users", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Users" })).toBeInTheDocument();
     const rows = await screen.findAllByRole("row");
     expect(rows.map((row) => row.textContent)).toEqual([
-      "Full nameLogin nameAdded",
-      "Bayu Santosobayu17 Nov 2026 09:00",
-      "Rina Wulandaririna16 Nov 2026 10:15",
+      "Full nameLogin nameAddedStatusActions",
+      "Bayu Santosobayu17 Nov 2026 09:00ActiveReset passwordDisable",
+      "Rina Wulandaririna16 Nov 2026 10:15ActiveYou",
     ]);
     expect(screen.getByText("2 users")).toBeInTheDocument();
     expect(requests[0]?.searchParams.toString()).toBe("page=1");
