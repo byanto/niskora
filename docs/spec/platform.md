@@ -28,7 +28,7 @@ _Sources: [Deployment, login and roles](https://github.com/byanto/niskora/issues
   | What | Contract |
   | --- | --- |
   | Images | `ghcr.io/byanto/niskora-backend:<commit>` and `ghcr.io/byanto/niskora-frontend:<commit>`, both built from the same commit. |
-  | Shape | The services and wiring of [`compose.yaml`](../../compose.yaml): the frontend image listens on port 80 and reaches the backend as `backend` on port 8080 (the API) and 8081 (the management port). |
+  | Shape | [`compose.yaml`](../../compose.yaml) itself, taken from the commit being deployed and run with the installation's own file added. It publishes no port and holds no password: the installation publishes what it needs and supplies every password. The frontend image listens on port 80 and reaches the backend as `backend` on port 8080 (the API) and 8081 (the management port). |
   | Health | `GET /api/health` answers `{"status":"UP"}` with 200, or `DOWN` with 503, and nothing more (PLT-31). |
   | Database | PostgreSQL 18, reached through `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD`. |
   | First account | `java -jar app.jar create-first-user --login-name=<login name> --full-name="<full name>"` in the backend container, with the password on standard input (PLT-18). |

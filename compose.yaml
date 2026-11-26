@@ -1,5 +1,10 @@
-# The local stack: `docker compose up`, then open http://localhost:8000.
-# Its services and wiring are the shape every installation relies on (PLT-1, PLT-11).
+# The stack every environment shares (PLT-1, PLT-11). It publishes no port and holds no password:
+# the services reach each other by name on Compose's own network.
+# Locally, `docker compose up` also loads compose.override.yaml, which adds the ports and the
+# development passwords. Then open http://localhost:8000.
+# An installation runs this file from the commit it deploys, with its own file added by -f instead
+# of the override, and supplies every password itself (PLT-10). One it leaves out stops the stack
+# from starting.
 name: niskora
 
 services:
@@ -8,8 +13,6 @@ services:
     environment:
       POSTGRES_DB: niskora
       POSTGRES_USER: niskora
-      # A local-only password. An installation passes its own through the environment (PLT-10).
-      POSTGRES_PASSWORD: niskora
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
@@ -23,22 +26,14 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/niskora
       SPRING_DATASOURCE_USERNAME: niskora
-      SPRING_DATASOURCE_PASSWORD: niskora
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      # For the Vite dev server's /api proxy (FE-83), bound to this machine only: the API, then
-      # Actuator's management port. Production publishes neither.
-      - "127.0.0.1:8080:8080"
-      - "127.0.0.1:8081:8081"
 
   caddy:
     build: ./frontend
     depends_on:
       - backend
-    ports:
-      - "127.0.0.1:8000:80"
 
 volumes:
   postgres-data:
