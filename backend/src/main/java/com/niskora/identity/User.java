@@ -10,11 +10,11 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A user: one person with one account, never shared (PLT-19). They log in with their login name,
+ * A user: one person with one account, never shared (PLT-14). They log in with their login name,
  * which is unique whatever its case, and the app shows their full name.
  *
  * <p>An account is never deleted, so everything it did keeps its name; it is disabled instead
- * (PLT-45). Each change raises its version (ENG-87) and records who made it and when (FE-81).
+ * (PLT-20). Each change raises its version (ENG-87) and records who made it and when (FE-81).
  */
 @Entity
 @Table(schema = "identity", name = "users")
@@ -28,7 +28,7 @@ class User {
   @Column(name = "full_name")
   private String fullName;
 
-  /** The Argon2 hash of the password, prefixed with the encoder's id (PLT-17). */
+  /** The Argon2 hash of the password, prefixed with the encoder's id (PLT-12). */
   @Column(name = "password_hash")
   private String passwordHash;
 

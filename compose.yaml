@@ -1,5 +1,5 @@
 # The local stack: `docker compose up`, then open http://localhost:8000.
-# Production has the same shape plus the Cloudflare Tunnel connector (PLT-4).
+# Its services and wiring are the shape every installation relies on (PLT-1, PLT-11).
 name: niskora
 
 services:
@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: niskora
       POSTGRES_USER: niskora
-      # A local-only password. Production reads its own from the secrets file (PLT-12).
+      # A local-only password. An installation passes its own through the environment (PLT-10).
       POSTGRES_PASSWORD: niskora
     volumes:
       - postgres-data:/var/lib/postgresql

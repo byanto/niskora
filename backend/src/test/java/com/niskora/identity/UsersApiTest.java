@@ -24,7 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * The Users screen's accounts over HTTP (PLT-21, FE-37): every account as a paged list (ENG-76 to
+ * The Users screen's accounts over HTTP (PLT-16, FE-37): every account as a paged list (ENG-76 to
  * ENG-79), and adding one with its field errors (ENG-81, ENG-82). Each test drives the API as the
  * browser does, logged in as rina.
  */

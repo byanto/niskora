@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Creates and changes users, with their password hashed by Argon2 (PLT-17). A change names the
+ * Creates and changes users, with their password hashed by Argon2 (PLT-12). A change names the
  * version it is based on, and is refused when the account has moved past it (ENG-87).
  */
 @Service
@@ -52,7 +52,7 @@ class Users {
   }
 
   /**
-   * Creates the first user (PLT-23), and refuses once any user exists: the others are added by a
+   * Creates the first user (PLT-18), and refuses once any user exists: the others are added by a
    * user on the Users screen. Two run at the same moment create one user, not two.
    */
   @Transactional
@@ -103,8 +103,8 @@ class Users {
   }
 
   /**
-   * Gives another user's account a new password (PLT-21). A user cannot reset their own: changing
-   * it asks for the current one (PLT-22).
+   * Gives another user's account a new password (PLT-16). A user cannot reset their own: changing
+   * it asks for the current one (PLT-17).
    */
   @Transactional
   User resetPassword(UUID id, ExpectedVersion version, String password, UUID by) {
@@ -123,9 +123,9 @@ class Users {
   }
 
   /**
-   * Changes the logged-in user's own password (PLT-22), once they give their current one. A wrong
+   * Changes the logged-in user's own password (PLT-17), once they give their current one. A wrong
    * current password counts as a failed login of their login name, so guessing it is slowed down as
-   * guessing at Login is (PLT-24).
+   * guessing at Login is (PLT-19).
    */
   @Transactional
   User changeOwnPassword(
@@ -155,7 +155,7 @@ class Users {
   }
 
   /**
-   * Disables another user's account (PLT-45): it cannot log in, and its open sessions end at once,
+   * Disables another user's account (PLT-20): it cannot log in, and its open sessions end at once,
    * on their next request. Nobody can disable their own, so at least one account can always log in.
    * An account already disabled is left as it is.
    */
@@ -169,7 +169,7 @@ class Users {
     return setDisabled(user, version, true, by);
   }
 
-  /** Enables a disabled account, so it can log in again (PLT-21). */
+  /** Enables a disabled account, so it can log in again (PLT-16). */
   @Transactional
   User enable(UUID id, ExpectedVersion version, UUID by) {
     return setDisabled(forChange(id), version, false, by);
@@ -271,7 +271,7 @@ class Users {
   }
 
   /**
-   * A password check refused for now, after too many wrong ones (PLT-24), with how long to wait.
+   * A password check refused for now, after too many wrong ones (PLT-19), with how long to wait.
    */
   static final class SlowedDownException extends RuntimeException {
 

@@ -48,7 +48,7 @@ const column = createColumnHelper<typeof features, User>();
  * Users (FE-37): every account as a paged list the server sorts (FE-59), with "Add user", and on
  * another user's row "Reset password" and "Disable" or "Enable". The logged-in user's own row
  * offers neither: they change their own password from the sidebar (FE-8), and nobody disables
- * their own account (PLT-45). The page and the sort live in the URL (FE-41), which the route
+ * their own account (PLT-20). The page and the sort live in the URL (FE-41), which the route
  * owns.
  */
 export function UsersScreen({

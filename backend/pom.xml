@@ -30,7 +30,7 @@
     <jacoco.version>0.8.16</jacoco.version>
     <!-- 3.2.0 is built on Spring Boot 4.1.2, the version in ENG-2. -->
     <springdoc.version>3.2.0</springdoc.version>
-    <!-- Spring Security's Argon2 encoder needs it (PLT-17); Spring Boot does not manage it. -->
+    <!-- Spring Security's Argon2 encoder needs it (PLT-12); Spring Boot does not manage it. -->
     <bouncycastle.version>1.87</bouncycastle.version>
     <!-- Extended by the surefire argLine below; a coverage agent can add to it too. -->
     <argLine/>

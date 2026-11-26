@@ -18,7 +18,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Logging in, the session and its CSRF protection over HTTP (PLT-17, PLT-24, FE-71 to FE-74). Each
+ * Logging in, the session and its CSRF protection over HTTP (PLT-12, PLT-19, FE-71 to FE-74). Each
  * test drives the API as the browser does, through {@link Browser}.
  */
 @SpringBootTest

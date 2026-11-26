@@ -18,8 +18,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * The first account is created with a command on the server (PLT-23), with its password hashed by
- * Argon2 (PLT-17). The annotations match {@code BackendStartsTest}, so both share one context.
+ * The first account is created with a command on the server (PLT-18), with its password hashed by
+ * Argon2 (PLT-12). The annotations match {@code BackendStartsTest}, so both share one context.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @DatabaseTest

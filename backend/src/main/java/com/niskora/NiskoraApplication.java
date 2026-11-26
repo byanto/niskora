@@ -33,7 +33,7 @@ public class NiskoraApplication {
 
   public static void main(String[] args) {
     SpringApplication application = new SpringApplication(NiskoraApplication.class);
-    // The one command the backend runs instead of serving, which identity carries out (PLT-23).
+    // The one command the backend runs instead of serving, which identity carries out (PLT-18).
     boolean command = args.length > 0 && args[0].equals(FirstUserCommand.NAME);
     if (!command) {
       application.run(args);

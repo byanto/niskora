@@ -31,7 +31,7 @@ import org.springframework.web.ErrorResponseException;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 /**
- * The security of every endpoint (PLT-17): a server-side session, CSRF protection for a single page
+ * The security of every endpoint (PLT-12): a server-side session, CSRF protection for a single page
  * app, and Problem Details for a call that is not logged in (401) or lacks the CSRF token (403).
  * Every path needs a session except logging in.
  */
@@ -120,14 +120,14 @@ class SecurityConfiguration {
     return repository;
   }
 
-  /** The logged-in user is kept in the server-side session (PLT-17). */
+  /** The logged-in user is kept in the server-side session (PLT-12). */
   @Bean
   SecurityContextRepository securityContextRepository() {
     return new HttpSessionSecurityContextRepository();
   }
 
   /**
-   * Argon2 with Spring Security's current defaults (PLT-17). Each hash is prefixed with the id of
+   * Argon2 with Spring Security's current defaults (PLT-12). Each hash is prefixed with the id of
    * its encoder, so the parameters can be raised later without locking anyone out.
    */
   @Bean

@@ -17,8 +17,8 @@ import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.stereotype.Component;
 
 /**
- * Creates the first user from the command line on the server (PLT-23). Every later user is added on
- * the Users screen, so it refuses once any user exists. There is no self-signup (PLT-18).
+ * Creates the first user from the command line on the server (PLT-18). Every later user is added on
+ * the Users screen, so it refuses once any user exists. There is no self-signup (PLT-13).
  *
  * <p>{@code java -jar app.jar create-first-user --login-name=rina --full-name="Rina Wulandari"}
  * asks for the password twice on a terminal, or reads it from the first line of standard input when

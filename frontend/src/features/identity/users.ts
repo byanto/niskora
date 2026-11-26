@@ -11,7 +11,7 @@ export type UserId = Id<"User">;
 
 /**
  * An account as the Users screen lists it, with its branded id (FE-44), its version, which a
- * change sends back (ENG-87), and whether it is disabled (PLT-45).
+ * change sends back (ENG-87), and whether it is disabled (PLT-20).
  */
 export type User = Omit<components["schemas"]["UserResponse"], "id"> & { id: UserId };
 
@@ -85,7 +85,7 @@ function changeHeaders({ user, idempotencyKey }: AccountChange<unknown>) {
   return { "Idempotency-Key": idempotencyKey, "If-Match": ifMatch(user.version) };
 }
 
-/** Gives another user a new password (PLT-21). */
+/** Gives another user a new password (PLT-16). */
 export async function resetPassword(change: AccountChange<{ password: string }>) {
   return branded(
     await dataOf(
@@ -97,7 +97,7 @@ export async function resetPassword(change: AccountChange<{ password: string }>)
   );
 }
 
-/** Disables another user's account, which ends their sessions at once (PLT-45). */
+/** Disables another user's account, which ends their sessions at once (PLT-20). */
 export async function disableUser(change: AccountChange) {
   return branded(
     await dataOf(
@@ -108,7 +108,7 @@ export async function disableUser(change: AccountChange) {
   );
 }
 
-/** Enables a disabled account again (PLT-21). */
+/** Enables a disabled account again (PLT-16). */
 export async function enableUser(change: AccountChange) {
   return branded(
     await dataOf(
@@ -119,7 +119,7 @@ export async function enableUser(change: AccountChange) {
   );
 }
 
-/** Changes the logged-in user's own password, given their current one (PLT-22). */
+/** Changes the logged-in user's own password, given their current one (PLT-17). */
 export async function changeOwnPassword(
   change: AccountChange<{ currentPassword: string; newPassword: string }>,
 ) {

@@ -33,7 +33,7 @@ function isFieldName(name: string): name is FieldName {
 }
 
 /**
- * "Change password" in the sidebar (PLT-22, FE-8): a dialog that asks for the logged-in user's
+ * "Change password" in the sidebar (PLT-17, FE-8): a dialog that asks for the logged-in user's
  * current password and a new one. It reads their account first, for the version the change is
  * based on (ENG-87), and closes once the server has changed it, with a toast (FE-54).
  */

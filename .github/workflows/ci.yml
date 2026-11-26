@@ -1,4 +1,4 @@
-# The merge gate (ENG-46) and image publishing (PLT-13). It holds the ENG-47 checks that exist so
+# The merge gate (ENG-46) and image publishing (PLT-7). It holds the ENG-47 checks that exist so
 # far; later tickets add theirs. The breaking-change check (ENG-91) is in api.yml. Every push to a
 # pull request runs the checks, including a build of both images without pushing them. A merge to
 # main runs the checks again and, when they pass, pushes the linux/arm64 images (ENG-5) to
@@ -72,7 +72,7 @@ jobs:
           test -z "$(git status --porcelain)"
 
   # The Playwright journeys (ENG-39) in a real browser against the whole Compose stack, built from
-  # this commit, with an account made by the first-user command (PLT-23).
+  # this commit, with an account made by the first-user command (PLT-18).
   journeys:
     name: Journeys
     runs-on: ubuntu-24.04

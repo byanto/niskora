@@ -32,8 +32,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.ErrorResponseException;
 
 /**
- * Logging in and out of the server-side session (PLT-17). Spring Security's own login form is off,
- * so this does what it would: check the password, slow down repeated failures (PLT-24), give the
+ * Logging in and out of the server-side session (PLT-12). Spring Security's own login form is off,
+ * so this does what it would: check the password, slow down repeated failures (PLT-19), give the
  * session a new id and the browser a new CSRF token, so nothing from before the login carries over,
  * and keep the logged-in user in the session.
  */
@@ -57,7 +57,7 @@ class Logins {
     DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
     provider.setPasswordEncoder(passwordEncoder);
     // A disabled account is refused only once its password is right, so a wrong guess never
-    // learns which accounts are disabled (PLT-45). Accounts never lock or expire.
+    // learns which accounts are disabled (PLT-20). Accounts never lock or expire.
     provider.setPreAuthenticationChecks(user -> {});
     provider.setPostAuthenticationChecks(user -> {
       if (!user.isEnabled()) {
