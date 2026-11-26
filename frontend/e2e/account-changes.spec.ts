@@ -12,7 +12,7 @@ test("reset a password, disable and enable an account, and change your own passw
   page,
   browser,
 }) => {
-  // Each run adds a user of its own: accounts are never deleted (PLT-45).
+  // Each run adds a user of its own: accounts are never deleted (PLT-20).
   const other = {
     loginName: `changed${String(Date.now())}`,
     fullName: `Changed Journey User ${String(Date.now())}`,

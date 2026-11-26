@@ -1,4 +1,4 @@
--- The identity module's own schema (ENG-19, ENG-60) and its users (PLT-17, PLT-19).
+-- The identity module's own schema (ENG-19, ENG-60) and its users (PLT-12, PLT-14).
 CREATE SCHEMA identity;
 
 CREATE TABLE identity.users (

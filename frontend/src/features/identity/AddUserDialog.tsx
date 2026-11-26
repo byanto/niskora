@@ -33,7 +33,7 @@ function isFieldName(name: string): name is FieldName {
 }
 
 /**
- * "Add user" on the Users screen (PLT-21, FE-37): a dialog that asks for the new user's full name,
+ * "Add user" on the Users screen (PLT-16, FE-37): a dialog that asks for the new user's full name,
  * login name and first password. It closes once the server has added them and the list shows
  * them, and a toast says so (FE-54, FE-55).
  */

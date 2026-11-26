@@ -44,10 +44,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The Users screen's accounts (PLT-21, FE-37): every account as a paged list, adding one, and
+ * The Users screen's accounts (PLT-16, FE-37): every account as a paged list, adding one, and
  * changing one with the verbs of ENG-70: resetting a password, disabling and enabling, and changing
- * your own password (PLT-22). Each change names the version it is based on (ENG-87). There is no
- * delete: an account is never deleted (PLT-45).
+ * your own password (PLT-17). Each change names the version it is based on (ENG-87). There is no
+ * delete: an account is never deleted (PLT-20).
  */
 @RestController
 @RequestMapping(path = UsersController.PATH, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -107,7 +107,7 @@ class UsersController {
   }
 
   /**
-   * Gives another user's account a new password (PLT-21), which niskora never mails (PLT-18). A
+   * Gives another user's account a new password (PLT-16), which niskora never mails (PLT-13). A
    * user changes their own with {@code change-password}, which asks for the current one.
    */
   @PostMapping(path = "/{id}/reset-password", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -121,7 +121,7 @@ class UsersController {
 
   /**
    * Disables another user's account: it can no longer log in, and its open sessions end at once
-   * (PLT-45). Nobody can disable their own, so at least one account can always log in.
+   * (PLT-20). Nobody can disable their own, so at least one account can always log in.
    */
   @PostMapping("/{id}/disable")
   ResponseEntity<UserResponse> disableUser(
@@ -129,7 +129,7 @@ class UsersController {
     return answerChange(() -> users.disable(id, version, me.id()));
   }
 
-  /** Enables a disabled account again, so it can log in (PLT-21). */
+  /** Enables a disabled account again, so it can log in (PLT-16). */
   @PostMapping("/{id}/enable")
   ResponseEntity<UserResponse> enableUser(
       @PathVariable UUID id, ExpectedVersion version, @AuthenticationPrincipal LoggedInUser me) {
@@ -137,8 +137,8 @@ class UsersController {
   }
 
   /**
-   * Changes the logged-in user's own password (PLT-22), once they give their current one. A wrong
-   * current password counts as a failed login (PLT-24).
+   * Changes the logged-in user's own password (PLT-17), once they give their current one. A wrong
+   * current password counts as a failed login (PLT-19).
    */
   @PostMapping(path = "/{id}/change-password", consumes = MediaType.APPLICATION_JSON_VALUE)
   ResponseEntity<UserResponse> changePassword(
@@ -154,7 +154,7 @@ class UsersController {
   /**
    * A change's answer: the account with its new version (ENG-81), or why it was refused: an unknown
    * account is a 404, an older version a 412 that says who changed it and when (ENG-87), and a
-   * broken rule a 422 (ENG-82), and a password check while they are slowed down a 429 (PLT-24).
+   * broken rule a 422 (ENG-82), and a password check while they are slowed down a 429 (PLT-19).
    */
   private static ResponseEntity<UserResponse> answerChange(Supplier<User> change) {
     User user;
@@ -198,7 +198,7 @@ class UsersController {
   }
 
   /**
-   * Adds an account (PLT-21), answered with a 201 and its {@code Location}. A blank field is a 400,
+   * Adds an account (PLT-16), answered with a 201 and its {@code Location}. A blank field is a 400,
    * and a rule the account breaks, such as a taken login name, a 422 (ENG-81), each with its field
    * errors (ENG-82).
    */
@@ -227,7 +227,7 @@ class UsersController {
 
   /**
    * An account as the Users screen lists it, with its version, which a change sends back as {@code
-   * If-Match} (ENG-87), and whether it is disabled (PLT-45).
+   * If-Match} (ENG-87), and whether it is disabled (PLT-20).
    */
   record UserResponse(
       UUID id,

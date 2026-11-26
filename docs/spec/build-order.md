@@ -6,10 +6,11 @@ Read [README.md](README.md) first. This file orders the work and adds no behavio
 
 ## Why this order
 
-- Deployment is first, so that every later step is used on real data the day it merges.
+- The walking skeleton is first, so that every later step can be released and used on real data the day it merges.
 - Location analysis needs only orders, so it comes before the purchasing chain.
 - The agent is last, because its tools sit on every other module.
 - The end of step 3 is the first slice the operator uses daily.
+- From step 2 on, a step is done when it works on production, on real data. Setting up and running that installation is outside this repository.
 
 ## The steps at a glance
 
@@ -31,7 +32,7 @@ The module dependencies are in [engineering.md](engineering.md). A module is cre
 
 ## Step 1: Walking skeleton
 
-**Goal.** An empty niskora that a user can log in to, deployed to production, built and guarded the way every later step will be.
+**Goal.** An empty niskora that a user can log in to, released as images that an installation can run, built and guarded the way every later step will be.
 
 **Depends on.** Nothing.
 
@@ -41,17 +42,11 @@ The module dependencies are in [engineering.md](engineering.md). A module is cre
 - The merge gate in CI with every check, the protected `main` branch, the weekly dependency updates and the first migration.
 - The `common` and `identity` modules: login, the session, the Users screen (adding, resetting a password, disabling and enabling) and changing your own password, as in [platform.md](platform.md).
 - The frontend shell with its sidebar, the design tokens, `docs/design.md`, `frontend/CLAUDE.md`, the fixed loading, empty and error states, and the translation setup, as in [frontend.md](frontend.md).
-- Production on the OCI machine: the Compose stack, the Cloudflare Tunnel, the secrets file, the image build on merge and the manual deploy workflow.
-- Backups: the nightly dump to Object Storage, the weekly copy to Cloudflare R2 and the monthly restore test.
-- Monitoring: the checks on Healthchecks.io with their alerts to Discord, the logs, and the runbook with one section per check.
+- The image build on merge, the health path and the structured logs: what an installation relies on, as in [platform.md](platform.md).
 
 **Done when.**
 
-- The owner and the operator each log in at `niskora.budiyanto.com` with their own account and see the empty shell.
-- A pull request cannot merge with a failing check, and a merge to `main` produces `linux/arm64` images.
-- The owner deploys a tag with the manual workflow and rolls back to the previous tag.
-- A nightly dump is in Object Storage, a copy is in R2, and one restore on the second machine has passed.
-- Stopping the stack on purpose raises an alert in Discord within 10 minutes.
+- A pull request cannot merge with a failing check, and a merge to `main` publishes `linux/arm64` images that can be pulled without logging in.
 - One Playwright journey (log in, see Home's empty state, log out) passes against the Compose stack.
 
 _Area files: [platform.md](platform.md), [engineering.md](engineering.md), [frontend.md](frontend.md)._
@@ -92,7 +87,7 @@ _Area files: [foundation.md](foundation.md), [frontend.md](frontend.md)._
 - The order import into the `orders` module: packages replaced as a set, [component lines](../../GLOSSARY.md#orders), [held packages](../../GLOSSARY.md#imports) and their release on "Merchant SKUs added", [hub packages](../../GLOSSARY.md#orders), [unmapped lines](../../GLOSSARY.md#orders), [abandoned packages](../../GLOSSARY.md#orders), [demand](../../GLOSSARY.md#orders), and the buyer personal data in its own schema.
 - Screens: Packages, Package page, and Home with data freshness, "needs attention" and yesterday's counts. Home's own endpoint replaces the placeholder query on `/api/health` that it used since step 1. The SPU page and the Merchant SKU page gain the stock figures and the demand chart.
 - The search box in the shell.
-- The monitoring check for an orders import within 3 days.
+- The ping on each successful orders import (PLT-27), so a watcher outside niskora notices when imports stop.
 
 **Done when.**
 

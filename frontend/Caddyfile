@@ -1,5 +1,5 @@
 # Serves the built React app and forwards /api to the backend, so the browser sees one
-# origin (PLT-5). TLS ends at the Cloudflare Tunnel in production, so Caddy listens on plain HTTP.
+# origin (PLT-3). TLS ends in front of the stack (PLT-6), so Caddy listens on plain HTTP.
 :80 {
 	encode
 

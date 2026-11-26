@@ -118,7 +118,7 @@ class OpenApiConfiguration {
   /**
    * The one operational path (ENG-68). No controller serves it: the proxy forwards it to Actuator's
    * health endpoint on the management port, so springdoc cannot see it and it is written here by
-   * hand, in the shape Actuator answers with (PLT-43).
+   * hand, in the shape Actuator answers with (PLT-31).
    */
   private static PathItem health() {
     Content body =

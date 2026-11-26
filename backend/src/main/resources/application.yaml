@@ -28,8 +28,8 @@ springdoc:
 server:
   servlet:
     session:
-      # The server-side session lives in a cookie only, never in a URL (PLT-17, FE-74). TLS ends at
-      # the Cloudflare Tunnel, and browsers accept a Secure cookie from http://localhost too.
+      # The server-side session lives in a cookie only, never in a URL (PLT-12, FE-74). TLS ends
+      # in front of the stack (PLT-6), and browsers accept a Secure cookie from http://localhost too.
       tracking-modes: cookie
       cookie:
         secure: true
@@ -42,7 +42,7 @@ niskora:
 
 logging:
   structured:
-    # One JSON object per line on stdout, collected by Docker's journald driver (PLT-41).
+    # One JSON object per line on stdout (PLT-29, PLT-11).
     format:
       console: ecs
 
@@ -57,7 +57,7 @@ management:
         include: health
   endpoint:
     health:
-      # A bare {"status":"UP"} or "DOWN", with no components, details or group names (PLT-43).
+      # A bare {"status":"UP"} or "DOWN", with no components, details or group names (PLT-31).
       show-components: never
       show-details: never
       probes:

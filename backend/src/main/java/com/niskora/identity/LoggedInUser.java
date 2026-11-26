@@ -59,14 +59,14 @@ final class LoggedInUser implements UserDetails, CredentialsContainer {
     return passwordHash;
   }
 
-  /** There are no roles in v1 (PLT-20). */
+  /** There are no roles in v1 (PLT-15). */
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of();
   }
 
   /**
-   * Whether the account was enabled when it logged in (PLT-45). A session that outlives it being
+   * Whether the account was enabled when it logged in (PLT-20). A session that outlives it being
    * disabled is ended by {@link DisabledAccountFilter}.
    */
   @Override

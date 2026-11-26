@@ -22,7 +22,7 @@ import { useAccountChange } from "./useAccountChange";
 import { resetPassword, type User } from "./users";
 
 /**
- * "Reset password" on another user's row (PLT-21, FE-37): a dialog that asks for their new
+ * "Reset password" on another user's row (PLT-16, FE-37): a dialog that asks for their new
  * password. It closes once the server has changed it, and a toast says so (FE-54, FE-55).
  */
 export function ResetPasswordDialog({ user }: { user: User }) {

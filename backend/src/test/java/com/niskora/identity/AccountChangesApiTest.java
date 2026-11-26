@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Changing an account over HTTP (PLT-21, PLT-22, PLT-45): resetting another user's password,
+ * Changing an account over HTTP (PLT-16, PLT-17, PLT-20): resetting another user's password,
  * disabling and enabling an account, and changing your own password, each a verb sub-path (ENG-70)
  * that names the version it is based on (ENG-87). Each test drives the API as the browser does,
  * logged in as rina, with bayu as the other user.

@@ -23,7 +23,7 @@ niskora complements BigSeller and never replaces it. BigSeller stays the source 
 3. **Customer location analysis.** Where [packages](../../GLOSSARY.md#orders) go, by province, city and district, for aiming place-targeted ads. See [locations.md](locations.md).
 4. **A read-only agent.** Answers questions in plain language from niskora's own data. See [agent.md](agent.md).
 
-v1 is deployed to one OCI machine, with login and no roles. See [platform.md](platform.md).
+v1 runs on one ARM machine as one Docker Compose stack, with login and no roles. See [platform.md](platform.md).
 
 ## Settled constraints
 
@@ -117,8 +117,8 @@ Each of these was ruled out on the map. None returns without a new decision.
 | [`restock.md`](restock.md) | restock advice | `RST` |
 | [`purchasing.md`](purchasing.md) | suppliers, supply sources, purchase orders, the three documents | `PUR` |
 | [`locations.md`](locations.md) | customer location analysis | `LOC` |
-| [`agent.md`](agent.md) | the agent | `KRN` |
-| [`platform.md`](platform.md) | login, users, deployment, backups, monitoring | `PLT` |
+| [`agent.md`](agent.md) | the agent | `AGT` |
+| [`platform.md`](platform.md) | how niskora runs and is released, login and users, stored files, logs | `PLT` |
 | [`engineering.md`](engineering.md) | module layout, testing, CI, migrations, API conventions | `ENG` |
 | [`frontend.md`](frontend.md) | architecture, the screens, visual design | `FE` |
 | [`build-order.md`](build-order.md) | the build steps | none |

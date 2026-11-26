@@ -19,7 +19,7 @@ import { disableUser, enableUser, type User } from "./users";
 type Access = "disable" | "enable";
 
 /**
- * "Disable" or "Enable" on another user's row (PLT-21, PLT-45, FE-37): a dialog that says what
+ * "Disable" or "Enable" on another user's row (PLT-16, PLT-20, FE-37): a dialog that says what
  * the change does and asks to confirm it. It closes once the server has made the change, and a
  * toast says so (FE-54, FE-55).
  */

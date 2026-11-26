@@ -1,6 +1,6 @@
 # Agent: the read-only agent
 
-What the agent answers, the tools it answers with, the model behind it, and how buyer data is kept away from it. Rule ids start with `KRN`.
+What the agent answers, the tools it answers with, the model behind it, and how buyer data is kept away from it. Rule ids start with `AGT`.
 
 Read [README.md](README.md) first. Terms are defined in [`GLOSSARY.md`](../../GLOSSARY.md) and are not redefined here.
 
@@ -63,7 +63,7 @@ _Sources: [AI agent design and provider](https://github.com/byanto/niskora/issue
 ## 5. Provider, model and cost
 
 - **AGT-22** The provider is the Gemini API on its free tier, with a key from Google AI Studio and no billing enabled. v1 spends nothing on AI.
-- **AGT-23** The agent is built on Spring AI's `ChatClient` with the Google GenAI starter. Provider and model are configuration, so a switch is a configuration change. The API key is a secret on the machine ([platform.md](platform.md), PLT-12) and is never in the repository or in an issue.
+- **AGT-23** The agent is built on Spring AI's `ChatClient` with the Google GenAI starter. Provider and model are configuration, so a switch is a configuration change. The API key is a secret the backend reads from its environment ([platform.md](platform.md), PLT-10) and is never in the repository or in an issue.
 - **AGT-24** Under the free tier's terms Google may use the questions and the tool results to improve its products, and human reviewers may read them. The owner accepts this for sales figures, costs, goods prices and supplier names. Buyer data never goes out. Moving to the paid tier later is a billing change only.
 - **AGT-25** The main model is `gemini-3.5-flash-lite`. Its free tier limits, as read from the owner's AI Studio page, are 15 requests a minute, 250,000 tokens a minute and 500 requests a day. That is about 125 questions a day against a plan of 20 to 50.
 - **AGT-26** An optional fallback model is `gemini-3.1-flash-lite`, which has its own limits of the same size. The fallback can be left empty.

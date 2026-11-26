@@ -38,7 +38,7 @@ In progress. The design for v1 is nearly complete and the implementation is star
 - **PostgreSQL 18**, one schema per module and no foreign keys across schemas ([ADR 0003](docs/adr/0003-one-database-schema-per-module.md)). Plain SQL, forward-only Flyway migrations.
 - **Tests against the real database.** Use case tests run on real PostgreSQL, with no mocked or fake repositories ([ADR 0002](docs/adr/0002-use-case-tests-run-against-real-postgresql.md)).
 - **React** frontend as a separate app, with an OpenAPI contract generated from the backend.
-- **Docker Compose** locally and in production, on a single Oracle Cloud machine ([ADR 0001](docs/adr/0001-self-hosted-postgresql-on-the-app-machine.md)).
+- **Docker Compose** locally and in production, on a single ARM machine ([ADR 0001](docs/adr/0001-self-hosted-postgresql-on-the-app-machine.md)).
 
 When a technical choice has to be made, development cost gets little weight. Quality, simplicity, robustness and long-term maintainability come first.
 

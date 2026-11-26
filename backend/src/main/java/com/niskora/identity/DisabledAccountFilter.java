@@ -12,7 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Ends the open sessions of a disabled account at once (PLT-45). Every request of a session asks
+ * Ends the open sessions of a disabled account at once (PLT-20). Every request of a session asks
  * whether its account may still use the app, so a session that outlives its account being disabled
  * ends on its next request, which is then answered as one without a session. The question is one
  * lookup by primary key, and holds however many sessions or machines there are.

@@ -9,7 +9,7 @@ async function logIn(page: Page, loginName: string, password: string) {
 }
 
 test("add a user, who then logs in with their own account", async ({ page }) => {
-  // Each run adds a user of its own: accounts are never deleted (PLT-45).
+  // Each run adds a user of its own: accounts are never deleted (PLT-20).
   const added = {
     loginName: `added${String(Date.now())}`,
     fullName: "Added Journey User",

@@ -41,7 +41,7 @@ class SessionController {
 
   /**
    * Logs in with a login name and a password, and starts a new session. A wrong login name or
-   * password is a 401, and an attempt while failed logins are slowed down is a 429 (PLT-24).
+   * password is a 401, and an attempt while failed logins are slowed down is a 429 (PLT-19).
    */
   @PostMapping
   @WithoutIdempotencyKey(

@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 /**
- * The session and CSRF token cookies as the servlet container writes them (PLT-17). Only a real
+ * The session and CSRF token cookies as the servlet container writes them (PLT-12). Only a real
  * server sets their attributes, so this runs on one. The annotations match {@code
  * BackendStartsTest}, so both share one Spring context and one container.
  */

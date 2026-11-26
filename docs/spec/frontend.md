@@ -106,7 +106,7 @@ v1 has 22 screens. Each has its own URL.
 
 - **FE-35** **Campaign days** lists the marked days with who marked each, lists the days that look like a campaign and are not marked, and has a form to mark a day or a range. **Place aliases** has tabs for unmatched spellings, all [place aliases](../../GLOSSARY.md#locations) and the official places, and lets a user map a spelling to a place.
 - **FE-36** **Settings** shows the company prefix table, which is read-only, and four editable settings: the default lead time and the default order cycle used for a Single SKU with no supply source (RST-22), the safety days (RST-18) and the trading name printed on the Daftar Pesanan (PUR-70). Every change is recorded with who made it and when.
-- **FE-37** **Users** lists every account, with "Add user", "Reset password", and "Disable" or "Enable" ([platform.md](platform.md), PLT-45). A user sees no "Reset password" or "Disable" on their own row: they change their own password from the sidebar (FE-8), which asks for the current one. There are no roles in v1.
+- **FE-37** **Users** lists every account, with "Add user", "Reset password", and "Disable" or "Enable" ([platform.md](platform.md), PLT-20). A user sees no "Reset password" or "Disable" on their own row: they change their own password from the sidebar (FE-8), which asks for the current one. There are no roles in v1.
 - **FE-38** **Login** takes a login name and a password and stands outside the shell.
 
 _Sources: [Main screens and navigation](https://github.com/byanto/niskora/issues/25), [Bringing in the Google Sheets and Grist data](https://github.com/byanto/niskora/issues/28), [Frontend architecture and libraries](https://github.com/byanto/niskora/issues/26), the `prototype/main-screens` branch._

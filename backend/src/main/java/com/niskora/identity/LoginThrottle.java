@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Slows down repeated failed logins (PLT-24), per login name whatever its case. The first {@value
+ * Slows down repeated failed logins (PLT-19), per login name whatever its case. The first {@value
  * #FREE_FAILURES} failures may be retried at once. From then on each retry waits twice as long as
  * the one before, counted from the last failure: 1 second, then 2, 4 and so on up to {@link
  * #LONGEST_WAIT}. A successful login, or an hour without a failure, forgets them.

@@ -10,7 +10,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
-/** Repeated failed logins are slowed down (PLT-24). */
+/** Repeated failed logins are slowed down (PLT-19). */
 class LoginThrottleTest {
 
   private final MovableClock clock = new MovableClock(Instant.parse("2026-11-19T03:00:00Z"));
