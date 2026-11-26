@@ -46,7 +46,7 @@ When a technical choice has to be made, development cost gets little weight. Qua
 
 You need Docker, JDK 25 and Node 24 with Corepack (for pnpm).
 
-- `docker compose up --build` starts PostgreSQL 18, the backend and Caddy. Open <http://localhost:8000>.
+- `docker compose up --build` starts PostgreSQL 18, the backend and Caddy. Open <http://localhost:8000>. `compose.override.yaml`, which Compose loads on its own, adds the development passwords and the ports, all bound to this machine: 8000 for the app, 8080 and 8081 for the Vite dev server, and 5432 for a database client.
 - The first account is made by a command in the backend container, which asks for its password: `docker compose exec backend java -jar app.jar create-first-user --login-name=<login name> --full-name="<full name>"`. It refuses once any account exists. Every later account is added on the Users screen.
 - `pnpm e2e` in `frontend/` runs the Playwright journeys against the stack on port 8000. They log in with the account in `frontend/e2e/account.ts`, so on an empty stack create that one first. `pnpm exec playwright install chromium` fetches the browser once.
 - `pnpm dev` in `frontend/` starts the Vite dev server on <http://localhost:5173>. It forwards `/api` to the backend from Compose.

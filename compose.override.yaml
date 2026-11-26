@@ -1,0 +1,22 @@
+# Local development only. `docker compose up` merges this file into compose.yaml on its own; an
+# installation never loads it. Every port is bound to this machine only.
+services:
+  postgres:
+    environment:
+      # Development passwords, for this machine's stack only.
+      POSTGRES_PASSWORD: niskora
+    ports:
+      # For a database client such as IntelliJ's.
+      - "127.0.0.1:5432:5432"
+
+  backend:
+    environment:
+      SPRING_DATASOURCE_PASSWORD: niskora
+    ports:
+      # For the Vite dev server's /api proxy (FE-83): the API, then Actuator's management port.
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8081"
+
+  caddy:
+    ports:
+      - "127.0.0.1:8000:80"
