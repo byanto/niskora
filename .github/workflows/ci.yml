@@ -75,7 +75,10 @@ jobs:
   # this commit, with an account made by the first-user command (PLT-23).
   journeys:
     name: Journeys
-    runs-on: ubuntu-24.04
+    # The production platform (ENG-5), so the stack reads the arm64 layers that the Image and
+    # Publish jobs cache. Without them every run fetches Maven and every dependency from Maven
+    # Central again, which fails whenever Central rate-limits the runner.
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
@@ -84,8 +87,21 @@ jobs:
           runtime: node@24
           cache: true
           require-lockfile: true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      # Builds the stack's images from compose.yaml under the names Compose gives them, reading
+      # the image jobs' cache without writing to it.
+      - uses: docker/bake-action@59cb1203cd42bcefd40a1b6d73b589e48c86040e # v7.5.0
+        with:
+          source: .
+          files: compose.yaml
+          load: true
+          set: |
+            backend.tags=niskora-backend
+            backend.cache-from=type=gha,scope=backend
+            caddy.tags=niskora-caddy
+            caddy.cache-from=type=gha,scope=frontend
       - name: Start the stack
-        run: docker compose up --detach --build --wait
+        run: docker compose up --detach --no-build --wait
       # The account named in frontend/e2e/account.ts. The password goes in on standard input, as
       # it does on the server.
       - name: Create the account
