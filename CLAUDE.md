@@ -49,8 +49,11 @@ A ticket runs in two sessions, each started fresh: a plan session, then a run se
 Plan session:
 
 1. Builder check on the ticket. Dispatch a fresh subagent with `docs/agents/builder-check-prompt.md`, pointed at the issue (it reads it with `gh issue view <number>`) and the spec sections the issue cites. Settle what it asks, in the issue, before planning.
-2. Write the plan with `writing-plans`. Save it to `docs/plans/<issue-number>-<slug>.md`, not the skill's default folder. The plan names the issue as its spec. Keep it to 5 to 8 tasks; a ticket that needs more gets split.
-3. Commit the plan on the ticket branch and open the pull request as a draft. A plan runs only after the maintainer approves it.
+2. When the ticket or the builder check shows two real ways to build it, lay out both with their trade-offs and let the maintainer pick before writing the plan.
+3. Write the plan with `writing-plans`. Save it to `docs/plans/<issue-number>-<slug>.md`, not the skill's default folder. The plan names the issue as its spec. Keep it to 5 to 8 tasks; a ticket that needs more gets split.
+   - The tests the plan names are the seams under test: approving the plan confirms them for `mattpocock-skills:tdd`, so an implementer never stops to ask.
+   - A plan that changes a screen ends with a task that opens each changed screen in a real browser with `chrome-devtools-axi` and saves the screenshots for the pull request (ENG-40).
+4. Commit the plan on the ticket branch and open the pull request as a draft. A plan runs only after the maintainer approves it.
 
 Run session:
 
@@ -58,7 +61,7 @@ Run session:
 2. Name the model on every dispatch: implementers and task reviewers on Sonnet, the final review on Opus. The session itself runs on Opus.
 3. Every implementer brief makes `source-driven-development` mandatory. Every task that adds behaviour is test first, following `mattpocock-skills:tdd`. The API contract order above still holds.
 4. After each task review, post the review as a comment on the pull request (`gh pr comment`). The workspace under `.superpowers/sdd/` is deleted after the run, so the comments are the only record.
-5. The final review is `mattpocock-skills:code-review`, in place of `superpowers:requesting-code-review`.
+5. The final review is `mattpocock-skills:code-review`, in place of `superpowers:requesting-code-review`. It replaces only the reviewer: the rest of the skill's `references/final-review.md` still holds. Give `code-review` the ledger's parked findings, then run the single fix wave and its scoped re-review, and post "Rulings I made" as a comment on the pull request.
 6. In place of `superpowers:finishing-a-development-branch`: run the local gate (see Before pushing), then write the pull request description with `mattpocock-skills:pr` and mark the pull request ready. Never merge.
 
 A plan is a record of its ticket. Never edit it after its pull request merges; a change of course is a new plan.
