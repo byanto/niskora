@@ -6,7 +6,7 @@ Real business data lives in the gitignored `samples/` folder. Never commit it or
 
 ## Before pushing
 
-Run the local gate and push only when it is green: `./mvnw verify` in `backend/` (it needs Docker for Testcontainers) and `pnpm check` in `frontend/`. `./mvnw spotless:apply` fixes backend formatting. The gate regenerates the `docs/modules/` diagram, `docs/api/openapi.yaml` and `frontend/src/lib/api/schema.d.ts`; commit any change to them, since CI fails when a build leaves the tree different. Nothing runs the gate for you: there are no git hooks, and CI in `.github/workflows/` is the only gate (ENG-48).
+Run the local gate for what the change touches, and push only when it is green: `./mvnw verify` in `backend/` when anything under `backend/` changes (it needs Docker for Testcontainers), and `pnpm check` in `frontend/` when anything under `frontend/` or `docs/api/` changes. A change to neither, such as documentation only, needs neither; CI still runs every check. `./mvnw spotless:apply` fixes backend formatting. The gate regenerates the `docs/modules/` diagram, `docs/api/openapi.yaml` and `frontend/src/lib/api/schema.d.ts`; commit any change to them, since CI fails when a build leaves the tree different. Nothing runs the gate for you: there are no git hooks, and CI in `.github/workflows/` is the only gate (ENG-48).
 
 ## API contract
 
